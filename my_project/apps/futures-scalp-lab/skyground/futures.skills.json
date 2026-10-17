@@ -1,0 +1,54 @@
+{
+  "futures-scalp-lab.selftest": {
+    "name": "futures-scalp-lab.selftest",
+    "description": "سلامت‌سنجی لب فیوچرز (علی‌بودن + کنترل + موتور ریسک). فقط خواندنی.",
+    "parameters": {},
+    "steps": [
+      "cd /mnt/c/Users/Iliya/Desktop/DSA/Main_Arena_conn/apps/futures-scalp-lab",
+      "python3 -m scalplab selftest"
+    ],
+    "requires_approval": false,
+    "safety_level": "confirm",
+    "status": "new",
+    "confidence": 0.0
+  },
+  "futures-scalp-lab.auto-paper": {
+    "name": "futures-scalp-lab.auto-paper",
+    "description": "اجرای AUTO روی دادهٔ واقعی Binance + موتور ریسک، فقط PAPER (بدون سفارش). سبک با --light.",
+    "parameters": {"symbol": "BTCUSDT", "tf": "1m"},
+    "steps": [
+      "cd /mnt/c/Users/Iliya/Desktop/DSA/Main_Arena_conn/apps/futures-scalp-lab",
+      "python3 -m scalplab auto --data binance --symbol BTCUSDT --tf 1m --light --trade --size 100 --leverage 3 --max-concurrent 4 --cb-losses 2"
+    ],
+    "requires_approval": true,
+    "safety_level": "approval",
+    "status": "new",
+    "confidence": 0.0
+  },
+  "futures-scalp-lab.sweep": {
+    "name": "futures-scalp-lab.sweep",
+    "description": "سویپ چند تایم‌فریم×افق روی دادهٔ واقعی برای پیدا کردن بهترین سناریو (خالص پس از کارمزد).",
+    "parameters": {"tfs": "1,5,15", "horizons": "4,8,16"},
+    "steps": [
+      "cd /mnt/c/Users/Iliya/Desktop/DSA/Main_Arena_conn/apps/futures-scalp-lab",
+      "python3 -m scalplab sweep --data binance --tfs 1,5,15 --horizons 4,8,16"
+    ],
+    "requires_approval": true,
+    "safety_level": "approval",
+    "status": "new",
+    "confidence": 0.0
+  },
+  "futures-scalp-lab.update": {
+    "name": "futures-scalp-lab.update",
+    "description": "به‌روزرسانی کد از گیت‌هاب (git pull) — همون مدلی که دستیار کد می‌زنه و این‌جا pull می‌شه.",
+    "parameters": {},
+    "steps": [
+      "cd /mnt/c/Users/Iliya/Desktop/DSA/Main_Arena_conn",
+      "git pull --ff-only origin arena/01a0255b-main-arena-conn"
+    ],
+    "requires_approval": true,
+    "safety_level": "approval",
+    "status": "new",
+    "confidence": 0.0
+  }
+}

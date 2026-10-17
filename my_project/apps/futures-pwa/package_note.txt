@@ -1,0 +1,18 @@
+Futures Scalp Lab v2
+
+Run:
+  npm start
+  open http://localhost:8787
+
+Default behavior:
+- dataMode is BYBIT LIVE.
+- The browser calls the local /api/bybit proxy, and the proxy forwards only public V5 market requests to BYBIT_API_URL (default https://api.bybit.com).
+- If Bybit is unavailable or region-blocked, the dashboard shows DATA ERROR and does not switch to synthetic prices.
+- Mock Local/Mock Server are explicit test modes only and are never allowed by the Real broker.
+- Paper trading starts ON by default; it calculates entry fee, exit fee, estimated slippage, SL/TP, net PnL and win-rate from closed paper trades.
+- Real trading starts OFF. The built-in /api/lbank/order endpoint is DRY_RUN_ONLY. A real deployment must point realWebhookUrl to a secure backend that stores exchange secrets server-side.
+
+If the default Bybit host is restricted in your network, run the same official public API through an endpoint permitted for your account/region, for example:
+  BYBIT_API_URL=https://api.bytick.com npm start
+
+Do not put API Secret or Withdraw-enabled credentials in the PWA.

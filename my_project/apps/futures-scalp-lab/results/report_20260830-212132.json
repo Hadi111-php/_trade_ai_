@@ -1,0 +1,257 @@
+{
+  "run_id": "20260830-212132",
+  "lab_version": "2026-08-26.1",
+  "config": {
+    "data_mode": "synthetic",
+    "symbol": "BTCUSDT",
+    "timeframe": "1m",
+    "candles": 2000,
+    "csv_path": "",
+    "binance_url": "https://api.binance.com/api/v3/klines",
+    "bybit_url": "https://api.bybit.com/v5/market/kline",
+    "bybit_category": "linear",
+    "seeds": [
+      42
+    ],
+    "horizon": 12,
+    "fee_bps": 4.0,
+    "cooldown": 5,
+    "agree_min": 2,
+    "out_dir": "results",
+    "run_id": "20260830-212132",
+    "max_ticks": 300,
+    "interval": 0.0,
+    "live": false,
+    "forever": false,
+    "light": false,
+    "trade": false,
+    "trade_size_quote": 100.0,
+    "leverage": 3.0,
+    "max_concurrent": 4,
+    "cb_losses": 2,
+    "stop_pct": 0.005,
+    "trail_pct": 0.003,
+    "adaptive": true,
+    "stop_atr_mult": 1.5,
+    "trail_atr_mult": 1.0,
+    "sweep_tfs": null,
+    "sweep_horizons": null
+  },
+  "data_mode": "synthetic",
+  "label": "دادهٔ مصنوعی — فقط اعتبارسنجی مکانیزم؛ NOT real market",
+  "total_signals": 166,
+  "pooled_metrics": {
+    "macd_flip": {
+      "n": 12,
+      "hit_gross": 0.5833,
+      "hit_net": 0.5,
+      "hit_net_ci95": [
+        0.2538,
+        0.7462
+      ],
+      "avg_net_bps": -3.72,
+      "expectancy_bps": -3.72,
+      "profit_factor": 0.75,
+      "avg_mae_bps": -15.87,
+      "avg_mfe_bps": 22.41
+    },
+    "donchian_breakout": {
+      "n": 26,
+      "hit_gross": 0.8462,
+      "hit_net": 0.7308,
+      "hit_net_ci95": [
+        0.5392,
+        0.863
+      ],
+      "avg_net_bps": 18.19,
+      "expectancy_bps": 18.19,
+      "profit_factor": 6.48,
+      "avg_mae_bps": -7.24,
+      "avg_mfe_bps": 34.51
+    },
+    "ema_cross": {
+      "n": 43,
+      "hit_gross": 0.7674,
+      "hit_net": 0.6977,
+      "hit_net_ci95": [
+        0.5489,
+        0.814
+      ],
+      "avg_net_bps": 19.48,
+      "expectancy_bps": 19.48,
+      "profit_factor": 5.16,
+      "avg_mae_bps": -7.73,
+      "avg_mfe_bps": 35.09
+    },
+    "consensus_k2": {
+      "n": 30,
+      "hit_gross": 0.8333,
+      "hit_net": 0.7333,
+      "hit_net_ci95": [
+        0.5555,
+        0.8582
+      ],
+      "avg_net_bps": 17.44,
+      "expectancy_bps": 17.44,
+      "profit_factor": 4.83,
+      "avg_mae_bps": -7.79,
+      "avg_mfe_bps": 34.04
+    },
+    "rsi_reversion": {
+      "n": 31,
+      "hit_gross": 0.0968,
+      "hit_net": 0.0323,
+      "hit_net_ci95": [
+        0.0057,
+        0.1619
+      ],
+      "avg_net_bps": -39.71,
+      "expectancy_bps": -39.71,
+      "profit_factor": 0.02,
+      "avg_mae_bps": -38.03,
+      "avg_mfe_bps": 5.21
+    },
+    "bb_squeeze": {
+      "n": 14,
+      "hit_gross": 0.7857,
+      "hit_net": 0.6429,
+      "hit_net_ci95": [
+        0.3876,
+        0.8366
+      ],
+      "avg_net_bps": 14.36,
+      "expectancy_bps": 14.36,
+      "profit_factor": 3.71,
+      "avg_mae_bps": -6.6,
+      "avg_mfe_bps": 33.16
+    },
+    "consensus_k3": {
+      "n": 9,
+      "hit_gross": 0.7778,
+      "hit_net": 0.7778,
+      "hit_net_ci95": [
+        0.4526,
+        0.9368
+      ],
+      "avg_net_bps": 14.99,
+      "expectancy_bps": 14.99,
+      "profit_factor": 6.43,
+      "avg_mae_bps": -5.29,
+      "avg_mfe_bps": 33.38
+    },
+    "consensus_k4": {
+      "n": 1,
+      "hit_gross": 1.0,
+      "hit_net": 1.0,
+      "hit_net_ci95": [
+        0.2065,
+        1.0
+      ],
+      "avg_net_bps": 40.59,
+      "expectancy_bps": 40.59,
+      "profit_factor": Infinity,
+      "avg_mae_bps": -8.29,
+      "avg_mfe_bps": 48.59
+    }
+  },
+  "ranking_by_net_expectancy": [
+    "ema_cross",
+    "consensus_k2",
+    "rsi_reversion"
+  ],
+  "control": {},
+  "calibration_conf_vs_hit": [
+    {
+      "conf_range": [
+        0.5,
+        0.6
+      ],
+      "n": 44,
+      "hit_gross": 0.5455,
+      "hit_net": 0.4773,
+      "hit_net_ci95": [
+        0.3375,
+        0.6206
+      ],
+      "avg_net_bps": -5.05,
+      "expectancy_bps": -5.05,
+      "profit_factor": 0.73,
+      "avg_mae_bps": -18.81,
+      "avg_mfe_bps": 23.2
+    },
+    {
+      "conf_range": [
+        0.6,
+        0.7
+      ],
+      "n": 23,
+      "hit_gross": 0.6957,
+      "hit_net": 0.5217,
+      "hit_net_ci95": [
+        0.3296,
+        0.7076
+      ],
+      "avg_net_bps": 1.3,
+      "expectancy_bps": 1.3,
+      "profit_factor": 1.1,
+      "avg_mae_bps": -17.22,
+      "avg_mfe_bps": 23.02
+    },
+    {
+      "conf_range": [
+        0.7,
+        0.8
+      ],
+      "n": 11,
+      "hit_gross": 0.6364,
+      "hit_net": 0.4545,
+      "hit_net_ci95": [
+        0.2127,
+        0.7199
+      ],
+      "avg_net_bps": 3.76,
+      "expectancy_bps": 3.76,
+      "profit_factor": 1.37,
+      "avg_mae_bps": -12.69,
+      "avg_mfe_bps": 26.27
+    },
+    {
+      "conf_range": [
+        0.8,
+        0.9
+      ],
+      "n": 11,
+      "hit_gross": 0.1818,
+      "hit_net": 0.1818,
+      "hit_net_ci95": [
+        0.0514,
+        0.477
+      ],
+      "avg_net_bps": -19.63,
+      "expectancy_bps": -19.63,
+      "profit_factor": 0.28,
+      "avg_mae_bps": -24.98,
+      "avg_mfe_bps": 13.99
+    },
+    {
+      "conf_range": [
+        0.9,
+        1.0
+      ],
+      "n": 37,
+      "hit_gross": 0.7297,
+      "hit_net": 0.6757,
+      "hit_net_ci95": [
+        0.5146,
+        0.8037
+      ],
+      "avg_net_bps": 16.29,
+      "expectancy_bps": 16.29,
+      "profit_factor": 3.12,
+      "avg_mae_bps": -9.3,
+      "avg_mfe_bps": 35.36
+    }
+  ],
+  "per_seed": {},
+  "files": {}
+}
