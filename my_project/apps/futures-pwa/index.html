@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="description" content="Bybit live futures momentum scalp paper-trading lab" />
+  <title>Bybit Futures Scalp Lab</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>⚡ Bybit Futures Scalp Lab</h1>
+        <p id="statusText">BYBIT LIVE؛ آماده‌سازی...</p>
+      </div>
+      <div class="top-actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <select id="accountSelector" style="background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; border-radius:8px; padding:0.4rem 0.6rem; font-weight:bold; font-size:0.85rem; cursor:pointer;">
+          <option value="hadi">👤 حساب داداش هادی</option>
+          <option value="son">👤 حساب آقا پسر</option>
+        </select>
+        <button id="saveFullJsonBtn" class="btn" style="background:#0284c7; color:#fff; font-weight:bold; font-size:0.85rem; padding:0.4rem 0.8rem;">💾 دانلود JSON</button>
+        <button id="modeToggleBtn" class="ghost" style="font-weight:bold; border:1px solid #38bdf8; color:#38bdf8;">🌐 حالت: Bybit LIVE</button>
+        <button id="installBtn" class="ghost hidden">نصب</button>
+        <button id="panicBtn" class="danger" title="قطع اضطراری (Kill Switch) — توقف فوری تمام معاملات و لغو سفارشات">Kill (قطع اضطراری)</button>
+      </div>
+    </header>
+
+    <section class="cards">
+      <article class="card accent">
+        <span>Equity مجازی</span>
+        <strong id="paperEquity">--</strong>
+      </article>
+      <article class="card">
+        <span>PnL باز، خالص کارمزد</span>
+        <strong id="openPnl">--</strong>
+      </article>
+      <article class="card">
+        <span>Win-rate معاملات بسته</span>
+        <strong id="winRate">--</strong>
+      </article>
+      <article class="card">
+        <span>کارمزد پرداخت‌شده</span>
+        <strong id="feesPaid">--</strong>
+      </article>
+      <article class="card">
+        <span>معاملات بسته • Net PnL</span>
+        <strong id="closedTrades">--</strong>
+      </article>
+      <article class="card">
+        <span>منبع دیتا</span>
+        <strong id="dataSourceBadge" class="badge live">BYBIT LIVE</strong>
+      </article>
+      <article class="card">
+        <span>حالت ارسال واقعی</span>
+        <strong id="realModeBadge" class="badge off">OFF</strong>
+      </article>
+    </section>
+
+    <nav class="tabs" aria-label="tabs">
+      <button class="tab active" data-tab="dashboard">📊 بازار و سیگنال‌ها</button>
+      <button class="tab" data-tab="netfishing">🎣 تور ماهیگیری</button>
+      <button class="tab" data-tab="paper">💼 پورتفوی مجازی</button>
+      <button class="tab" data-tab="feeds">📡 دیتای صرافی‌ها</button>
+      <button class="tab" data-tab="real">⚡ واقعی</button>
+      <button class="tab" data-tab="settings">⚙️ تنظیمات و فرمول‌ساز</button>
+      <button class="tab" data-tab="logs">📑 لاگ‌ها</button>
+    </nav>
+
+    <main>
+      <!-- ۱. تب اصلی بازار و سیگنال‌ها -->
+      <section id="dashboard" class="panel active">
+        <div class="toolbar wrap">
+          <button id="refreshBtn">🔄 رفرش فوری</button>
+          <label class="switch-row"><input id="autoScanToggle" type="checkbox" checked /> اسکن خودکار</label>
+          <label class="inline-select">پروفایل ریسک
+            <select id="quickRiskProfile"><option value="low">کم (محافظه‌کار)</option><option value="medium">متوسط (متعادل)</option><option value="high">زیاد (تهاجمی)</option></select>
+          </label>
+          <span id="lastUpdate" class="muted">--</span>
+        </div>
+
+        <!-- کارت‌های زنده و رنگی سیگنال‌ها در صدر داشبورد -->
+        <div class="panel-heading" style="margin-top:0.5rem;">
+          <div><h2>🎯 رادار سیگنال‌ها و فرصت‌های ترید</h2><span class="muted">اسکن بلادرنگ ۱۰ ارز برتر با تحلیل چنداندیکاتوره RSI/EMA/ATR</span></div>
+        </div>
+        <div id="marketGrid" class="market-grid"></div>
+
+        <!-- نمودار قیمت و پوزیشن‌های باز -->
+        <div class="dashboard-layout" style="margin-top:1.2rem;">
+          <section class="chart-panel">
+            <div class="panel-heading">
+              <div><h2>📈 نمودار قیمت و تحلیل زنده</h2><span id="chartSymbolMeta" class="muted">نمادی انتخاب نشده</span></div>
+              <label class="inline-select">ارز
+                <select id="chartSymbolSelect"></select>
+              </label>
+            </div>
+            <canvas id="priceChart" aria-label="نمودار کندل قیمت"></canvas>
+          </section>
+
+          <section class="dashboard-positions">
+            <div class="panel-heading"><div><h2>💼 پوزیشن‌های باز زنده</h2><span class="muted">سود/ضرر شناور لحظه‌ای</span></div><button class="ghost small" data-tab-jump="paper">پورتفوی کامل</button></div>
+            <div class="table-wrap compact-table"><table><thead><tr><th>نماد</th><th>سمت</th><th>ورود</th><th>مارک</th><th>SL/TP</th><th>Floating PnL</th></tr></thead><tbody id="dashboardPaperPositions"></tbody></table></div>
+          </section>
+        </div>
+
+        <section class="dashboard-validation" style="margin-top:1rem;">
+          <div class="panel-heading"><div><h2>🏆 خلاصه عملکرد و اعتبارسنجی</h2><span id="dashReportScope" class="muted">معاملات بسته‌شده، خالص بعد از کارمزد</span></div><button class="ghost small" data-tab-jump="paper">جزئیات کامل</button></div>
+          <div class="report-grid mini-report">
+            <div><span>Win-rate</span><b id="dashReportWinRate">--</b></div>
+            <div><span>Net PnL</span><b id="dashReportNetPnl">--</b></div>
+            <div><span>Fees</span><b id="dashReportFees">--</b></div>
+            <div><span>Profit Factor</span><b id="dashReportProfitFactor">--</b></div>
+            <div><span>Max Drawdown</span><b id="dashReportDrawdown">--</b></div>
+            <div><span>Closed</span><b id="dashReportCount">--</b></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ۲. تب اختصاصی اتوترید تور ماهیگیری (Net Fishing) -->
+      <section id="netfishing" class="panel">
+        <div class="notice" style="border-right-color:#38bdf8; background:rgba(56, 189, 248, 0.08);">
+          <b>🎣 استراتژی تور ماهیگیری (Net Fishing Strategy):</b>
+          پهن کردن شبکه گره‌های پلکانی (Ladder Grid) در بالا و پایین مارکت بر مبنای ATR؛ صید امواج نوسانی با اولین بازگشت قیمت و درو کردن خودکار سود.
+        </div>
+        <div class="toolbar wrap">
+          <label class="inline-select">نماد فعال تور
+            <select id="netFishingSymbolSelect">
+              <option value="BTCUSDT">BTCUSDT (بیت‌کوین)</option>
+              <option value="ETHUSDT">ETHUSDT (اتریوم)</option>
+              <option value="SOLUSDT">SOLUSDT (سولانا)</option>
+              <option value="XRPUSDT">XRPUSDT (ریپل)</option>
+              <option value="DOGEUSDT">DOGEUSDT (دوج‌کوین)</option>
+            </select>
+          </label>
+          <label class="inline-select">تعداد لایه‌های تور
+            <select id="netFishingLayersSelect"><option value="3">۳ لایه</option><option value="5" selected>۵ لایه (پیشنهادی)</option><option value="7">۷ لایه</option></select>
+          </label>
+          <button id="redeployNetBtn" class="btn" style="background:#10b981; color:#fff; font-weight:bold;">🕸️ پهن کردن مجدد تور در قیمت فعلی</button>
+        </div>
+
+        <div class="report-grid" style="margin:1rem 0;">
+          <div><span>وضعیت حسگر نهنگ</span><b id="netWhaleSentiment" style="color:#38bdf8;">NEUTRAL</b></div>
+          <div><span>قیمت مبنای تور</span><b id="netCenterPrice">--</b></div>
+          <div><span>گره‌های فعال/در انتظار</span><b id="netNodesRatio">--</b></div>
+          <div><span>کل صیدهای موفق (TP)</span><b id="netHarvestedCount" style="color:#10b981;">--</b></div>
+        </div>
+
+        <h2>گره‌های پلکانی تور ماهیگیری (Ladder Net Nodes)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>شناسه گره</th><th>جهت</th><th>قیمت هدف</th><th>حجم</th><th>حد سود (TP)</th><th>حد ضرر (SL)</th><th>وضعیت</th></tr>
+            </thead>
+            <tbody id="netFishingNodesRows">
+              <tr><td colspan="7" style="padding:1.5rem; color:var(--text-muted);">در حال دریافت و ساخت گره‌های تور...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ۳. تب اختصاصی مانیتورینگ دیتای صرافی‌ها -->
+      <section id="feeds" class="panel">
+        <div class="notice">
+          <b>📡 پایپ‌لاین دیتای ضدتحریم چندگانه:</b> سیستم به صورت خودکار بین Bybit V5، Binance Public و CoinGecko گردش می‌کند تا حتی بدون VPN هم داده‌های زنده و بدون وقفه در جریان باشند.
+        </div>
+        <div class="panel-heading"><div><h2>ورودی دیتای بازار و سلامت صرافی‌ها</h2><span class="muted">کنترل منبع و تازگی داده</span></div><span id="feedHealth" class="badge live">--</span></div>
+        <div class="table-wrap compact-table"><table><thead><tr><th>نماد</th><th>Source</th><th>Ticker</th><th>آخرین کندل بسته</th><th>تعداد</th><th>Age</th><th>وضعیت</th></tr></thead><tbody id="dataFeedRows"></tbody></table></div>
+        <details class="raw-input" style="margin-top:1rem;"><summary>نمایش ورودی Parse‌شده نماد انتخابی</summary><pre id="dataInputJson">--</pre></details>
+      </section>
+
+      <!-- ۴. تب پورتفوی مجازی -->
+      <section id="paper" class="panel">
+        <div class="notice">
+          <b>Paper Trading:</b> ورود و خروج مجازی با قیمت زنده مارکت انجام می‌شود؛ کارمزد ورود/خروج، اسلیپیج ورودی، SL/TP و حد ضرر روزانه در محاسبات لحاظ می‌شوند.
+        </div>
+        <div class="toolbar wrap">
+          <label class="switch-row"><input id="paperAutoToggle" type="checkbox" checked /> اتوترید مجازی</label>
+          <button id="exportTradesJsonBtn" class="btn" style="background:#38bdf8; color:#040a13; font-weight:bold;">📥 دانلود / کپی JSON تاریخچه معاملات</button>
+          <button id="closeAllPaperBtn" class="warning">بستن همه پوزیشن‌های مجازی</button>
+          <button id="resetPaperBtn" class="ghost">ریست مجازی</button>
+        </div>
+        <div class="validation-report">
+          <div class="report-heading"><h2>گزارش اعتبارسنجی سیگنال</h2><span id="reportScope" class="muted">معاملات بسته‌شده Paper، خالص بعد از کارمزد</span></div>
+          <div class="report-grid">
+            <div><span>تعداد بسته‌شده</span><b id="reportCount">--</b></div>
+            <div><span>Win-rate خالص</span><b id="reportWinRate">--</b></div>
+            <div><span>Profit Factor</span><b id="reportProfitFactor">--</b></div>
+            <div><span>Expectancy</span><b id="reportExpectancy">--</b></div>
+            <div><span>Net PnL</span><b id="reportNetPnl">--</b></div>
+            <div><span>Fees</span><b id="reportFees">--</b></div>
+            <div><span>Max Drawdown</span><b id="reportDrawdown">--</b></div>
+            <div><span>میانگین Hold</span><b id="reportHold">--</b></div>
+          </div>
+        </div>
+        <h2>پوزیشن‌های باز</h2>
+        <div class="table-wrap"><table><thead><tr><th>نماد</th><th>سمت</th><th>ورود</th><th>مارک</th><th>سایز</th><th>SL/TP</th><th>Fee تا الان</th><th>PnL خالص</th><th></th></tr></thead><tbody id="paperPositions"></tbody></table></div>
+        <h2>تاریخچه معاملات مجازی</h2>
+        <div class="table-wrap"><table><thead><tr><th>زمان</th><th>نماد</th><th>سمت</th><th>Risk</th><th>ورود / خروج</th><th>Gross</th><th>Fees</th><th>Net PnL</th><th>دلیل / مدت</th></tr></thead><tbody id="paperTrades"></tbody></table></div>
+      </section>
+        <h2>تاریخچه معاملات مجازی</h2>
+        <div class="table-wrap"><table><thead><tr><th>زمان</th><th>نماد</th><th>سمت</th><th>Risk</th><th>ورود / خروج</th><th>Gross</th><th>Fees</th><th>Net PnL</th><th>دلیل / مدت</th></tr></thead><tbody id="paperTrades"></tbody></table></div>
+      </section>
+
+      <section id="real" class="panel">
+        <div class="risk-box">
+          <h2>اتوترید واقعی فیوچرز</h2>
+          <p>این تب همیشه OFF شروع می‌شود و فعال‌سازی آن فقط با اقدام صریح تو و عبارت تأیید انجام می‌شود. مقصد قابل انتخاب LBank Futures یا Bitunix Futures است؛ فعلاً PWA فقط payload استاندارد را به Backend می‌فرستد. کلید API/Secret نباید داخل Browser/PWA ذخیره شود؛ Backend باید امضا و دسترسی Trade را مدیریت کند.</p>
+          <ul>
+            <li>داده Mock هرگز اجازه ارسال واقعی ندارد؛ Real فقط با برچسب BYBIT LIVE مجاز است.</li>
+            <li>اتصال مستقیم LBank/Bitunix داخل Browser نیست؛ Adapter و امضای API باید روی Backend امن تو باشد.</li>
+            <li>API Key فقط دسترسی Trade داشته باشد و Withdraw خاموش باشد.</li>
+            <li>Kill Switch ارسال‌های بعدی را متوقف می‌کند؛ Backend باید سمت خودش هم Kill Switch و سقف ریسک داشته باشد.</li>
+            <li>مسیر داخلی <code>/api/lbank/order</code> در این محیط فقط <b>DRY_RUN_ONLY</b> است و سفارش صرافی ارسال نمی‌کند.</li>
+          </ul>
+        </div>
+        <div class="toolbar wrap">
+          <label class="switch-row danger-text"><input id="realAutoToggle" type="checkbox" /> فعال‌سازی ارسال واقعی</label>
+          <input id="confirmText" placeholder="برای فعال‌سازی بنویس: I ACCEPT RISK" />
+        </div>
+        <h2>سیگنال‌های ارسال‌شده/ردشده واقعی</h2>
+        <div class="table-wrap"><table><thead><tr><th>زمان</th><th>نماد</th><th>سمت</th><th>وضعیت</th><th>پیام</th></tr></thead><tbody id="realOrders"></tbody></table></div>
+      </section>
+
+      <section id="settings" class="panel">
+        <form id="settingsForm" class="settings-grid">
+          <fieldset>
+            <legend>منبع بازار — Bybit V5</legend>
+            <label>حالت دیتا<select name="dataMode"><option value="live">BYBIT LIVE — بدون fallback ساختگی</option><option value="mock-server">Mock Server — فقط تست UI/استراتژی</option><option value="mock-local">Mock Local — فقط تست UI/استراتژی</option></select></label>
+            <label>دسته فیوچرز<select name="bybitCategory"><option value="linear">linear / USDT Perpetual</option><option value="inverse">inverse</option></select></label>
+            <label>Base URL پروکسی/Bybit<input name="dataBaseUrl" /></label>
+            <label>Base URL Mock صریح<input name="mockBaseUrl" /></label>
+            <label>مسیر ticker<input name="tickerPath" /></label>
+            <label>مسیر kline<input name="klinePath" /></label>
+            <label>نمادها، با کاما<textarea name="symbols" rows="4"></textarea></label>
+            <label>مپ نماد برای مقصد، JSON<textarea name="symbolMap" rows="4"></textarea></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Momentum / Breakout</legend>
+            <label>پروفایل ریسک<select name="riskProfile"><option value="low">کم — محافظه‌کار</option><option value="medium">متوسط — متعادل</option><option value="high">زیاد — تهاجمی</option></select></label>
+            <p class="muted small-note">با تغییر پروفایل، پارامترهای فیلتر سیگنال، مارجین، اهرم، حد ضرر روزانه و تعداد پوزیشن‌ها اعمال می‌شود؛ بعداً قابل ویرایش دستی است.</p>
+            <label>تایم‌فریم کندل<select name="timeframe"><option value="1">1m</option><option value="3">3m</option><option value="5">5m</option><option value="15">15m</option><option value="30">30m</option><option value="60">1h</option></select></label>
+            <label>فقط کندل بسته‌شده؟<select name="useClosedCandle"><option value="true">بله — validation محافظه‌کارانه</option><option value="false">خیر — شامل کندل در حال تشکیل</option></select></label>
+            <label>حداقل امتیاز سیگنال<input name="minScore" type="number" step="1" min="1" max="100" /></label>
+            <label>حداقل حرکت قیمت %<input name="minMovePct" type="number" step="0.01" /></label>
+            <label>حداقل جهش حجم x<input name="volumeSpikeX" type="number" step="0.1" /></label>
+            <label>ATR Stop ضریب<input name="atrStopMult" type="number" step="0.1" /></label>
+            <label>Risk/Reward TP<input name="takeProfitR" type="number" step="0.1" /></label>
+            <label>Cooldown هر نماد، ثانیه<input name="cooldownSec" type="number" step="1" /></label>
+            <label>حداکثر زمان نگهداری، دقیقه<input name="maxHoldMinutes" type="number" step="1" min="0" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>ریسک و کارمزد Paper</legend>
+            <label>سرمایه مجازی USDT<input name="paperInitialEquity" type="number" step="1" /></label>
+            <label>مارجین هر معامله USDT<input name="orderMargin" type="number" step="1" /></label>
+            <label>اهرم<input name="leverage" type="number" step="1" min="1" max="125" /></label>
+            <label>کارمزد Taker ورود %<input name="feeOpenPct" type="number" step="0.001" /></label>
+            <label>کارمزد Taker خروج %<input name="feeClosePct" type="number" step="0.001" /></label>
+            <label>اسلیپیج تخمینی %<input name="slippagePct" type="number" step="0.001" /></label>
+            <label>حد ضرر روزانه %<input name="dailyLossLimitPct" type="number" step="0.1" /></label>
+            <label>حداکثر پوزیشن همزمان<input name="maxOpenPositions" type="number" step="1" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>اتوماسیون، سرور ابری و حساب‌ها</legend>
+            <label>آدرس سرور ابری سیگنال (PythonAnywhere / Server URL):<input name="cloudServerUrl" placeholder="https://your_username.pythonanywhere.com" /></label>
+            <label>شناسه حساب فعال<select name="activeAccount"><option value="hadi">حساب داداش هادی</option><option value="son">حساب آقا پسر</option></select></label>
+            <label>فاصله اسکن، ثانیه<input name="scanIntervalSec" type="number" step="1" min="3" /></label>
+            <label>Paper Auto پیش‌فرض<select name="paperAutoDefault"><option value="true">ON — فقط مجازی</option><option value="false">OFF</option></select></label>
+            <label>مقصد Real از طریق Backend<select name="realVenue"><option value="lbank-futures">LBank Futures</option><option value="bitunix-futures">Bitunix Futures</option><option value="bybit-futures">Bybit Futures</option></select></label>
+            <label>Webhook امن اتوترید واقعی<input name="realWebhookUrl" placeholder="https://your-secure-backend/order" /></label>
+            <label>کلید اختیاری Webhook Header<input name="webhookToken" placeholder="ترجیحاً در محیط امن Backend" /></label>
+          </fieldset>
+
+          <fieldset style="grid-column: 1 / -1; background: rgba(30, 41, 59, 0.5); border: 1px solid #38bdf8;">
+            <legend style="color:#38bdf8; font-weight:bold;">🧪 فرمول‌ساز داینامیک و سفارشی (Custom Rule Sandbox)</legend>
+            <p class="muted small-note" style="margin-bottom:8px;">
+              در این کادر می‌توانی با کد جاوااسکریپت شرط‌های اختصاصی خودت را بنویسی. اگر خالی باشد، استراتژی استاندارد کار می‌کند.<br>
+              <strong>متغیرهای در دسترس:</strong> <code>price, movePct, oneCandlePct, volX, atr, atrPct, rsi, emaFast, emaSlow, candles, symbol</code>
+            </p>
+            <label>کد فرمول شرطی (JavaScript Sandbox):
+              <textarea name="customFormula" rows="4" style="font-family:monospace; direction:ltr; text-align:left;" placeholder="// مثال فرمول اختصاصی داداش هادی:&#10;if (rsi < 35 &amp;&amp; movePct > 0.2 &amp;&amp; volX > 1.4) {&#10;  return { side: 'LONG', score: 95, why: 'کف RSI + شکست با حجم سنگین' };&#10;}&#10;if (rsi > 68 &amp;&amp; movePct < -0.2) {&#10;  return { side: 'SHORT', score: 90, why: 'سقف اشباع خرید RSI' };&#10;}"></textarea>
+            </label>
+          </fieldset>
+
+          <div class="settings-actions">
+            <button type="submit">ذخیره Settings و اسکن</button>
+            <button id="exportSettingsBtn" type="button" class="ghost">Export JSON</button>
+            <button id="importSettingsBtn" type="button" class="ghost">Import JSON</button>
+            <button id="defaultsBtn" type="button" class="warning">پیش‌فرض‌های امن</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="logs" class="panel">
+        <div class="toolbar"><button id="clearLogsBtn" class="ghost">پاک‌کردن لاگ</button></div>
+        <pre id="logBox"></pre>
+      </section>
+    </main>
+  </div>
+
+  <template id="marketCardTpl">
+    <article class="market-card">
+      <div class="row between"><h3></h3><span class="price">--</span></div>
+      <div class="data-state">--</div>
+      <div class="row metrics">
+        <span>حرکت: <b class="move">--</b></span>
+        <span>حجم: <b class="vol">--</b></span>
+        <span>ATR: <b class="atr">--</b></span>
+        <span>RSI: <b class="rsi-tag">--</b></span>
+      </div>
+      <div class="signal-line"><span class="side flat">WAIT</span><meter min="0" max="100" value="0"></meter><b class="score">0%</b></div>
+      <p class="why muted"></p>
+      <div class="trade-plan"></div>
+      <button class="paperNow small">ورود مجازی</button>
+    </article>
+  </template>
+
+  <script type="module" src="src/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# لاگ‌های حجیم بازتولیدپذیر commit نمی‌شوند؛ گزارش‌های کوچک برای داشبورد می‌مانند
+results/signals_*.jsonl
+results/outcomes_*.jsonl

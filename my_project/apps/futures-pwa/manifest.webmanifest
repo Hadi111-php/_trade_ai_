@@ -1,0 +1,13 @@
+{
+  "name": "Bybit Futures Momentum Scalp Lab",
+  "short_name": "Bybit Scalp Lab",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "orientation": "portrait",
+  "description": "Live Bybit V5 futures market scanner with fee-aware paper trading",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}

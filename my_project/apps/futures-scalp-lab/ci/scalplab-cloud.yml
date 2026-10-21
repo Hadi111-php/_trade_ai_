@@ -1,0 +1,64 @@
+# اجرای خودکار Futures Scalp Lab روی ابرِ GitHub — بدون درگیر کردنٔ PC تو.
+# - synthetic همیشه اجرا می‌شود (بدون اینترنت، قطعی).
+# - binance سعی می‌شود؛ اگر شبکه/منطقه blok بود، workflow نمی‌شکند.
+# - jsonl های کامل به‌عنوان Artifact آپلود می‌شوند (۹۰ روز می‌مانند).
+# - فقط report_*.json/md به ریپو commit می‌شوند (حجیم نیست).
+# نکته: trigger زمانیِ (schedule) فقط روی برنچ پیش‌فرض فعال می‌شود؛
+#       روی برنچ کاری، از Actions → Run workflow (دستی) استفاده کن.
+name: scalplab
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"   # هر ۶ ساعت (فقط روی برنچ پیش‌فرض)
+
+permissions:
+  contents: write
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run synthetic (deterministic)
+        working-directory: apps/futures-scalp-lab
+        run: |
+          python -m scalplab --data synthetic --seeds 42 123 777 \
+            --candles 2000 --horizon 8 --run-id "gh-${{ github.run_id }}"
+
+      - name: Try binance REAL data (optional) -> writes real report
+        working-directory: apps/futures-scalp-lab
+        continue-on-error: true
+        run: |
+          python -m scalplab auto --data binance --symbol BTCUSDT --tf 1m \
+            --interval 5 --max-ticks 500 --light --trade \
+            --size 100 --leverage 3 --max-concurrent 4 --cb-losses 2 \
+            --run-id "ghb-${{ github.run_id }}"
+
+      - name: Upload full logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scalplab-results
+          path: apps/futures-scalp-lab/results/*.jsonl
+          retention-days: 90
+
+      - name: Refresh bundled report for the web dashboard
+        working-directory: apps/futures-scalp-lab
+        run: |
+          LATEST=$(ls -t results/report_*.json | head -1)
+          cp "$LATEST" ../dsa-command-dashboard/public/scalp-report.json
+
+      - name: Commit reports back to repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add apps/futures-scalp-lab/results/report_*.json \
+                  apps/futures-scalp-lab/results/report_*.md \
+                  apps/dsa-command-dashboard/public/scalp-report.json || true
+          git diff --cached --quiet || \
+            git commit -m "chore(scalplab): store run reports [ci]" && git push

@@ -1,0 +1,18 @@
+# واحد systemd برای اجرای 24/7 روی VPS (PAPER فقط)
+# نصب: sudo cp scalplab.service /etc/systemd/system/ && sudo systemctl enable --now scalplab
+[Unit]
+Description=Futures Scalp Lab AUTO (PAPER)
+After=network.target
+
+[Service]
+Type=simple
+# مسیر کلون ریپو روی VPS را بگذار
+WorkingDirectory=/opt/Main_Arena_conn/apps/futures-scalp-lab
+ExecStart=/usr/bin/python3 -m scalplab auto --data binance --symbol BTCUSDT --tf 1m --light --trade --size 100 --leverage 3 --max-concurrent 4 --cb-losses 2 --stop-pct 0.005 --trail-pct 0.003
+Restart=on-failure
+RestartSec=10
+# مصرف کم: هیچ GUI، فقط یک فرایند سبک
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
