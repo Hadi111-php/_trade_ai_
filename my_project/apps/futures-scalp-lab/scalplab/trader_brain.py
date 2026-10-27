@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 import os
@@ -89,6 +90,9 @@ class TraderConfig:
     range_breakout_bb_high: float = 0.90 # bb_pos > این → شکستِ بالا → لانگ
     range_breakout_bb_low: float = 0.10  # bb_pos < این → شکستِ پایین → شورت
     range_breakout_vol_min: float = 1.0  # حداقل ratioِ حجم برای تأیید شکست
+    # --- auto-regime: config خودکار طبق داده‌ی اخیر ---
+    auto_regime: bool = False            # سوییش vol_min روی داده recent + خودکار انتخاب
+    regime_months: int = 3               # چند ماه اخیر را برای سوییش بررسی کند
     trend_trade: bool = True             # tradeِ روند (pullback/Donchian)
     min_confidence: float = 0.5
     entry_mode: str = "pullback"        # pullback | breakout | both
@@ -735,6 +739,86 @@ def _label(cfg: TraderConfig) -> str:
     return "دادهٔ مصنوعی — فقط اعتبارسنجی مکانیزم؛ NOT real market"
 
 
+def auto_regime_sweep(cfg: TraderConfig, candles: list, params: dict,
+                      regime_params: dict) -> float:
+    """سوییش vol_min روی داده recent و انتخابِ برتشر config.
+
+    روی N ماهِ آخر candles، هر vol_minِ [2,3,4,5,6] را backtest می‌کند
+    و configِ highest PF (با min trades) را برمی‌گرداند.
+    """
+    from datetime import datetime, timezone, timedelta
+
+    n_months = max(cfg.regime_months, 1)
+    now_ts = candles[-1].ts if candles else 0
+    cutoff = now_ts - n_months * 30 * 24 * 60 * 60 * 1000  # تقریبیِ N ماه
+
+    recent = [c for c in candles if c.ts >= cutoff]
+    if len(recent) < 50:
+        print(f"⚠️  auto-regime: داده recent کمألا ({len(recent)} candles). از dataِ کامل استفاده می‌شود.")
+        recent = candles
+
+    print(f"🔍 Auto-Regime: بررسی {n_months} ماهِ اخیر "
+          f"({datetime.fromtimestamp(recent[0].ts/1000, tz=timezone.utc).strftime('%Y-%m-%d')}"
+          f" → {datetime.fromtimestamp(recent[-1].ts/1000, tz=timezone.utc).strftime('%Y-%m-%d')})")
+    print(f"   {len(recent)} candles")
+
+    # پیش‌محاسبهِ snapshots و regimes (وابسته به vol_min نیستند)
+    snaps = build_snapshot(recent, params)
+    regs = compute_regimes(recent, regime_params)
+
+    # میانگین حجم برای فیلتر ratio
+    avg_vol = (sum(c.v for c in recent) / len(recent)) if recent else 0.0
+
+    sweep_vols = [2.0, 3.0, 4.0, 5.0, 6.0]
+    print(f"\n   {'vol_min':>7} {'Trades':>7} {'W':>4} {'L':>4} {'WR%':>5} {'PF':>6} {'Exp':>6} {'PnL':>7}")
+    print("   " + "-" * 55)
+
+    results = []
+    for vol in sweep_vols:
+        # configِ موقت با vol_minِ متفاوت
+        tmp_cfg = copy.copy(cfg)
+        tmp_cfg.range_breakout_vol_min = vol
+        tmp_cfg.range_breakout = True
+        tmp_cfg.trend_trade = False
+        tmp_cfg.range_trade = False
+        tmp_cfg.vol_avg = avg_vol
+
+        brain = TraderBrain(tmp_cfg, None, None)  # بدون لاگ‌گذاری در سوییش
+        brain.cfg.vol_avg = avg_vol
+
+        n = len(recent)
+        for i in range(n):
+            snap = snaps[i]
+            reg = regs[i]
+            if snap is None or reg is None:
+                continue
+            candle = recent[i]
+            dec = brain.decide(recent, reg, snap, i, candle.ts)
+            if dec["action"] == "ENTER":
+                brain.open(dec, snap, reg, candle, i)
+            exits = brain.on_candle(candle.c, candle.ts, reg, snap, candle, i)
+
+        s = brain.summary()
+        results.append({"vol_min": vol, **s})
+        pf_cls = "🟢" if s["profit_factor"] >= 1.2 else ("🟡" if s["profit_factor"] >= 0.9 else "🔴")
+        print(f"   {vol:>7.1f} {s['trades']:>7} {s['wins']:>4} {s['losses']:>4} "
+              f"{s['win_rate']*100:>5.0f} {s['profit_factor']:>6.2f} "
+              f"{s['expectancy']:>+6.2f} {s['total_pnl']:>+7.2f} {pf_cls}")
+
+    # برتشر config: highest PF با min 3 trades
+    min_trades = 3
+    eligible = [r for r in results if r["trades"] >= min_trades]
+    if not eligible:
+        eligible = results  # falls back به همه
+    best = max(eligible, key=lambda r: r["profit_factor"])
+
+    print(f"\n   ✅ config منتخب: vol_min={best['vol_min']}, "
+          f"PF={best['profit_factor']}, trades={best['trades']}")
+    print(f"   → استفاده از configِ منتخب برای backtest اصلی\n")
+
+    return best["vol_min"]
+
+
 def run_trader(cfg: TraderConfig) -> int:
     if not cfg.run_id:
         cfg.run_id = time.strftime("%Y%m%d-%H%M%S")
@@ -746,6 +830,17 @@ def run_trader(cfg: TraderConfig) -> int:
     params = dict(DEFAULT_PARAMS)
     params["model_version"] = __version__
     regime_params = dict(cfg.regime_params)
+
+    # --- auto-regime: سوییش vol_min و انتخابِ configِ برتشر -----------------------------
+    if cfg.auto_regime and cfg.data_mode == "csv":
+        from .data import csv_candles
+        _all_candles = csv_candles(cfg)
+        if _all_candles:
+            best_vol = auto_regime_sweep(cfg, _all_candles, params, regime_params)
+            cfg.range_breakout_vol_min = best_vol
+            cfg.range_breakout = True
+            cfg.trend_trade = False
+            cfg.range_trade = False
 
     print("=" * 68)
     print("  🧠 TraderBrain — نقش معامله‌گر فیوچرز (PAPER)")
@@ -961,6 +1056,10 @@ def build_trader_parser() -> argparse.ArgumentParser:
     p.add_argument("--rb-bb-high", dest="range_breakout_bb_high", type=float, default=0.90)
     p.add_argument("--rb-bb-low", dest="range_breakout_bb_low", type=float, default=0.10)
     p.add_argument("--rb-vol-min", dest="range_breakout_vol_min", type=float, default=1.0)
+    p.add_argument("--auto-regime", dest="auto_regime", action="store_true",
+                   help="سوییش vol_min روی داده recent و خودکار انتخابِ برتشر config")
+    p.add_argument("--regime-months", dest="regime_months", type=int, default=3,
+                   help="تعداد ماه‌های اخیر برای سوییشِ auto-regime (default: 3)")
     p.add_argument("--no-trend", dest="trend_trade", action="store_false",
                    help="tradeِ روند را خاموش (فقط breakout)")
     p.add_argument("--min-conf", dest="min_confidence", type=float, default=0.5)
@@ -1017,6 +1116,8 @@ def load_trader_config(argv=None) -> TraderConfig:
         range_breakout_bb_high=args.range_breakout_bb_high,
         range_breakout_bb_low=args.range_breakout_bb_low,
         range_breakout_vol_min=args.range_breakout_vol_min,
+        auto_regime=args.auto_regime,
+        regime_months=args.regime_months,
         trend_trade=args.trend_trade,
         min_confidence=args.min_confidence,
     )
