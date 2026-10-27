@@ -76,6 +76,13 @@ class TraderConfig:
     cooldown_bars: int = 5
     regime_change_exit: bool = True
     range_trade: bool = False           # رنج: معامله محدۊد یا صبر
+    # تنظیماتِ رنج (range) — tradeِ محدۊد
+    range_stop_atr: float = 0.5         # استاپِ رنج: 0.5×ATR (تنگ‌تر)
+    range_rr: float = 1.2               # RRِ رنج: 1.2:1 (بهتر از 0.8)
+    range_bb_low: float = 0.15          # bb_pos ≤ این → خریدِ کفِ رنج
+    range_bb_high: float = 0.85         # bb_pos ≥ این → فروشِ سقفِ رنج
+    range_adx_max: float = 22.0         # ADXِ کمتر از این → رنج تأیید
+    range_bb_width_max: float = 0.08    # BB widthِ کمتر از این → رنج تنگ
     min_confidence: float = 0.5
     entry_mode: str = "pullback"        # pullback | breakout | both
 
@@ -193,12 +200,30 @@ class TraderBrain:
         trigger = ""
         if bias == 0:
             if self.cfg.range_trade:
-                if rsi <= 35:
-                    side, trigger = 1, "رنج: کف RSI"
-                elif rsi >= 65:
-                    side, trigger = -1, "رنج: سقف RSI"
+                bb_pos = regime.get("bb_pos", 0.5)
+                bb_width = regime.get("bb_width", 0.0)
+                adx_val = regime.get("adx", 0.0)
+                # تأییدِ رنج: ADX پایین + BB تنگ (confirmationِ robust)
+                range_confirmed = adx_val < self.cfg.range_adx_max and \
+                                  bb_width < self.cfg.range_bb_width_max
+                if range_confirmed:
+                    # ورود بر اساسِ positionِ BB (کفِ رنج / سقفِ رنج)
+                    if bb_pos <= self.cfg.range_bb_low:
+                        side, trigger = 1, "رنج تأیید: کف BB"
+                    elif bb_pos >= self.cfg.range_bb_high:
+                        side, trigger = -1, "رنج تأیید: سقف BB"
+                    else:
+                        return {"action": "WAIT", "symbol": sym,
+                                "reason": f"رنج تأیید: bb_pos={bb_pos:.2f} در وسطِ BB"}
                 else:
-                    return {"action": "WAIT", "symbol": sym, "reason": "رنج و RSI خنثی"}
+                    # fallback: RSI (رنج غير تأیید)
+                    if rsi <= 35:
+                        side, trigger = 1, "رنج: کف RSI"
+                    elif rsi >= 65:
+                        side, trigger = -1, "رنج: سقف RSI"
+                    else:
+                        return {"action": "WAIT", "symbol": sym,
+                                "reason": f"رنج غير تأیید (ADX={adx_val:.0f}, width={bb_width:.3f}) — RSI خنثی"}
             else:
                 return {"action": "WAIT", "symbol": sym,
                         "reason": "رنج: با روند موافق نیست — صبر"}
@@ -231,16 +256,23 @@ class TraderBrain:
                         "reason": f"فیلتر حجم: ratio={vol_ratio:.2f} در محدودهِ وسط (ambiguous)"}
 
         # سطح‌های ریسک (ورود با slippage: فیل شده قیمت واقعی)
-        stop_dist = max(atr_abs * self.cfg.stop_atr_mult, price * 0.0012)
+        # رنجِ tradeها: stopِ تنگ‌تر + RRِ کوچک‌تر
+        is_range = "رنج" in trigger
+        if is_range:
+            stop_dist = max(atr_abs * self.cfg.range_stop_atr, price * 0.0008)
+            take_rr = self.cfg.range_rr
+        else:
+            stop_dist = max(atr_abs * self.cfg.stop_atr_mult, price * 0.0012)
+            take_rr = self.cfg.take_profit_rr
         slip = self.cfg.slippage_pct / 100.0
         if side == 1:
             entry = price * (1 + slip)          # خرید: پرکردن بدترِ قیمت
             stop = entry - stop_dist
-            take = entry + stop_dist * self.cfg.take_profit_rr
+            take = entry + stop_dist * take_rr
         else:
             entry = price * (1 - slip)          # فروش: پرکردن بدترِ قیمت
             stop = entry + stop_dist
-            take = entry - stop_dist * self.cfg.take_profit_rr
+            take = entry - stop_dist * take_rr
 
         # اندازه‌ی پوزیشن بر اساس ریسک (1% موجودی) + سقف اهرم
         if self.cfg.fixed_risk > 0:
@@ -370,6 +402,17 @@ class TraderBrain:
 
             in_profit = (price - p.entry) * p.direction > 0
 
+            # رنجِ trade: اگر قیمت از BBs بیرون بره (رنج شکسته) — خروجِ زودی
+            if "رنج" in (p.reason or ""):
+                bb_pos = (regime or {}).get("bb_pos")
+                if bb_pos is not None:
+                    if p.direction == 1 and bb_pos > 0.90:
+                        to_close.append((p, "range_break_up", price))
+                        continue
+                    if p.direction == -1 and bb_pos < 0.10:
+                        to_close.append((p, "range_break_down", price))
+                        continue
+
             # فیلتر حجم برای خروجِ discretionary (take_profit) — stopِ مکمل است (exitأ ممكن نیست)
             vol_ok = True
             if self.cfg.vol_exit_filter and self.cfg.vol_avg > 0:
@@ -380,7 +423,7 @@ class TraderBrain:
             # legacy: خروج در قیمتِ close (نه stop/take)
             exit_px = price if self.cfg.legacy_exit_close else None
             if p.direction == 1:
-                if self.cfg.trail_enabled and p.trail_pct > 0:
+                if self.cfg.trail_enabled and p.trail_pct > 0 and "رنج" not in (p.reason or ""):
                     profit_pct = (price - p.entry) / p.entry
                     if profit_pct >= self.cfg.trail_start_profit_pct:
                         p.trail_active = True
@@ -395,7 +438,7 @@ class TraderBrain:
                 elif price >= p.take and vol_ok:
                     to_close.append((p, "take_profit", exit_px if exit_px is not None else p.take))
             else:
-                if self.cfg.trail_enabled and p.trail_pct > 0:
+                if self.cfg.trail_enabled and p.trail_pct > 0 and "رنج" not in (p.reason or ""):
                     profit_pct = (p.entry - price) / p.entry
                     if profit_pct >= self.cfg.trail_start_profit_pct:
                         p.trail_active = True
@@ -857,6 +900,12 @@ def build_trader_parser() -> argparse.ArgumentParser:
     p.add_argument("--cb", dest="cb_losses", type=int, default=2)
     p.add_argument("--entry-mode", choices=["pullback", "breakout", "both"], default="pullback")
     p.add_argument("--range-trade", action="store_true")
+    p.add_argument("--range-stop", dest="range_stop_atr", type=float, default=0.5)
+    p.add_argument("--range-rr", dest="range_rr", type=float, default=1.2)
+    p.add_argument("--range-bb-low", dest="range_bb_low", type=float, default=0.15)
+    p.add_argument("--range-bb-high", dest="range_bb_high", type=float, default=0.85)
+    p.add_argument("--range-adx-max", dest="range_adx_max", type=float, default=22.0)
+    p.add_argument("--range-bb-width-max", dest="range_bb_width_max", type=float, default=0.08)
     p.add_argument("--min-conf", dest="min_confidence", type=float, default=0.5)
     p.add_argument("--live", action="store_true", help="عمداً غیرفعال؛ LIVE پیاده‌سازی نشده")
     return p
@@ -901,6 +950,12 @@ def load_trader_config(argv=None) -> TraderConfig:
         cb_losses=args.cb_losses,
         entry_mode=args.entry_mode,
         range_trade=args.range_trade,
+        range_stop_atr=args.range_stop_atr,
+        range_rr=args.range_rr,
+        range_bb_low=args.range_bb_low,
+        range_bb_high=args.range_bb_high,
+        range_adx_max=args.range_adx_max,
+        range_bb_width_max=args.range_bb_width_max,
         min_confidence=args.min_confidence,
     )
     if args.forever:
