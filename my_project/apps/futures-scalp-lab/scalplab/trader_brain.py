@@ -1132,6 +1132,10 @@ def load_trader_config(argv=None) -> TraderConfig:
         cfg.entry_mode = "both"
         cfg.range_trade = False
         cfg.daily_loss_limit_pct = 10.0
+        # --- pedidi trailing: سود الکی نادیده گرفته نمی‌شود ---
+        # trailing زود فعال می‌شود (سود защитыགཅོད་) اما فاصله عریض است (سود کامل می‌ره TP)
+        cfg.trail_start_profit_pct = 0.015   # 1.5% سود قبل از trailing
+        cfg.trail_atr_mult = 3.0             # 3×ATR فاصله (عریض — winners می‌تونن بدوعن)
     elif args.preset == "baseline":
         # CONFIGِ قدیم: tradeِ روند فقط (بدون breakoutِ رنج)
         cfg.range_breakout = False
