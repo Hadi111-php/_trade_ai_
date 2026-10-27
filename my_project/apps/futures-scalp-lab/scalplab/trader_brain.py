@@ -947,6 +947,8 @@ def build_trader_parser() -> argparse.ArgumentParser:
     p.add_argument("--daily-loss", dest="daily_loss_limit_pct", type=float, default=3.0)
     p.add_argument("--cb", dest="cb_losses", type=int, default=2)
     p.add_argument("--entry-mode", choices=["pullback", "breakout", "both"], default="pullback")
+    p.add_argument("--preset", choices=["optimal", "baseline", "custom"], default="custom",
+                   help="optimal: range breakout vol=4.0 + no trend | baseline: old config")
     p.add_argument("--range-trade", action="store_true")
     p.add_argument("--range-stop", dest="range_stop_atr", type=float, default=0.5)
     p.add_argument("--range-rr", dest="range_rr", type=float, default=1.2)
@@ -1018,6 +1020,23 @@ def load_trader_config(argv=None) -> TraderConfig:
         trend_trade=args.trend_trade,
         min_confidence=args.min_confidence,
     )
+    # --- presetها -------------------------------------------------------------
+    if args.preset == "optimal":
+        # CONFIGِ OPTIMAL: range breakout با حجمِ بالا + tradeِ روند خاموش
+        cfg.range_breakout = True
+        cfg.range_breakout_vol_min = 4.0
+        cfg.range_breakout_bb_high = 0.90
+        cfg.range_breakout_bb_low = 0.10
+        cfg.trend_trade = False
+        cfg.entry_mode = "both"
+        cfg.range_trade = False
+        cfg.daily_loss_limit_pct = 10.0
+    elif args.preset == "baseline":
+        # CONFIGِ قدیم: tradeِ روند فقط (بدون breakoutِ رنج)
+        cfg.range_breakout = False
+        cfg.range_trade = False
+        cfg.trend_trade = True
+        cfg.entry_mode = "pullback"
     if args.forever:
         cfg.max_ticks = 10 ** 9
     if not cfg.run_id:
