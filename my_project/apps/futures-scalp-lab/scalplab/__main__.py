@@ -31,6 +31,11 @@ def main(argv=None):
         cfg = load_trader_config(argv)
         return run_trader(cfg)
 
+    if argv and argv[0] == "dashboard":
+        argv = argv[1:]
+        from .dashboard import main as dash_main
+        return dash_main(argv)
+
     cfg = load_config(argv)
     report = run_lab(cfg)
 
