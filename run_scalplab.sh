@@ -148,12 +148,55 @@ python3 -m scalplab trader \
     --rb-vol-min 4.0 2>&1 | tail -15
 echo ""
 
-# ۱۰. خلاصه
+# ۱۰. backtestِ auto-regime — config خودکار طبق داده recent
 echo "========================================="
-echo "  ۵. خلاصهِ نتایح"
+echo "  ۵. backtestِ Auto-Regime — config خودکار"
 echo "========================================="
 echo ""
-for f in results/trader_report_brk-btc-optimal.json results/trader_report_brk-eth-optimal.json results/trader_report_combo-btc-optimal.json; do
+echo "🔍 BTC — auto-regime (3 ماه اخیر):"
+python3 -m scalplab trader \
+    --data csv \
+    --csv data/btcusdt_1h_lastyear.csv \
+    --tf 60 \
+    --symbol BTCUSDT \
+    --run-id auto-btc \
+    --risk 1.0 \
+    --fixed-risk 10 \
+    --rr 2.0 \
+    --entry-mode both \
+    --equity 1000 \
+    --daily-loss 10 \
+    --range-breakout \
+    --no-trend \
+    --auto-regime \
+    --regime-months 3 2>&1 | tail -20
+echo ""
+
+echo "🔍 ETH — auto-regime (3 ماه اخیر):"
+python3 -m scalplab trader \
+    --data csv \
+    --csv data/ethusdt_1h_lastyear.csv \
+    --tf 60 \
+    --symbol ETHUSDT \
+    --run-id auto-eth \
+    --risk 1.0 \
+    --fixed-risk 10 \
+    --rr 2.0 \
+    --entry-mode both \
+    --equity 1000 \
+    --daily-loss 10 \
+    --range-breakout \
+    --no-trend \
+    --auto-regime \
+    --regime-months 3 2>&1 | tail -20
+echo ""
+
+# ۱۲. خلاصه
+echo "========================================="
+echo "  ۶. خلاصهِ نتایج"
+echo "========================================="
+echo ""
+for f in results/trader_report_brk-btc-optimal.json results/trader_report_brk-eth-optimal.json results/trader_report_combo-btc-optimal.json results/trader_report_auto-btc.json results/trader_report_auto-eth.json; do
     if [ -f "$f" ]; then
         name=$(basename "$f" .json | sed 's/trader_report_//')
         python3 -c "
