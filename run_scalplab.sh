@@ -161,12 +161,13 @@ import json
 try:
     with open('$f') as fh:
         d = json.load(fh)
-    trades = d.get('trades',[])
-    pnl = sum(t.get('pnl',0) for t in trades)
-    wins = sum(1 for t in trades if t.get('pnl',0) > 0)
-    n = len(trades)
+    s = d.get('summary',{})
+    n = s.get('trades',0)
+    wins = s.get('wins',0)
+    pnl = s.get('total_pnl',0)
+    pf = s.get('profit_factor',0)
     wr = (wins/n*100) if n > 0 else 0
-    print(f'  $name: n={n} W={wins} WR={wr:.0f}% PnL={pnl:.2f}')
+    print(f'  $name: n={n} W={wins} WR={wr:.0f}% PnL={pnl:.2f} PF={pf:.3f}')
 except Exception as e:
     print(f'  $name: error: {e}')
 "
