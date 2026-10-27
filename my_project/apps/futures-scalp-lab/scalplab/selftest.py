@@ -91,6 +91,42 @@ def _test_engine() -> bool:
     return ok
 
 
+def _test_regimes() -> bool:
+    """تشخیص ۳ حالت روند روی داده مصنوعی، و اینکه تریدر با روند موافق معامله کند."""
+    from .regimes import compute_regimes
+    from .trader_brain import TraderBrain, TraderConfig
+    cfg = LabConfig(candles=2000)
+    candles = synthetic_candles(cfg, seed=5)
+    regs = compute_regimes(candles, {})
+    names = {r["regime"] for r in regs if r}
+    for want in ("uptrend", "downtrend", "sideways"):
+        if want not in names:
+            print(f"  FAIL regime: {want} پیدا نشد")
+            return False
+
+    # تریدر هرگز برخلاف روند معامله نمی‌کند
+    tc = TraderConfig(symbol="BTCUSDT", data_mode="synthetic")
+    brain = TraderBrain(tc)
+    from .runner import DEFAULT_PARAMS
+    from .indicators import build_snapshot
+    snaps = build_snapshot(candles, dict(DEFAULT_PARAMS))
+    bad = 0
+    for i, r in enumerate(regs):
+        if r is None or snaps[i] is None:
+            continue
+        d = brain.decide(candles, r, snaps[i], i, candles[i].ts)
+        if d["action"] == "ENTER":
+            bias = {"uptrend": 1, "downtrend": -1, "sideways": 0}[r["regime"]]
+            if bias == 0 and r["regime"] == "sideways" and not tc.range_trade:
+                continue  # رنج و صبر — انتظار HOLD/WAIT
+            if bias != 0 and d["direction"] != bias:
+                bad += 1
+    if bad:
+        print(f"  FAIL trader: {bad} معامله برخلاف روند")
+        return False
+    return True
+
+
 def run_selftest() -> int:
     ok1 = _test_causality()
     print("causality (no lookahead):", "PASS" if ok1 else "FAIL")
@@ -98,6 +134,8 @@ def run_selftest() -> int:
     print("random control sanity:", "PASS" if ok2 else "FAIL")
     ok3 = _test_engine()
     print("risk engine (max4/trail/stop/cb):", "PASS" if ok3 else "FAIL")
-    all_ok = ok1 and ok2 and ok3
+    ok4 = _test_regimes()
+    print("regimes + trader discipline:", "PASS" if ok4 else "FAIL")
+    all_ok = ok1 and ok2 and ok3 and ok4
     print("SELFTEST:", "PASS" if all_ok else "FAIL")
     return 0 if all_ok else 1
