@@ -4,3 +4,4 @@ __pycache__/
 # لاگ‌های حجیم بازتولیدپذیر commit نمی‌شوند؛ گزارش‌های کوچک برای داشبورد می‌مانند
 results/signals_*.jsonl
 results/outcomes_*.jsonl
+results/trader_trades_*.jsonl

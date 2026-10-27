@@ -25,6 +25,12 @@ def main(argv=None):
         run_sweep(cfg)
         return 0
 
+    if argv and argv[0] == "trader":
+        argv = argv[1:]
+        from .trader_brain import load_trader_config, run_trader
+        cfg = load_trader_config(argv)
+        return run_trader(cfg)
+
     cfg = load_config(argv)
     report = run_lab(cfg)
 

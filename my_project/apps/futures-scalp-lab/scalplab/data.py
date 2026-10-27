@@ -81,7 +81,10 @@ def synthetic_candles(cfg: LabConfig, seed: int) -> List[Candle]:
 
 
 def csv_candles(cfg: LabConfig) -> List[Candle]:
-    """فایل CSV با ستون‌های ts,open,high,low,close,volume (هدر اختیاری)."""
+    """فایل CSV با ستون‌های ts,open,high,low,close,volume (هدر اختیاری).
+
+    header‌های timestamp/time/vol نیز recognition می‌شوند.
+    """
     candles: List[Candle] = []
     with open(cfg.csv_path, newline="", encoding="utf-8") as f:
         rows = list(_csv.reader(f))
@@ -90,7 +93,11 @@ def csv_candles(cfg: LabConfig) -> List[Candle]:
     start = 0
     first = [c.strip().lower() for c in rows[0]]
     if any(h in ("ts", "timestamp", "open", "time") for h in first):
-        idx = {h: i for i, h in enumerate(first)}
+        idx: dict = {}
+        for i, h in enumerate(first):
+            key = "ts" if h in ("ts", "timestamp", "time") else ("volume" if h in ("vol", "volume") else h)
+            if key not in idx:
+                idx[key] = i
         start = 1
     else:
         idx = {"ts": 0, "open": 1, "high": 2, "low": 3, "close": 4, "volume": 5}
@@ -100,7 +107,7 @@ def csv_candles(cfg: LabConfig) -> List[Candle]:
         candles.append(Candle(
             int(float(r[idx["ts"]])), float(r[idx["open"]]), float(r[idx["high"]]),
             float(r[idx["low"]]), float(r[idx["close"]]),
-            float(r[idx.get("volume", 5)] if len(r) > 5 else 0.0)))
+            float(r[idx["volume"]] if "volume" in idx and len(r) > idx["volume"] else 0.0)))
     return candles
 
 
