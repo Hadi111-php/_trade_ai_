@@ -83,6 +83,13 @@ class TraderConfig:
     range_bb_high: float = 0.85         # bb_pos ≥ این → فروشِ سقفِ رنج
     range_adx_max: float = 22.0         # ADXِ کمتر از این → رنج تأیید
     range_bb_width_max: float = 0.08    # BB widthِ کمتر از این → رنج تنگ
+    # --- range breakout detection ---
+    # وقتی رنج شکسته می‌شود، در جهتِ جدید وارد می‌شویم (مخالفِ range trading)
+    range_breakout: bool = False          # فعال‌سازی رنجِ شکسته
+    range_breakout_bb_high: float = 0.90 # bb_pos > این → شکستِ بالا → لانگ
+    range_breakout_bb_low: float = 0.10  # bb_pos < این → شکستِ پایین → شورت
+    range_breakout_vol_min: float = 1.0  # حداقل ratioِ حجم برای تأیید شکست
+    trend_trade: bool = True             # tradeِ روند (pullback/Donchian)
     min_confidence: float = 0.5
     entry_mode: str = "pullback"        # pullback | breakout | both
 
@@ -199,35 +206,76 @@ class TraderBrain:
         side = 0
         trigger = ""
         if bias == 0:
-            if self.cfg.range_trade:
+            # --- range breakout detection ---
+            # وقتی رنج شکسته می‌شود، در جهتِ شکست وارد می‌شویم (مخالفِ range trading)
+            # trigger "breakout" — خطمِی "رنج" ندارد → stop/RRِ trend استفاده می‌شود
+            if self.cfg.range_breakout:
                 bb_pos = regime.get("bb_pos", 0.5)
-                bb_width = regime.get("bb_width", 0.0)
-                adx_val = regime.get("adx", 0.0)
-                # تأییدِ رنج: ADX پایین + BB تنگ (confirmationِ robust)
-                range_confirmed = adx_val < self.cfg.range_adx_max and \
-                                  bb_width < self.cfg.range_bb_width_max
-                if range_confirmed:
-                    # ورود بر اساسِ positionِ BB (کفِ رنج / سقفِ رنج)
-                    if bb_pos <= self.cfg.range_bb_low:
-                        side, trigger = 1, "رنج تأیید: کف BB"
-                    elif bb_pos >= self.cfg.range_bb_high:
-                        side, trigger = -1, "رنج تأیید: سقف BB"
-                    else:
-                        return {"action": "WAIT", "symbol": sym,
-                                "reason": f"رنج تأیید: bb_pos={bb_pos:.2f} در وسطِ BB"}
+                vol_ratio = candles[i].v / self.cfg.vol_avg if self.cfg.vol_avg > 0 else 1.0
+                if bb_pos >= self.cfg.range_breakout_bb_high and \
+                   vol_ratio >= self.cfg.range_breakout_vol_min:
+                    side, trigger = 1, "breakout: شکستِ بالا"
+                elif bb_pos <= self.cfg.range_breakout_bb_low and \
+                     vol_ratio >= self.cfg.range_breakout_vol_min:
+                    side, trigger = -1, "breakout: شکستِ پایین"
                 else:
-                    # fallback: RSI (رنج غير تأیید)
-                    if rsi <= 35:
-                        side, trigger = 1, "رنج: کف RSI"
-                    elif rsi >= 65:
-                        side, trigger = -1, "رنج: سقف RSI"
+                    # از range trading یا WAIT الگوبری بکنیم
+                    if self.cfg.range_trade:
+                        _bb_width = regime.get("bb_width", 0.0)
+                        _adx_val = regime.get("adx", 0.0)
+                        range_confirmed = _adx_val < self.cfg.range_adx_max and \
+                                          _bb_width < self.cfg.range_bb_width_max
+                        if range_confirmed:
+                            if bb_pos <= self.cfg.range_bb_low:
+                                side, trigger = 1, "رنج تأیید: کف BB"
+                            elif bb_pos >= self.cfg.range_bb_high:
+                                side, trigger = -1, "رنج تأیید: سقف BB"
+                            else:
+                                return {"action": "WAIT", "symbol": sym,
+                                        "reason": f"رنج تأیید: bb_pos={bb_pos:.2f} در وسطِ BB"}
+                        else:
+                            if rsi <= 35:
+                                side, trigger = 1, "رنج: کف RSI"
+                            elif rsi >= 65:
+                                side, trigger = -1, "رنج: سقف RSI"
+                            else:
+                                return {"action": "WAIT", "symbol": sym,
+                                        "reason": f"رنج غير تأیید (ADX={_adx_val:.0f}, width={_bb_width:.3f}) — RSI خنثی"}
                     else:
                         return {"action": "WAIT", "symbol": sym,
-                                "reason": f"رنج غير تأیید (ADX={adx_val:.0f}, width={bb_width:.3f}) — RSI خنثی"}
+                                "reason": "رنج: با روند موافق نیست — صبر"}
+                    # end of range_trade fallback
             else:
-                return {"action": "WAIT", "symbol": sym,
-                        "reason": "رنج: با روند موافق نیست — صبر"}
+                # range_breakout خاموش → range_trade یا WAIT
+                if self.cfg.range_trade:
+                    bb_pos = regime.get("bb_pos", 0.5)
+                    bb_width = regime.get("bb_width", 0.0)
+                    adx_val = regime.get("adx", 0.0)
+                    range_confirmed = adx_val < self.cfg.range_adx_max and \
+                                      bb_width < self.cfg.range_bb_width_max
+                    if range_confirmed:
+                        if bb_pos <= self.cfg.range_bb_low:
+                            side, trigger = 1, "رنج تأیید: کف BB"
+                        elif bb_pos >= self.cfg.range_bb_high:
+                            side, trigger = -1, "رنج تأیید: سقف BB"
+                        else:
+                            return {"action": "WAIT", "symbol": sym,
+                                    "reason": f"رنج تأیید: bb_pos={bb_pos:.2f} در وسطِ BB"}
+                    else:
+                        if rsi <= 35:
+                            side, trigger = 1, "رنج: کف RSI"
+                        elif rsi >= 65:
+                            side, trigger = -1, "رنج: سقف RSI"
+                        else:
+                            return {"action": "WAIT", "symbol": sym,
+                                    "reason": f"رنج غير تأیید (ADX={adx_val:.0f}, width={bb_width:.3f}) — RSI خنثی"}
+                else:
+                    return {"action": "WAIT", "symbol": sym,
+                            "reason": "رنج: با روند موافق نیست — صبر"}
         else:
+            if not self.cfg.trend_trade:
+                return {"action": "WAIT", "symbol": sym,
+                        "reason": f"روند {regime['regime']}: tradeِ روند خاموش — صبر"}
             want = 1 if bias == 1 else -1
             entry_mode = self.cfg.entry_mode
             pullback = entry_mode in ("pullback", "both")
@@ -906,6 +954,13 @@ def build_trader_parser() -> argparse.ArgumentParser:
     p.add_argument("--range-bb-high", dest="range_bb_high", type=float, default=0.85)
     p.add_argument("--range-adx-max", dest="range_adx_max", type=float, default=22.0)
     p.add_argument("--range-bb-width-max", dest="range_bb_width_max", type=float, default=0.08)
+    p.add_argument("--range-breakout", action="store_true",
+                   help="رنج شکسته: در جهتِ شکست وارد شود")
+    p.add_argument("--rb-bb-high", dest="range_breakout_bb_high", type=float, default=0.90)
+    p.add_argument("--rb-bb-low", dest="range_breakout_bb_low", type=float, default=0.10)
+    p.add_argument("--rb-vol-min", dest="range_breakout_vol_min", type=float, default=1.0)
+    p.add_argument("--no-trend", dest="trend_trade", action="store_false",
+                   help="tradeِ روند را خاموش (فقط breakout)")
     p.add_argument("--min-conf", dest="min_confidence", type=float, default=0.5)
     p.add_argument("--live", action="store_true", help="عمداً غیرفعال؛ LIVE پیاده‌سازی نشده")
     return p
@@ -956,6 +1011,11 @@ def load_trader_config(argv=None) -> TraderConfig:
         range_bb_high=args.range_bb_high,
         range_adx_max=args.range_adx_max,
         range_bb_width_max=args.range_bb_width_max,
+        range_breakout=args.range_breakout,
+        range_breakout_bb_high=args.range_breakout_bb_high,
+        range_breakout_bb_low=args.range_breakout_bb_low,
+        range_breakout_vol_min=args.range_breakout_vol_min,
+        trend_trade=args.trend_trade,
         min_confidence=args.min_confidence,
     )
     if args.forever:
