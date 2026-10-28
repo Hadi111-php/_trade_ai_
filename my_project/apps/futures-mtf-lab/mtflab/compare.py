@@ -449,6 +449,10 @@ def build_payload(csv_path: str, symbol: str, out_dir: str, stamp: str,
     log("🧩 اجرای سناریوی جدید — پیش‌فرض خودش …")
     new_native = run_new(csv_path, symbol, "native", out_dir, f"cmp-new-native-{stamp}", tf=tf)
 
+    log("✨ اجرای نسخهٔ اصلاح‌شدهٔ ورود (پریست entry_quality) — مدل هزینهٔ یکسان …")
+    new_eq = run_new(csv_path, symbol, "normalized", out_dir, f"cmp-new-eq-{stamp}",
+                     tf=tf, extra=["--preset", "entry_quality"])
+
     log("🔀 مقایسهٔ نسخه‌های A/B/C سناریوی جدید …")
     versions = {}
     best_v, best_exp = None, -1e18
@@ -461,6 +465,24 @@ def build_payload(csv_path: str, symbol: str, out_dir: str, stamp: str,
 
     diff = bootstrap_diff([t["pnl"] for t in new_norm["trades"]],
                           [t["pnl"] for t in old_norm["trades"]])
+    diff_eq = bootstrap_diff([t["pnl"] for t in new_eq["trades"]],
+                             [t["pnl"] for t in new_norm["trades"]])
+    diff_eq_old = bootstrap_diff([t["pnl"] for t in new_eq["trades"]],
+                                 [t["pnl"] for t in old_norm["trades"]])
+
+    # ماتریس «ورود × خروج» برای تب آزمایشگاه خروج (کوتاه، فقط برای داشبورد)
+    log("🧬 ماتریس ورود × خروج برای داشبورد …")
+    try:
+        from .diagnose import run_policy_matrix
+        from .data import load_layers
+        cfg_diag = new_eq.get("_cfg")
+        layers_diag, _meta = load_layers(cfg_diag)
+        matrix = run_policy_matrix(cfg_diag, layers_diag,
+                                   policy_ids=["base", "no_trail", "trail_0.5R",
+                                               "trail_tight", "tp6", "be_1R"])
+    except Exception as e:                                  # noqa: BLE001
+        matrix = {"error": str(e)}
+        log(f"   ⚠️ ماتریس خروج ساخته نشد: {e}")
 
     # تست‌های واحد برای تب سلامت (سریع: ~۰.۳ ثانیه)
     log("🧪 اجرای تست‌های واحد برای تب سلامت …")
@@ -498,6 +520,20 @@ def build_payload(csv_path: str, symbol: str, out_dir: str, stamp: str,
                                "منبع: <span class='mono'>apps/futures-scalp-lab</span>",
                 "runs": {"normalized": old_norm, "native": old_native},
             },
+            "new_eq": {
+                "id": "new_eq",
+                "name": "✨ سناریوی جدید — ورودِ اصلاح‌شده (پریست entry_quality)",
+                "short_name": "جدید (ورود اصلاح‌شده)",
+                "subtitle": f"{tf[0]}/{tf[1]}/{tf[2]} · فقط pullback + ردِ کندلِ اوج · "
+                            f"{new_eq['summary'].get('trades', 0)} معامله",
+                "description": "همان سناریوی MTF، فقط با دو تغییر در سمت ورود: "
+                               "(۱) حذف ورودِ شکست (breakout) و (۲) وتوی کندلِ اوج "
+                               "(دامنه > ۱×ATR). این پارامترها از تحلیل همین داده "
+                               "انتخاب شده‌اند → <b>ریسک overfit</b> دارند و باید در "
+                               "TRAIN/OOS و دادهٔ بیشتر تأیید شوند.",
+                "runs": {"normalized": new_eq},
+                "caution": True,
+            },
             "new": {
                 "id": "new",
                 "name": "🧩 سناریوی جدید — MTF (چندتایم‌فریمی)",
@@ -513,6 +549,16 @@ def build_payload(csv_path: str, symbol: str, out_dir: str, stamp: str,
         },
         "validation": res_new.get("validation"),
         "best_version": best_v,
+        "entry_quality": {
+            "bootstrap_vs_new": diff_eq,
+            "bootstrap_vs_old": diff_eq_old,
+            "delta_expectancy": round(new_eq["summary"].get("expectancy", 0)
+                                      - new_norm["summary"].get("expectancy", 0), 4),
+            "preset": "entry_quality",
+            "preset_overrides": {"trigger_entry_modes": ["pullback"],
+                                 "trigger_max_range_atr": 1.0},
+        },
+        "exit_matrix": matrix,
         "health_new": health_new,
         "health": {
             "tests": tests,
@@ -530,6 +576,7 @@ def build_payload(csv_path: str, symbol: str, out_dir: str, stamp: str,
         },
     }
     payload["verdict"] = _verdict(old_norm, new_norm, diff, old_native, new_native)
+    payload["verdict_eq"] = _verdict(old_norm, new_eq, diff_eq_old, old_native, new_eq)
     payload["bootstrap"] = diff
 
     # پاک‌سازی اشیای سنگین (موتور/زمینه/کندل‌ها) — فقط دادهٔ لازم برای داشبورد
@@ -590,14 +637,22 @@ def compare_command(argv: Optional[List[str]] = None) -> int:
 
     so = payload["scenarios"]["old"]["runs"]["normalized"]["summary"]
     sn = payload["scenarios"]["new"]["runs"]["normalized"]["summary"]
+    sq = payload["scenarios"]["new_eq"]["runs"]["normalized"]["summary"]
     print("\n" + "=" * 72)
     print("📊 مقایسهٔ عادلانه (هزینه/ریسک یکسان)")
     print(f"  قدیم : n={so['trades']:>4}  PF={so.get('profit_factor')}  "
           f"exp={so['expectancy']:+.3f}$  ret={so.get('return_pct'):+.2f}%")
     print(f"  جدید : n={sn['trades']:>4}  PF={sn.get('profit_factor')}  "
           f"exp={sn['expectancy']:+.3f}$  ret={sn.get('return_pct'):+.2f}%")
+    print(f"  اصلاح : n={sq['trades']:>4}  PF={sq.get('profit_factor')}  "
+          f"exp={sq['expectancy']:+.3f}$  ret={sq.get('return_pct'):+.2f}%  "
+          f"(پریست entry_quality)")
     print(f"  برنده: {payload['verdict']['winner']}  ({payload['verdict']['new_wins']} "
           f"در برابر {payload['verdict']['old_wins']} معیار)")
+    dq = payload.get("entry_quality", {}).get("bootstrap_vs_new", {})
+    if dq.get("ok"):
+        print(f"  اصلاح ورود در برابر جدید: {dq['observed_diff']:+.3f}$ "
+              f"CI95 [{dq['ci95'][0]:+.3f}, {dq['ci95'][1]:+.3f}] → {dq['note']}")
     b = payload.get("bootstrap", {})
     if b.get("ok"):
         print(f"  معناداری آماری: {b['note']}")

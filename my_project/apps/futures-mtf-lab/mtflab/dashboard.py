@@ -307,10 +307,12 @@ def _run_card(run: dict) -> str:
 def tab_compare(payload: dict) -> str:
     old = payload["scenarios"]["old"]
     new = payload["scenarios"]["new"]
+    new_eq = payload["scenarios"].get("new_eq")
     cm = payload.get("cost_models", {})
+    pairs = [("old", old), ("new", new)] + ([("new_eq", new_eq)] if new_eq else [])
     rows = []
     for cm_key, cm_label in (("normalized", "یکسان‌سازی‌شده (عادلانه)"), ("native", "پیش‌فرض خودش")):
-        for sc, scn in (("old", old), ("new", new)):
+        for sc, scn in pairs:
             r = scn["runs"].get(cm_key)
             if not r:
                 continue
@@ -336,8 +338,11 @@ def tab_compare(payload: dict) -> str:
                     "Expectancy$", "بازده%", "MaxDD%", "کارمزد$"], rows))
 
     # KPI دو ستونه
-    h.append('<div class="grid2" style="margin-top:12px">')
-    for scn, title, color in ((old, "🧠 سناریوی قدیم", "#b98bff"), (new, "🧩 سناریوی جدید", "#3ddc97")):
+    h.append('<div class="grid3" style="margin-top:12px">')
+    kpi_set = [(old, "🧠 سناریوی قدیم", "#b98bff"), (new, "🧩 سناریوی جدید", "#3ddc97")]
+    if new_eq:
+        kpi_set.append((new_eq, "✨ ورودِ اصلاح‌شده", "#ffcf5c"))
+    for scn, title, color in kpi_set:
         r = scn["runs"].get("normalized") or {}
         h.append(f'<div><h2 style="margin-top:0">{title} — {esc(scn["subtitle"])}</h2>'
                  f'{_run_card(r)}</div>')
@@ -345,7 +350,10 @@ def tab_compare(payload: dict) -> str:
 
     # منحنی موجودی هم‌پوشان
     series = []
-    for scn, color in ((old, "#b98bff"), (new, "#3ddc97")):
+    line_set = [(old, "#b98bff"), (new, "#3ddc97")]
+    if new_eq:
+        line_set.append((new_eq, "#ffcf5c"))
+    for scn, color in line_set:
         r = scn["runs"].get("normalized")
         if r and r.get("equity_curve"):
             pts = [(p["ts"], p["equity"] - payload.get("initial_equity", 1000.0))
@@ -365,6 +373,23 @@ def tab_compare(payload: dict) -> str:
     if v.get("detail_rows"):
         h.append(table(["معیار", "سناریوی قدیم", "سناریوی جدید", "برنده"],
                        v["detail_rows"]))
+
+    ve = payload.get("verdict_eq")
+    if ve and new_eq:
+        eq = payload.get("entry_quality", {})
+        b = eq.get("bootstrap_vs_new") or {}
+        tone2 = "ok" if ve.get("winner") == "new" else ("warn" if ve.get("winner") == "tie" else "bad")
+        h.append('<h2>حکم نسخهٔ اصلاح‌شدهٔ ورود</h2>')
+        h.append(f'<div class="note {tone2}">{ve.get("text", "")}</div>')
+        if b.get("ok"):
+            h.append(f'<div class="note">بوت‌استرپ «ورود اصلاح‌شده» در برابر «جدید پایه»: '
+                     f'<b>{fnum(b.get("observed_diff"), 2, True)}$</b> · CI95 '
+                     f'[{fnum(b["ci95"][0], 2, True)}, {fnum(b["ci95"][1], 2, True)}] → '
+                     f'<b>{esc(b.get("note", ""))}</b><br>'
+                     f'⚠️ نمونهٔ OOS کوچک است؛ این نسخه «فرضیهٔ آزمون‌شده» است، نه دستور معامله.</div>')
+        if ve.get("detail_rows"):
+            h.append(table(["معیار", "سناریوی قدیم", "ورود اصلاح‌شده", "برنده"],
+                           ve["detail_rows"]))
     return "".join(h)
 
 
@@ -511,6 +536,109 @@ def tab_new(payload: dict) -> str:
             f'پوشش بایاس: <b>{fpct((cov.get("bias_coverage") or 0)*100, 2, False)}</b></div>')
     return _scenario_tab(scn, payload, "".join(h + extra))
 
+
+
+# ----------------------------------------------------------------------------
+# تب جدید — سناریوی ورودِ اصلاح‌شده
+# ----------------------------------------------------------------------------
+def tab_entry_quality(payload: dict) -> str:
+    scn = payload["scenarios"].get("new_eq")
+    if not scn:
+        return '<div class="note warn">این اجرا نسخهٔ ورودِ اصلاح‌شده را ندارد.</div>'
+    eq = payload.get("entry_quality", {}) or {}
+    ov = eq.get("preset_overrides", {}) or {}
+    b1 = eq.get("bootstrap_vs_new") or {}
+    b2 = eq.get("bootstrap_vs_old") or {}
+
+    h = ['<h2>سناریوی ورودِ اصلاح‌شده — چه چیزی عوض شد و چرا؟</h2>',
+         '<div class="note warn"><b>هشدار روش‌شناسی:</b> این دو پارامتر از تحلیل '
+         '<i>همین داده</i> انتخاب شده‌اند (گزارش <span class="mono">diagnosis_report.md</span>). '
+         'یعنی بخشی از بهبود، قطعاً overfit است. معیار پذیرش ما: مثبت‌بودن در TRAIN و OOS '
+         'به‌طور هم‌زمان + فلات پارامتری — نه بهترین عدد روی کل داده.</div>']
+    h.append(table(["پارامتر", "مقدار", "دلیل داده‌ای"],
+                   [["<span class='mono'>trigger_entry_modes</span>",
+                     esc(str(ov.get("trigger_entry_modes"))),
+                     "ورودِ breakout در ۶۷ معامله expectancy −۲.۱۲$ داشت؛ pullback −۰.۸۶$"],
+                    ["<span class='mono'>trigger_max_range_atr</span>",
+                     esc(str(ov.get("trigger_max_range_atr"))),
+                     "ردِ کندلِ اوج (دامنه > ۱×ATR): ورود بعد از حرکتِ پرشتاب، بدترین زمان‌بندی بود"]]))
+
+    if b1.get("ok"):
+        h.append(f'<div class="note">در برابر «جدید پایه»: '
+                 f'<b>{fnum(b1.get("observed_diff"), 2, True)}$</b> · CI95 '
+                 f'[{fnum(b1["ci95"][0], 2, True)}, {fnum(b1["ci95"][1], 2, True)}] → '
+                 f'<b>{esc(b1.get("note", ""))}</b></div>')
+    if b2.get("ok"):
+        h.append(f'<div class="note">در برابر «سناریوی قدیم»: '
+                 f'<b>{fnum(b2.get("observed_diff"), 2, True)}$</b> · CI95 '
+                 f'[{fnum(b2["ci95"][0], 2, True)}, {fnum(b2["ci95"][1], 2, True)}] → '
+                 f'<b>{esc(b2.get("note", ""))}</b></div>')
+
+    s_ = (scn["runs"].get("normalized") or {}).get("summary", {})
+    h.append('<div class="note">همان خروجِ قبلی (TP 3×ATR + تریلینگ از 1R) دست نخورده است — '
+             f'پس تغییر نتیجه فقط از سمت ورود آمده: {fnum(s_.get("trades"), 0)} معامله، '
+             f'PF={fnum(s_.get("profit_factor"), 3)}، '
+             f'expectancy={fnum(s_.get("expectancy"), 2, True)}$.'
+             f'<br>قلب استدلال: ابزار تشخیص نشان داد مشکل «برداشتِ سود» نبود، «زمان‌بندی ورود» بود.</div>')
+    return _scenario_tab(scn, payload, "".join(h))
+
+
+# ----------------------------------------------------------------------------
+# تب جدید — آزمایشگاه خروج (ماتریس ورود × خروج)
+# ----------------------------------------------------------------------------
+def tab_exit_lab(payload: dict) -> str:
+    mx = payload.get("exit_matrix") or {}
+    h = ['<h2>آزمایشگاه خروج: آیا سود شناور بعد از اصلاح ورود جواب می‌دهد؟</h2>',
+         '<div class="note">منطق آزمون: اگر تریلینگ قبلاً بی‌فایده بود چون ورود edge نداشت، '
+         'پس روی ورودِ بهتر باید ارزش پیدا کند. این جدول همان آزمون است — '
+         'یک پارامتر در سمت ورود، یک پارامتر در سمت خروج، همه با هزینهٔ یکسان.</div>']
+    if mx.get("error"):
+        h.append(f'<div class="note bad">ماتریس خروج ساخته نشد: {esc(mx["error"])}</div>')
+        return "".join(h)
+    cells = mx.get("cells") or {}
+    if not cells:
+        h.append('<div class="note warn">داده‌ای برای این تب نیست.</div>')
+        return "".join(h)
+
+    order = mx.get("policy_ids") or []
+    head = ["سیاست خروج", "ورود پایه: n", "Expectancy$", "PF",
+            "ورود اصلاح‌شده: n", "Expectancy$", "PF", "Δ"]
+    rows = []
+    for pid in order:
+        b = (cells.get("base") or {}).get(pid)
+        q = (cells.get("entry_quality") or {}).get(pid)
+        if not b or not q:
+            continue
+        d = (q["full"]["expectancy"] - b["full"]["expectancy"])
+        rows.append([esc(b["label"]), fnum(b["full"]["n"], 0),
+                     fnum(b["full"]["expectancy"], 2, True),
+                     fnum(b["full"]["profit_factor"], 3),
+                     fnum(q["full"]["n"], 0),
+                     fnum(q["full"]["expectancy"], 2, True),
+                     fnum(q["full"]["profit_factor"], 3),
+                     fnum(d, 2, True)])
+    h.append(table(head, rows))
+
+    v = mx.get("verdict") or {}
+    if v:
+        tone = "bad" if not v.get("trail_helps_again") else "ok"
+        h.append(f'<div class="note {tone}"><b>حکم:</b> {esc(v.get("note", ""))}.'
+                 f'<br>بهترین expectancy با ورود پایه: '
+                 f'<b>{fnum(v.get("base_entry_best_expectancy"), 2, True)}$</b> · '
+                 f'با ورود اصلاح‌شده: '
+                 f'<b>{fnum(v.get("entry_quality_best_expectancy"), 2, True)}$</b></div>')
+
+    for eid, sm in (mx.get("summary") or {}).items():
+        nm = "ورود پایه" if eid == "base" else "ورود اصلاح‌شده"
+        rob = sm.get("robust_policies") or []
+        h.append(f'<div class="note">{nm}: بهترین سیاست '
+                 f'<b class="mono">{esc(sm.get("best_policy", "—"))}</b> با '
+                 f'{fnum(sm.get("best_expectancy"), 2, True)}$ · '
+                 f'پایدار در TRAIN+OOS: <b>{esc("، ".join(rob) if rob else "هیچ‌کدام")}</b></div>')
+    h.append('<div class="note"><b>درسِ این تب:</b> خروج فقط «توزیع» سود را عوض می‌کند؛ '
+             'expectancy را ورود می‌سازد. تریلینگ تنگ، drawdown را کم می‌کند ولی سود نمی‌سازد؛ '
+             'تریلینگ زودهنگام (۰.۵R) و بریک‌ایون در 1R بدترین گزینه‌ها بودند.</div>')
+    return "".join(h)
 
 # ----------------------------------------------------------------------------
 # تب ۴ — اعتبارسنجی
@@ -687,13 +815,30 @@ def tab_health(payload: dict) -> str:
 # ----------------------------------------------------------------------------
 # رندر نهایی
 # ----------------------------------------------------------------------------
-def render(payload: dict, title: str = "داشبورد مقایسهٔ سناریوها") -> str:
+def _safe(builder, payload: dict, tid: str) -> str:
+    """یک تب خراب نباید کل داشبورد را سفید کند — ولی خطا هم پنهان نمی‌شود."""
+    try:
+        return builder(payload)
+    except Exception as e:                                   # noqa: BLE001
+        return (f'<div class="note bad"><b>این تب ساخته نشد:</b> '
+                f'<span class="mono">{esc(type(e).__name__)}: {esc(str(e))}</span><br>'
+                f'بقیهٔ داشبورد سالم است؛ payload این اجرا کلید لازم را ندارد.</div>')
+
+
+def render(payload: dict, title: str = "داشبورد مقایسهٔ سناریوها",
+           strict: bool = False) -> str:
+    def _t(builder):
+        if strict:
+            return builder(payload)
+        return _safe(builder, payload, "")
     tabs = [
-        ("tab-compare", "🔀 مقایسه", tab_compare(payload)),
-        ("tab-old", "🧠 سناریوی قدیم", tab_old(payload)),
-        ("tab-new", "🧩 سناریوی جدید", tab_new(payload)),
-        ("tab-validation", "✅ اعتبارسنجی", tab_validation(payload)),
-        ("tab-health", "🛡️ سلامت و دام‌ها", tab_health(payload)),
+        ("tab-compare", "🔀 مقایسه", _t(tab_compare)),
+        ("tab-old", "🧠 سناریوی قدیم", _t(tab_old)),
+        ("tab-new", "🧩 سناریوی جدید", _t(tab_new)),
+        ("tab-eq", "✨ ورود اصلاح‌شده", _t(tab_entry_quality)),
+        ("tab-exit", "🧬 آزمایشگاه خروج", _t(tab_exit_lab)),
+        ("tab-validation", "✅ اعتبارسنجی", _t(tab_validation)),
+        ("tab-health", "🛡️ سلامت و دام‌ها", _t(tab_health)),
     ]
     buttons = "".join(
         f'<button class="tab{" active" if i == 0 else ""}" '

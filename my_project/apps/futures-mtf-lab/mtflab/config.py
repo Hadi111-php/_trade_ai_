@@ -10,9 +10,29 @@ import argparse
 import json
 import os
 from dataclasses import asdict, dataclass, field, fields
-from typing import List, Optional
+import copy
+from typing import Dict, List, Optional
 
 CONFIG_FILENAME = "config/default_config.json"
+
+# ----------------------------------------------------------------------------
+# پریست‌ها — «ترکیب‌های نام‌دار» پارامترها
+# ----------------------------------------------------------------------------
+# چرا پریست و نه تغییر پیش‌فرض؟ چون پیش‌فرض باید «بی‌طرف» بماند تا مقایسه با
+# سناریوی قدیم روی دادهٔ یکسان، مقایسهٔ منصفانه باشد. هر پریست یعنی «یک فرضیه
+# که روی داده آزموده شد»؛ در `--preset entry_quality` صریحاً می‌گوییم پارامترها
+# از همین داده انتخاب شده‌اند و ریسک overfit دارند (نتایج TRAIN/OOS در گزارش
+# diagnose دیده می‌شود).
+PRESETS: Dict[str, dict] = {
+    "base": {},
+    # از گزارش تشخیص: pullback-only + ردِ کندلِ اوج (دامنه > 1×ATR)
+    # شاهد: expectancy −0.79$ → +0.80$ و DD −13.8% → −4.6% (بدون تغییر خروج)
+    # قید: OOS فقط ۷ معامله → «فرضیهٔ قوی»، نه یافتهٔ قطعی.
+    "entry_quality": {
+        "trigger_entry_modes": ["pullback"],
+        "trigger_max_range_atr": 1.0,
+    },
+}
 
 
 @dataclass
@@ -108,6 +128,7 @@ class MTFConfig:
     run_id: str = ""
     verbose: bool = True
     forensics: bool = True              # ثبت کامل سیگنال/معامله در JSONL
+    preset: str = "base"                # base | entry_quality (نگاه کنید به PRESETS)
     seed: int = 42
 
     # ── اعتبارسنجی ────────────────────────────────────────────────────────
@@ -128,6 +149,7 @@ class MTFConfig:
         return round(self.take_profit_atr_mult / max(self.stop_atr_mult, 1e-9), 4)
 
     def label(self) -> str:
+        tag = "" if self.preset == "base" else f" · پریست {self.preset}"
         if self.data_mode == "bybit":
             return "دادهٔ واقعی Bybit (عمومی، بدون کلید) — PAPER؛ هنوز سود واقعی نیست"
         if self.data_mode == "csv":
@@ -168,6 +190,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="mtflab",
                                 description="Futures MTF Lab — سناریوی چندتایم‌فریمی (PAPER)")
     p.add_argument("--config", default=None, help="فایل JSON کانفیگ")
+    p.add_argument("--preset", choices=sorted(PRESETS), default=None,
+                   help="ترکیب نام‌دار پارامترها (base = پیش‌فرض بی‌طرف)")
 
     g = p.add_argument_group("داده")
     g.add_argument("--data", dest="data_mode", choices=["csv", "bybit", "synthetic"], default=None)
@@ -252,6 +276,14 @@ def load_config(argv: Optional[List[str]] = None) -> MTFConfig:
             setattr(cfg, k, v)
         elif not str(k).startswith("_") and cfg.verbose:
             print(f"⚠️  کلید ناشناخته در کانفیگ نادیده گرفته شد: {k}")
+
+    # پریست، بین فایل و CLI اعمال می‌شود: CLI همیشه حرف آخر را می‌زند.
+    preset_name = args.preset or cfg.preset or "base"
+    if preset_name not in PRESETS:
+        raise SystemExit(f"پریست ناشناخته: {preset_name} (مجاز: {sorted(PRESETS)})")
+    for k, v in PRESETS[preset_name].items():
+        setattr(cfg, k, copy.deepcopy(v))
+    cfg.preset = preset_name
 
     for k, v in vars(args).items():
         if k == "config" or v is None:

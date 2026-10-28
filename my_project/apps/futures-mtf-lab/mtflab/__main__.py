@@ -6,6 +6,7 @@
   download   دانلود دادهٔ عمومی Bybit برای سه تایم‌فریم (بدون API key)
   compare    اجرای هر دو سناریو روی دادهٔ یکسان + ساخت داشبورد تب‌دار
   diagnose   کالبدشکافی چرا سود کم برداشت می‌شود + آزمون سود شناور + گزارش فارسی
+  robust     آزمون بقا: همان یافته روی چند نماد و چند پنجرهٔ زمانی
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -17,6 +18,7 @@
   python3 -m mtflab validate --data bybit --symbol BTCUSDT --tf-trigger 15m
   python3 -m mtflab compare --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv
   python3 -m mtflab diagnose --data csv --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv --align A --bias-ema 50
+  python3 -m mtflab robust --source bybit --symbols BTCUSDT ETHUSDT SOLUSDT --presets entry_quality
   python3 -m mtflab serve --dir ../futures-scalp-lab/results --port 8080
 """
 from __future__ import annotations
@@ -76,6 +78,10 @@ def main(argv=None) -> int:
         print(f"   بهترین فرضیهٔ پایدار: {su['best_robust']} "
               f"(از {su['n_experiments']} فرضیه، {su['robust_count']} پایدار)")
         return 0
+
+    if cmd == "robust":
+        from .robust import robust_command
+        return robust_command(rest)
 
     if cmd == "compare":
         from .compare import compare_command

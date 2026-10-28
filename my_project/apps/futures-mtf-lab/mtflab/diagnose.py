@@ -393,6 +393,10 @@ def diagnose(cfg: MTFConfig, layers: Dict[str, List[Candle]],
     setups = run_setup_experiments(cfg, layers)
 
     if progress:
+        print("🧬 ماتریس ورود × خروج (آیا سود شناور بعد از اصلاح ورود جواب می‌دهد؟) …")
+    matrix = run_policy_matrix(cfg, layers)
+
+    if progress:
         print("🧭 نقشهٔ نشت سود …")
     leaks = leak_map(base_res, cfg)
 
@@ -415,6 +419,7 @@ def diagnose(cfg: MTFConfig, layers: Dict[str, List[Candle]],
         "autopsy_rows": autopsy["rows"],
         "policies": policies,
         "setups": setups,
+        "matrix": matrix,
         "leaks": leaks,
         "policy_significance": comp,
     }
@@ -882,6 +887,44 @@ def write_diagnosis_report(diag: dict, cfg: MTFConfig, out_path: str,
       "**تنگ‌تر** (۱×ATR) کم‌ضررترین بود و تریلینگ از ۰.۵R بدترین — یعنی تریلینگ زودهنگام، "
       "سم است.\n")
 
+    # ---------- ۳.۱) سود شناور بعد از اصلاح ورود ----------
+    mx = diag.get("matrix")
+    if mx and mx.get("verdict") is not None:
+        w("### ۳.۱) آزمون دوباره: آیا سود شناور بعد از اصلاحِ ورود جواب می‌دهد؟\n")
+        w("منطق آزمون: اگر تریلینگ قبلاً بی‌فایده بود چون ورود edge نداشت، پس روی "
+          "ورودِ بهتر باید ارزش پیدا کند — این را مستقیم اندازه گرفتیم.\n")
+        w("| سیاست خروج | ورود پایه: expectancy | PF | ورود اصلاح‌شده: expectancy | PF | Δ |")
+        w("|---|---:|---:|---:|---:|---:|")
+        for pid in mx["policy_ids"]:
+            b = mx["cells"].get("base", {}).get(pid)
+            q = mx["cells"].get("entry_quality", {}).get(pid)
+            if not b or not q:
+                continue
+            d = q["full"]["expectancy"] - b["full"]["expectancy"]
+            w(f"| {b['label']} | {_f(b['full']['expectancy'])} | "
+              f"{b['full']['profit_factor'] if b['full']['profit_factor'] is not None else '—'} | "
+              f"{_f(q['full']['expectancy'])} | "
+              f"{q['full']['profit_factor'] if q['full']['profit_factor'] is not None else '—'} | "
+              f"{_f(d)} |")
+        w("")
+        v = mx["verdict"]
+        w(f"**حکم داده:** {v['note']}.")
+        if v["trail_helps_again"]:
+            w(f"سیاست‌هایی که با ورودِ بهتر از TP ثابت جلو زدند: "
+              f"{', '.join(v['helped_ids'])} — با این حال همین‌ها باید در TRAIN/OOS هم "
+              f"تأیید شوند (ستون «پایدار» در جدول ۳).")
+        w("")
+        for eid, sm in mx["summary"].items():
+            nm = "ورود پایه" if eid == "base" else "ورود اصلاح‌شده"
+            w(f"- {nm}: بهترین سیاست `{sm['best_policy']}` با "
+              f"{_f(sm['best_expectancy'])}$ | سیاست‌های پایدار: "
+              f"{('، '.join(sm['robust_policies']) if sm['robust_policies'] else 'هیچ‌کدام')}")
+            sg = sm.get("significance")
+            if sg and sg.get("ok"):
+                w(f"  - اختلاف همین سیاست با خروج پایه: {_f(sg['observed'])}$، "
+                  f"CI95 [{_f(sg['ci95'][0])} , {_f(sg['ci95'][1])}] → {sg['note']}")
+        w("")
+
     # ---------- ۴) نقشهٔ نشت ----------
     w("## ۴) نقشهٔ نشت سود (کجا پول می‌سوزد)\n")
     for name, label in (("trigger_mode", "حالت ورود"), ("regime", "رژیم بازار"),
@@ -1015,3 +1058,92 @@ def write_diagnosis_report(diag: dict, cfg: MTFConfig, out_path: str,
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(text)
     return out_path
+
+
+# ----------------------------------------------------------------------------
+# ۹) ماتریس «ورود × خروج» — آیا بعد از اصلاح ورود، سود شناور جواب می‌دهد؟
+# ----------------------------------------------------------------------------
+MATRIX_ENTRIES = ["base", "entry_quality"]
+MATRIX_POLICY_IDS = ["base", "no_trail", "trail_0.5R", "trail_tight",
+                     "trail_wide", "tp6", "be_1R", "partial_1R"]
+
+
+def run_policy_matrix(cfg: MTFConfig, layers: Dict[str, List[Candle]],
+                      entries: Optional[List[str]] = None,
+                      policy_ids: Optional[List[str]] = None) -> dict:
+    """همان سیاست‌های خروج، این بار روی دو «کیفیت ورود» مختلف.
+
+    فرضیهٔ قابل‌آزمون: تریلینگ روی ورودِ بد بی‌فایده بود چون خروج فقط توزیع
+    را عوض می‌کند. اگر ورود edge داشته باشد، آیا تریلینگ ارزش پیدا می‌کند؟
+    """
+    from .config import PRESETS
+
+    entries = entries or MATRIX_ENTRIES
+    policy_ids = policy_ids or MATRIX_POLICY_IDS
+    by_id = {pid: (label, over) for pid, label, over in EXIT_POLICIES}
+
+    trig = layers["trigger"]
+    n = len(trig)
+    i1, i2 = int(n * cfg.train_ratio), int(n * (cfg.train_ratio + cfg.validation_ratio))
+    train_sub = _slice_layers(layers, cfg, trig[0].open_time_ms, trig[i1 - 1].open_time_ms)
+    oos_sub = _slice_layers(layers, cfg, trig[i2].open_time_ms, trig[-1].open_time_ms)
+
+    cells: Dict[str, Dict[str, dict]] = {}
+    pnl_cells: Dict[Tuple[str, str], List[float]] = {}
+    for eid in entries:
+        entry_over = PRESETS.get(eid, {})
+        cells[eid] = {}
+        for pid in policy_ids:
+            label, pol_over = by_id[pid]
+            over = dict(entry_over)
+            over.update(pol_over)
+            c = replace(cfg, verbose=False, forensics=False, run_id="",
+                        preset=eid, **{k: v for k, v in over.items()})
+            full_res = run_backtest(c, layers)
+            full = _metrics_positions(full_res, c)
+            pnl_cells[(eid, pid)] = _position_pnls(full_res)
+            tr = _metrics_positions(run_backtest(c, train_sub), c)
+            oo = _metrics_positions(run_backtest(c, oos_sub), c)
+            cells[eid][pid] = {
+                "label": label, "full": full, "train": tr, "oos": oo,
+                "robust": bool(tr["n"] >= 5 and oo["n"] >= 5
+                               and tr["expectancy"] > 0 and oo["expectancy"] > 0),
+            }
+
+    summary = {}
+    for eid in entries:
+        rows = cells[eid]
+        best = max(policy_ids, key=lambda p: rows[p]["full"]["expectancy"])
+        robust = [p for p in policy_ids if rows[p]["robust"]]
+        significance = None
+        if best != "base" and pnl_cells.get((eid, "base")) and pnl_cells.get((eid, best)):
+            significance = bootstrap_policy_diff(pnl_cells[(eid, best)],
+                                                 pnl_cells[(eid, "base")])
+        summary[eid] = {
+            "best_policy": best,
+            "best_expectancy": rows[best]["full"]["expectancy"],
+            "robust_policies": robust,
+            "robust_count": len(robust),
+            "significance": significance,
+        }
+
+    # آیا اصلاح ورود، «ارزش تریلینگ» را عوض کرد؟
+    verdict = None
+    if "base" in cells and "entry_quality" in cells:
+        b, q = cells["base"], cells["entry_quality"]
+        trail_ids = [p for p in ("trail_0.5R", "trail_tight", "trail_wide") if p in b]
+        base_best = max(b[p]["full"]["expectancy"] for p in b) if b else 0.0
+        eq_best = max(q[p]["full"]["expectancy"] for p in q) if q else 0.0
+        trail_beats = [p for p in trail_ids
+                       if q[p]["full"]["expectancy"] > q["base"]["full"]["expectancy"]]
+        verdict = {
+            "trail_helps_again": bool(trail_beats),
+            "helped_ids": trail_beats,
+            "base_entry_best_expectancy": round(base_best, 4),
+            "entry_quality_best_expectancy": round(eq_best, 4),
+            "note": ("با ورودِ بهتر، تریلینگ دوباره ارزش پیدا کرد"
+                     if trail_beats else
+                     "حتی با ورودِ بهتر هم هیچ تریلینگی از TP ثابت بهتر نشد"),
+        }
+    return {"entries": entries, "policy_ids": policy_ids,
+            "cells": cells, "summary": summary, "verdict": verdict}

@@ -11,6 +11,7 @@ results/trader_trades_*.jsonl
 results/*.tmp
 !results/README.md
 !results/diagnosis_report.md
+!results/robust_report.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
 data/*.csv
