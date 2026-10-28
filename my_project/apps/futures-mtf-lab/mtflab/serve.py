@@ -47,6 +47,7 @@ th{{color:#8b98a9;background:#1b2230}} .dim{{color:#8b98a9;font-size:12px}}
 <div class="sub">پوشه: <span class="dim">{root}</span> · {count} فایل · PAPER فقط</div>
 <table><thead><tr><th>فایل</th><th>نوع</th><th>حجم</th></tr></thead><tbody>{rows}</tbody></table>
 <div class="sub" style="margin-top:16px">
+  <a href="/">↩ بازگشت به داشبورد</a> &nbsp;·&nbsp;
   برای ساخت داشبورد مقایسه:
   <span class="dim">python3 -m mtflab compare --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv</span>
 </div>
@@ -74,6 +75,16 @@ def make_handler(root: str):
             path = urllib.parse.urlparse(self.path).path
             try:
                 if path in ("/", "/index.html"):
+                    # صفحهٔ اصلی = داشبورد مقایسه (اگر ساخته شده باشد)
+                    dash = os.path.join(root_abs, "dash_scenarios.html")
+                    if os.path.isfile(dash):
+                        self.send_response(302)
+                        self.send_header("Location", "/dash_scenarios.html")
+                        self.end_headers()
+                        return
+                    self._serve_index()
+                    return
+                if path in ("/files", "/files.html"):
                     self._serve_index()
                     return
                 if path == "/healthz":
