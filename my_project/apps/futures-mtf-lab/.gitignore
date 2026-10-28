@@ -12,6 +12,8 @@ results/*.tmp
 !results/README.md
 !results/diagnosis_report.md
 !results/robust_report.md
+!results/evolve_report.md
+!results/evolve_report_rolling.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
 data/*.csv
