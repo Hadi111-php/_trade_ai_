@@ -56,6 +56,11 @@ class Position:
     atr_at_entry: float = 0.0
     open_fee: float = 0.0
     trail_active: bool = False
+    partial_taken: bool = False
+    breakeven_done: bool = False
+    initial_qty: float = 0.0
+    realized_partial_pnl: float = 0.0
+    legs: int = 0
     layers: dict = field(default_factory=dict)
     snap_trigger: dict = field(default_factory=dict)
     snap_filter: dict = field(default_factory=dict)
@@ -82,6 +87,7 @@ class MTFEngine:
         self.max_drawdown_pct = 0.0
         self.positions: List[Position] = []
         self.trades: List[dict] = []
+        self.positions_opened: int = 0
         self.equity_curve: List[dict] = []
         self.consecutive_losses = 0
         self.cooldown_until_bar = -1
@@ -95,6 +101,7 @@ class MTFEngine:
         self.veto_stats: Dict[str, int] = {
             "bias": 0, "filter": 0, "trigger": 0, "cost": 0, "confidence": 0,
             "cooldown": 0, "circuit_breaker": 0, "daily_loss": 0, "slots": 0,
+            "hour_filter": 0, "climax": 0,
         }
         self.trigger_stats: Dict[str, int] = {"pullback": 0, "breakout": 0, "none": 0}
         self.decision_log: List[dict] = []
@@ -146,6 +153,9 @@ class MTFEngine:
         d = info["decision"]
         if d.action == "ENTER":
             return None
+        if info.get("trig") is not None and "کندلِ اوج" in str(info["trig"].reason):
+            self.veto_stats["climax"] += 1
+            return d.reason
         layer = getattr(d, "veto_layer", "") or "trigger"
         if layer in self.veto_stats:
             self.veto_stats[layer] += 1
@@ -196,7 +206,7 @@ class MTFEngine:
             trigger_mode=info["trig"].mode, reason=d.reason, atr_at_entry=atr_v,
             open_fee=open_fee, layers=d.layers,
             snap_trigger=info["snap_trigger"], snap_filter=info["snap_filter"],
-            snap_bias=info["snap_bias"],
+            snap_bias=info["snap_bias"], initial_qty=qty,
             path=[{"ts": ts, "o": info["bar"].low_tf_candle.open,
                    "h": info["bar"].low_tf_candle.high,
                    "l": info["bar"].low_tf_candle.low,
@@ -204,109 +214,183 @@ class MTFEngine:
                    "v": info["bar"].low_tf_candle.volume}],
         )
         self.positions.append(pos)
+        self.positions_opened += 1
         self._log_signal(info, pos, i, ts, lev)
         return pos
 
     # -- مدیریت خروج ---------------------------------------------------------
-    def manage_position(self, pos: Position, candle: Candle, i: int,
-                        ctxs: Dict[str, TFContext], filt_dir_now: int) -> Optional[dict]:
-        """بررسی خروج با high/low کندل جاری. بازگشت: رکورد close یا None."""
-        stop_at_open = pos.stop_current        # stop‌ای که از کندل‌های قبل می‌دانیم
-        exit_price: Optional[float] = None
-        reason = ""
-
-        if pos.direction == 1:
-            if candle.low <= stop_at_open:
-                # gap-through: اگر open پایین‌تر از stop باشد، در open پر می‌شود
-                exit_price = min(candle.open, stop_at_open)
-                reason = "stop_loss" if stop_at_open == pos.stop_initial else "stop/trail"
-            elif candle.high >= pos.take:
-                exit_price = max(candle.open, pos.take) if candle.open >= pos.take else pos.take
-                reason = "take_profit"
-        else:
-            if candle.high >= stop_at_open:
-                exit_price = max(candle.open, stop_at_open)
-                reason = "stop_loss" if stop_at_open == pos.stop_initial else "stop/trail"
-            elif candle.low <= pos.take:
-                exit_price = min(candle.open, pos.take) if candle.open <= pos.take else pos.take
-                reason = "take_profit"
-
-        if exit_price is None and self.cfg.regime_change_exit and filt_dir_now != 0 \
-                and filt_dir_now == -pos.direction and self.filter_flip_streak >= self.cfg.filter_confirm_bars:
-            exit_price = candle.close
-            reason = f"regime_flip_confirmed_{self.filter_flip_streak}"
-
-        if exit_price is None and self.cfg.max_holding_bars > 0 and \
-                (i - pos.open_bar) >= self.cfg.max_holding_bars:
-            exit_price = candle.close
-            reason = "time_stop"
-
-        # ثبت مسیر (برای MFE/MAE) — حتی اگر خروج رخ ندهد
+    def _append_path(self, pos: Position, candle: Candle) -> None:
         pos.path.append({"ts": candle.open_time_ms, "o": candle.open, "h": candle.high,
                          "l": candle.low, "c": candle.close, "v": candle.volume})
         pos.high_water = max(pos.high_water, candle.close)
         pos.low_water = min(pos.low_water, candle.close)
 
-        if exit_price is None:
-            # به‌روزرسانی trailing در پایان کندل (علی: از دادهٔ آینده استفاده نمی‌کند)
-            if self.cfg.trail_enabled and pos.stop_distance > 0:
-                r_now = pos.direction * (candle.close - pos.entry) / pos.stop_distance
-                if r_now >= self.cfg.trail_start_r:
-                    pos.trail_active = True
-                if pos.trail_active:
-                    atr_now = ctxs["trigger"].atr[i] or pos.atr_at_entry
-                    trail_dist = atr_now * self.cfg.trail_atr_mult
-                    if pos.direction == 1:
-                        pos.stop_current = max(pos.stop_current, pos.high_water - trail_dist)
-                    else:
-                        pos.stop_current = min(pos.stop_current, pos.low_water + trail_dist)
-            return None
+    def _move_to_breakeven(self, pos: Position) -> None:
+        """استاپ را به نقطهٔ ورود منتقل کن (هرگز عقب‌تر نبر)."""
+        if pos.direction == 1:
+            pos.stop_current = max(pos.stop_current, pos.entry)
+        else:
+            pos.stop_current = min(pos.stop_current, pos.entry)
+        pos.breakeven_done = True
 
-        return self._close(pos, exit_price, candle.open_time_ms, reason, i)
+    def manage_position(self, pos: Position, candle: Candle, i: int,
+                        ctxs: Dict[str, TFContext], filt_dir_now: int) -> Optional[dict]:
+        """مدیریت یک پوزیشن در یک کندل — ترتیب بررسی عمداً محافظه‌کارانه است.
 
-    def _close(self, pos: Position, price: float, ts: int, reason: str, i: int) -> dict:
-        self.positions.remove(pos)
+        ۱) stop (اول از همه؛ اگر با TP هم‌زمان لمس شود، ضرر فرض می‌شود)
+        ۲) خروج جزئی در سطح partial_take_r
+        ۳) TP برای باقی‌ماندهٔ پوزیشن
+        ۴) انتقال استاپ به نقطهٔ ورود در breakeven_at_r
+        ۵) خروج رژیمی / time-stop در close
+        ۶) به‌روزرسانی تریلینگ در **پایان** کندل (علی)
+        """
         cfg = self.cfg
+        sd = pos.stop_distance
+        stop_at_open = pos.stop_current        # فقط از کندل‌های قبل معلوم است
+
+        # ۱) stop
+        hit_stop = (candle.low <= stop_at_open) if pos.direction == 1 \
+            else (candle.high >= stop_at_open)
+        if hit_stop:
+            px = min(candle.open, stop_at_open) if pos.direction == 1 \
+                else max(candle.open, stop_at_open)
+            if abs(stop_at_open - pos.entry) < 1e-9:
+                reason = "breakeven"
+            elif abs(stop_at_open - pos.stop_initial) < 1e-9:
+                reason = "stop_loss"
+            else:
+                reason = "stop/trail"
+            self._append_path(pos, candle)
+            return self._close(pos, px, candle.open_time_ms, reason, i)
+
+        # ۲) خروج جزئی
+        if cfg.partial_take_r > 0 and not pos.partial_taken and pos.qty > 0:
+            lvl = pos.entry + pos.direction * sd * cfg.partial_take_r
+            hit = (candle.high >= lvl) if pos.direction == 1 else (candle.low <= lvl)
+            if hit:
+                self._take_partial(pos, lvl, candle.open_time_ms, i, cfg.partial_take_frac)
+                if cfg.breakeven_at_r <= 0 or cfg.breakeven_at_r <= cfg.partial_take_r:
+                    self._move_to_breakeven(pos)
+
+        # ۳) TP برای باقی‌مانده
+        if pos.qty > 1e-12:
+            hit_tp = (candle.high >= pos.take) if pos.direction == 1 \
+                else (candle.low <= pos.take)
+            if hit_tp:
+                px = max(candle.open, pos.take) if pos.direction == 1 \
+                    else min(candle.open, pos.take)
+                self._append_path(pos, candle)
+                return self._close(pos, px, candle.open_time_ms, "take_profit", i)
+
+        # ۴) بریک‌ایون
+        if cfg.breakeven_at_r > 0 and not pos.breakeven_done:
+            lvl = pos.entry + pos.direction * sd * cfg.breakeven_at_r
+            hit = (candle.high >= lvl) if pos.direction == 1 else (candle.low <= lvl)
+            if hit:
+                self._move_to_breakeven(pos)
+
+        # ۵) خروج رژیمی / time-stop
+        exit_price: Optional[float] = None
+        reason = ""
+        if cfg.regime_change_exit and filt_dir_now != 0 \
+                and filt_dir_now == -pos.direction \
+                and self.filter_flip_streak >= cfg.filter_confirm_bars:
+            exit_price = candle.close
+            reason = f"regime_flip_confirmed_{self.filter_flip_streak}"
+        elif cfg.max_holding_bars > 0 and (i - pos.open_bar) >= cfg.max_holding_bars:
+            exit_price = candle.close
+            reason = "time_stop"
+
+        self._append_path(pos, candle)
+
+        if exit_price is not None:
+            return self._close(pos, exit_price, candle.open_time_ms, reason, i)
+
+        # ۶) تریلینگ در پایان کندل (علی)
+        if cfg.trail_enabled and sd > 0:
+            r_now = pos.direction * (candle.close - pos.entry) / sd
+            if r_now >= cfg.trail_start_r:
+                pos.trail_active = True
+            if pos.trail_active:
+                atr_now = ctxs["trigger"].atr[i] or pos.atr_at_entry
+                trail_dist = atr_now * cfg.trail_atr_mult
+                if pos.direction == 1:
+                    pos.stop_current = max(pos.stop_current, pos.high_water - trail_dist)
+                else:
+                    pos.stop_current = min(pos.stop_current, pos.low_water + trail_dist)
+        return None
+
+    def _take_partial(self, pos: Position, price: float, ts: int, i: int, frac: float) -> None:
+        """بستن بخشی از پوزیشن (سود شناور مرحله‌ای)."""
+        frac = max(0.0, min(1.0, float(frac)))
+        if frac <= 0 or frac >= 1 or pos.qty <= 0:
+            return
+        qty = pos.qty * frac
+        self._close(pos, price, ts, "partial_take_%gR" % self.cfg.partial_take_r, i,
+                    qty=qty, partial=True)
+        pos.qty -= qty
+        pos.notional = pos.qty * pos.entry
+        pos.risk_amount *= (1.0 - frac)
+        pos.partial_taken = True
+
+    def _close(self, pos: Position, price: float, ts: int, reason: str, i: int,
+               qty: Optional[float] = None, partial: bool = False) -> dict:
+        """بستن کل یا بخشی از پوزیشن + ثبت فورنزیک."""
+        cfg = self.cfg
+        full = qty is None
+        q = pos.qty if full else min(float(qty), pos.qty)
+        if q <= 0:
+            return {}
+        if full:
+            self.positions.remove(pos)
+
+        share = (q / pos.initial_qty) if pos.initial_qty else 1.0
         fill = slip_price(price, cfg.slippage_pct, -pos.direction)   # خروج: پرشدنِ بدتر
-        gross_pnl = pos.direction * (fill - pos.entry) * pos.qty
-        close_fee = fee_on_notional(pos.notional, cfg.fee_bps)
-        net_pnl = gross_pnl - pos.open_fee - close_fee
+        gross_pnl = pos.direction * (fill - pos.entry) * q
+        close_fee = fee_on_notional(q * pos.entry, cfg.fee_bps)
+        open_fee_leg = pos.open_fee * share
+        net_pnl = gross_pnl - open_fee_leg - close_fee
         self.equity += gross_pnl - close_fee
         self._bump_dd()
 
+        pos.realized_partial_pnl += net_pnl
+        pos.legs += 1
         is_loss = net_pnl < 0
-        if is_loss:
-            self.consecutive_losses += 1
-            self.cooldown_until_bar = i + cfg.cooldown_bars_after_loss
-        else:
-            self.consecutive_losses = 0
 
-        if self.consecutive_losses >= cfg.cb_losses:
-            self.cb_until_bar = i + cfg.cb_cooldown_bars
-            self.consecutive_losses = 0
+        if full:
+            # شمارنده‌های ریسک فقط روی سود/زیانِ کلِ پوزیشن (شامل لگ‌های جزئی)
+            if pos.realized_partial_pnl < 0:
+                self.consecutive_losses += 1
+                self.cooldown_until_bar = i + cfg.cooldown_bars_after_loss
+            else:
+                self.consecutive_losses = 0
+            if self.consecutive_losses >= cfg.cb_losses:
+                self.cb_until_bar = i + cfg.cb_cooldown_bars
+                self.consecutive_losses = 0
 
-        # MFE / MAE به درصد و به R
         exc = [pos.direction * (c["c"] - pos.entry) / pos.entry for c in pos.path[1:]]
         mfe = max(exc) if exc else 0.0
         mae = min(exc) if exc else 0.0
-        sd = pos.stop_distance or 1e-9
-        r_gross = pos.direction * (fill - pos.entry) * pos.qty / pos.risk_amount \
-            if pos.risk_amount else 0.0
-        r_multiple = net_pnl / pos.risk_amount if pos.risk_amount else 0.0
         bars_held = len(pos.path) - 1
+        r_multiple = (net_pnl / pos.risk_amount) if pos.risk_amount else 0.0
 
         rec = {
             "type": "close", "run_id": cfg.run_id, "ts": ts, "symbol": pos.symbol,
             "side": pos.direction, "entry": round(pos.entry, 4), "exit": round(fill, 4),
             "stop_initial": round(pos.stop_initial, 4), "stop_final": round(pos.stop_current, 4),
-            "take": round(pos.take, 4), "qty": round(pos.qty, 8),
-            "notional": round(pos.notional, 4), "risk_amount": round(pos.risk_amount, 4),
+            "take": round(pos.take, 4), "qty": round(q, 8),
+            "notional": round(q * pos.entry, 4),
+            "risk_amount": round(pos.risk_amount, 4),
             "equity_before": round(pos.equity_before, 4),
             "equity_after": round(self.equity, 4),
             "bars_held": bars_held, "reason": reason,
-            "gross_pnl": round(gross_pnl, 4), "fees": round(pos.open_fee + close_fee, 4),
-            "pnl": round(net_pnl, 4), "net_pct": round(net_pnl / max(pos.notional, 1e-9) * 100, 4),
-            "r_multiple": round(r_multiple, 4), "r_gross": round(r_gross, 4),
+            "gross_pnl": round(gross_pnl, 4), "fees": round(open_fee_leg + close_fee, 4),
+            "pnl": round(net_pnl, 4),
+            "net_pct": round(net_pnl / max(q * pos.entry, 1e-9) * 100, 4),
+            "r_multiple": round(r_multiple, 4),
+            "r_gross": round(gross_pnl / pos.risk_amount, 4) if pos.risk_amount else 0.0,
+            "position_pnl": round(pos.realized_partial_pnl, 4),
+            "partial": bool(partial), "leg": pos.legs,
             "mfe_pct": round(mfe * 100, 4), "mae_pct": round(mae * 100, 4),
             "is_win": not is_loss, "trail_active": pos.trail_active,
             "confidence_entry": pos.confidence, "score_entry": pos.score,
@@ -319,6 +403,7 @@ class MTFEngine:
             "layers_entry": pos.layers,
             "indicators_entry": pos.snap_trigger, "indicators_filter_entry": pos.snap_filter,
             "indicators_bias_entry": pos.snap_bias,
+            "open_bar": pos.open_bar, "exit_bar": i,
             "path_candles": pos.path if cfg.forensics else [],
             "diagnosis": _diagnose(pos, reason, net_pnl, mfe, mae, bars_held, r_multiple),
         }
@@ -380,6 +465,7 @@ class MTFEngine:
             "expectancy_r": round(sum(rs) / len(rs), 4) if rs else 0.0,
             "total_pnl": round(total, 4),
             "total_fees": round(sum(x["fees"] for x in t), 4),
+            "partial_legs": sum(1 for x in t if x.get("partial")),
             "equity": round(self.equity, 4),
             "return_pct": round((self.equity - self.cfg.initial_equity)
                                 / self.cfg.initial_equity * 100, 4),
@@ -387,6 +473,9 @@ class MTFEngine:
             "avg_bars_held": round(sum(x["bars_held"] for x in t) / len(t), 2) if t else 0.0,
             "avg_mfe_pct": round(sum(x["mfe_pct"] for x in t) / len(t), 4) if t else 0.0,
             "avg_mae_pct": round(sum(x["mae_pct"] for x in t) / len(t), 4) if t else 0.0,
+            "positions_opened": self.positions_opened,
+            "avg_legs_per_position": round(len(t) / self.positions_opened, 3)
+            if self.positions_opened else 0.0,
             "circuit_breaker_hits": self.veto_stats["circuit_breaker"],
             "still_open": len(self.positions),
             "veto_stats": dict(self.veto_stats),
@@ -464,7 +553,7 @@ def run_backtest(cfg: MTFConfig, layers: Dict[str, List[Candle]],
         # 2) ورود جدید
         d = info["decision"]
         if d.action == "ENTER":
-            blocked = None
+            blocked = None  # noqa: F841
             if engine.cb_until_bar > i:
                 blocked = "circuit_breaker"
             elif i <= engine.cooldown_until_bar:
@@ -473,6 +562,9 @@ def run_backtest(cfg: MTFConfig, layers: Dict[str, List[Candle]],
                 blocked = "daily_loss"
             elif not engine._open_slots_free():
                 blocked = "slots"
+            hour_utc = (candle.open_time_ms // 3_600_000) % 24
+            if cfg.skip_hours_utc and hour_utc in set(cfg.skip_hours_utc):
+                blocked = blocked or "hour_filter"
             if blocked:
                 engine.veto_stats[blocked] += 1
                 if collect_waits:

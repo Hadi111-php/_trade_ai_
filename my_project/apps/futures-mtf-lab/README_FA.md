@@ -38,7 +38,13 @@ python3 -m mtflab compare \
   --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv \
   --out results/dash_scenarios.html
 
-# ۳) دیدن داشبورد در مرورگر
+# ۳) گزارش تشخیصی: چرا سود کم برداشت می‌شود + آزمون سود شناور
+python3 -m mtflab diagnose \
+  --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv \
+  --tf-trigger 1h --tf-filter 4h --tf-bias 1d --align A --bias-ema 50 \
+  --out results/diagnosis_report.md
+
+# ۴) دیدن داشبورد در مرورگر
 python3 -m mtflab serve --dir results --port 8080
 #   → http://localhost:8080/dash_scenarios.html
 ```
@@ -68,6 +74,7 @@ python3 -m mtflab run --data bybit --symbol BTCUSDT --align C
 | `run` (پیش‌فرض) | بک‌تست یک سناریو |
 | `validate` | بک‌تست + اعتبارسنجی کامل |
 | `compare` | دو سناریو روی دادهٔ یکسان + داشبورد تب‌دار |
+| `diagnose` | کالبدشکافی خروج + ۱۵ سیاست سود شناور + ۱۲ فرضیهٔ ورود + گزارش فارسی |
 | `download` | دانلود دادهٔ عمومی Bybit (15m/1h/4h) |
 | `dashboard` | بازسازی داشبورد از JSON ذخیره‌شده |
 | `serve` | سرو داشبوردها در مرورگر (stdlib) |
@@ -115,6 +122,7 @@ futures-mtf-lab/
 │   ├── report.py         گزارش JSON + Markdown
 │   ├── dashboard.py      داشبورد HTML ۵ تبی
 │   ├── compare.py        مقایسهٔ دو سناریو + bootstrap معناداری
+│   ├── diagnose.py       تشخیص: کالبدشکافی خروج، سیاست‌های سود شناور، فرضیه‌های ورود
 │   ├── serve.py          سرور استاندارد برای داشبورد
 │   └── selftest.py       خودآزمایی
 ├── tests/                ۲۱ تست (بدون pytest هم اجرا می‌شود)

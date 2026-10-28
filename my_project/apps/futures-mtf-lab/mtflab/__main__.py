@@ -5,6 +5,7 @@
   validate   بک‌تست + اعتبارسنجی کامل (split / walk-forward / monte-carlo / baselines)
   download   دانلود دادهٔ عمومی Bybit برای سه تایم‌فریم (بدون API key)
   compare    اجرای هر دو سناریو روی دادهٔ یکسان + ساخت داشبورد تب‌دار
+  diagnose   کالبدشکافی چرا سود کم برداشت می‌شود + آزمون سود شناور + گزارش فارسی
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -15,6 +16,7 @@
   python3 -m mtflab run --data bybit --symbol BTCUSDT --tf-trigger 15m --tf-filter 1h --tf-bias 4h
   python3 -m mtflab validate --data bybit --symbol BTCUSDT --tf-trigger 15m
   python3 -m mtflab compare --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv
+  python3 -m mtflab diagnose --data csv --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv --align A --bias-ema 50
   python3 -m mtflab serve --dir ../futures-scalp-lab/results --port 8080
 """
 from __future__ import annotations
@@ -32,6 +34,9 @@ USAGE = __doc__
 
 def main(argv=None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
+    if argv and argv[0] in ("-h", "--help"):
+        print(USAGE)
+        return 0
     cmd = argv[0] if argv and not argv[0].startswith("-") else "run"
     rest = argv[1:] if argv and not argv[0].startswith("-") else argv
 
@@ -45,6 +50,32 @@ def main(argv=None) -> int:
     if cmd == "selftest":
         from .selftest import run_selftest
         return run_selftest()
+
+    if cmd == "diagnose":
+        import argparse
+        p = argparse.ArgumentParser(prog="mtflab diagnose", add_help=False)
+        p.add_argument("--out", default="results/diagnosis_report.md")
+        known, rest2 = p.parse_known_args(rest)
+        rest = rest2
+        from .config import load_config
+        from .data import load_layers
+        from .diagnose import (diagnose, run_setup_sweep, setup_significance,
+                               write_diagnosis_report)
+        cfg = load_config(rest)
+        layers, _meta = load_layers(cfg)
+        t0 = time.time()
+        diag = diagnose(cfg, layers)
+        sweeps = run_setup_sweep(cfg, layers)
+        diag["setup_significance"] = setup_significance(cfg, layers, diag["setups"])
+        out = write_diagnosis_report(diag, cfg, known.out, sweeps=sweeps)
+        b, su = diag["base"]["summary"], diag["setups"]
+        print(f"\n⏱ {time.time()-t0:.1f}s")
+        print(f"📄 گزارش تشخیصی: {out}")
+        print(f"   پایه: {b['trades']} معامله | PF {b['profit_factor']} | "
+              f"expectancy {b['expectancy']:+.3f}$")
+        print(f"   بهترین فرضیهٔ پایدار: {su['best_robust']} "
+              f"(از {su['n_experiments']} فرضیه، {su['robust_count']} پایدار)")
+        return 0
 
     if cmd == "compare":
         from .compare import compare_command

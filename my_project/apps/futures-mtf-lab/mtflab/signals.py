@@ -260,6 +260,19 @@ def trigger_state(ctx: TFContext, i: int, cfg) -> TriggerSignal:
     volz = ctx.volz[i] or 0.0
     modes = cfg.trigger_entry_modes or ["pullback", "breakout"]
 
+    # ── فیلتر «کندلِ اوج» (climax / chasing) ─────────────────────────────
+    # اگر کندلِ ورود خودش بزرگ‌ترین بخشِ حرکت را انجام داده باشد، ورود در انتهای
+    # آن = دویدن دنبال قیمت. این فیلتر همان چیزی است که معاملاتِ «۱-۲ کندل و مرده»
+    # را حذف می‌کند.
+    if cfg.trigger_max_range_atr > 0:
+        rng_pct = (c.high - c.low) / atr_v if atr_v > 0 else 0.0
+        if rng_pct > cfg.trigger_max_range_atr:
+            return TriggerSignal(0, 0.0, "none",
+                                 f"کندلِ اوج: دامنه {rng_pct:.2f}×ATR > "
+                                 f"{cfg.trigger_max_range_atr:.2f} — ورود نکن (chasing)",
+                                 _r(atr_v / c.close * 100.0 * cfg.edge_atr_mult, 4),
+                                 {"range_atr": _r(rng_pct, 3)})
+
     # --- pullback (دو طرفه؛ جهت در لایهٔ هم‌راستایی تعیین می‌شود) ---
     if "pullback" in modes and ema_v is not None:
         dist = abs(c.close - ema_v)

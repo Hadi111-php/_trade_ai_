@@ -62,6 +62,10 @@ class MTFConfig:
     trigger_vol_z_min: float = 1.2      # تأیید حجم برای شکست
     trigger_atr_period: int = 14
     trigger_entry_modes: List[str] = field(default_factory=lambda: ["pullback", "breakout"])
+    # ضدِ «دویدن دنبال قیمت»: اگر دامنهٔ کندلِ ورود > این × ATR باشد، وارد نشو (0 = خاموش)
+    trigger_max_range_atr: float = 0.0
+    # فیلتر ساعت (UTC) — عمداً پیش‌فرض خاموش؛ فقط برای آزمایش و با هشدار overfit
+    skip_hours_utc: List[int] = field(default_factory=list)
 
     # ── نسخهٔ هم‌راستایی (A/B/C طبق docs/strategy_design.md) ──────────────
     alignment_version: str = "A"        # A: AND سخت‌گیرانه | B: امتیاز وزنی | C: فقط فیلتر رژیم
@@ -86,6 +90,9 @@ class MTFConfig:
     trail_enabled: bool = True
     trail_start_r: float = 1.0          # تریلینگ فقط بعد از +1R سود
     trail_atr_mult: float = 2.0
+    breakeven_at_r: float = 0.0         # >0: بعد از رسیدن به این R، استاپ به نقطهٔ ورود
+    partial_take_r: float = 0.0         # >0: خروج جزئی در این R
+    partial_take_frac: float = 0.5      # چه کسری از پوزیشن جزئی بسته شود
     max_concurrent: int = 1
     cooldown_bars_after_loss: int = 4
     cb_losses: int = 3                  # ضرر متوالی → مدار شکن
@@ -186,6 +193,10 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--score-min", dest="score_min", type=float, default=None)
     g.add_argument("--no-bias", dest="bias_enabled", action="store_false", default=None)
     g.add_argument("--entry-modes", dest="trigger_entry_modes", nargs="+", default=None)
+    g.add_argument("--max-range-atr", dest="trigger_max_range_atr", type=float, default=None,
+                   help="ردِ ورود اگر دامنهٔ کندلِ تریگر > این × ATR باشد (ضدِ climax/chasing، 0=خاموش)")
+    g.add_argument("--skip-hours", dest="skip_hours_utc", type=int, nargs="+", default=None,
+                   help="ساعت‌های UTC که در آن‌ها ورود نکن (مثلاً 0 1 2 13 14)")
 
     g = p.add_argument_group("هزینه")
     g.add_argument("--fee-bps", dest="fee_bps", type=float, default=None)
@@ -202,6 +213,12 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--tp-atr", dest="take_profit_atr_mult", type=float, default=None)
     g.add_argument("--trail-atr", dest="trail_atr_mult", type=float, default=None)
     g.add_argument("--no-trail", dest="trail_enabled", action="store_false", default=None)
+    g.add_argument("--breakeven-r", dest="breakeven_at_r", type=float, default=None,
+                   help="استاپ را بعد از این R به نقطهٔ ورود ببر (0=خاموش)")
+    g.add_argument("--partial-r", dest="partial_take_r", type=float, default=None,
+                   help="خروج جزئی در این R (0=خاموش)")
+    g.add_argument("--partial-frac", dest="partial_take_frac", type=float, default=None,
+                   help="کسر خروج جزئی (پیش‌فرض 0.5)")
     g.add_argument("--max-concurrent", dest="max_concurrent", type=int, default=None)
     g.add_argument("--cooldown", dest="cooldown_bars_after_loss", type=int, default=None)
     g.add_argument("--cb-losses", dest="cb_losses", type=int, default=None)

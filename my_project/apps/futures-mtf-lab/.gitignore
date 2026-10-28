@@ -10,6 +10,7 @@ results/trader_signals_*.jsonl
 results/trader_trades_*.jsonl
 results/*.tmp
 !results/README.md
+!results/diagnosis_report.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
 data/*.csv
