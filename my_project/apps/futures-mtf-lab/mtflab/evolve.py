@@ -35,7 +35,10 @@ from .engine import run_backtest
 # ----------------------------------------------------------------------------
 # فضای جست‌وجو (کوچک و از پیش ثبت‌شده — عمداً کوچک)
 # ----------------------------------------------------------------------------
-TEMPERAMENTS: Tuple[float, ...] = (0.85, 1.0, 1.15)
+#: دامنهٔ τ — عریض‌تر از نسخهٔ اول (۰.۸۵..۱.۱۵) تا اگر رژیمی واقعاً «صبورتر»
+#: یا «محافظه‌کارتر» می‌خواهد، ماشین بتواند پیدایش کند. اگر با این دامنهٔ باز هم
+#: چیزی پیدا نشود، نتیجه «نبود سیگنال» است، نه «کم‌بودن دامنه».
+TEMPERAMENTS: Tuple[float, ...] = (0.75, 0.85, 1.0, 1.15, 1.3)
 
 #: کلیدهایی که τ آن‌ها را به‌طور یکنواخت می‌کشد/جمع می‌کند.
 #: همه‌شان «فاصله» هستند (به ATR یا به R)، پس یک عدد می‌تواند هم‌زمان
@@ -231,7 +234,8 @@ def run_evolve(cfg: MTFConfig,
                rules: Optional[dict] = None,
                placebo: bool = False,
                seed: int = 13,
-               progress: bool = True) -> dict:
+               progress: bool = True,
+               full_baselines: bool = True) -> dict:
     """آزمون walk-forward: در هر گام، روی گذشته فیت می‌کنیم و روی آینده ارزیابی.
 
     `data` = {symbol: {"trigger": [...], "filter": [...], "bias": [...]}}
@@ -244,10 +248,40 @@ def run_evolve(cfg: MTFConfig,
     trig0 = data[symbols[0]]["trigger"]
     chunks = _chunks(trig0, rules["chunk_bars"])
 
+    # کش: در طول حلقه، همان (نماد، پنجره، θ) بارها اجرا می‌شود. بدون کش
+    # زمان اجرا سه‌برابر است و هیچ اطلاعات تازه‌ای هم به‌دست نمی‌آید.
+    def _slice_sym(layers: Dict[str, List[Candle]], t0: int, t1: int):
+        """برش برای یک نماد؛ اگر آن نماد تاریخ کوتاه‌تری دارد، به انتهایش محدود می‌شود.
+
+        نمادها همیشه تاریخ شروع/طول یکسان ندارند (BTC از ۲۰۲۰، ETH از ۲۰۲۱).
+        بدون این محدودسازی، گام‌های آخر برای نماد کوتاه‌تر خالی می‌شوند و
+        میانگین‌ها بی‌صدا خراب می‌شوند.
+        """
+        trig = layers["trigger"]
+        if not trig:
+            return None
+        # پنجره می‌تواند کاملاً قبل از شروع این نماد باشد (مثلاً ETH در ۲۰۲۰)
+        if t1 < trig[0].open_time_ms or t0 > trig[-1].open_time_ms:
+            return None
+        sub = _slice_layers(layers, cfg, t0, min(t1, trig[-1].open_time_ms))
+        if not sub.get("trigger"):
+            return None
+        return sub
+
+    cache: Dict[tuple, dict] = {}
+
+    def _cached(sym: str, sub: Dict[str, List[Candle]], th: dict) -> dict:
+        key = (sym, sub["trigger"][0].open_time_ms, sub["trigger"][-1].open_time_ms,
+               round(float(th["tau"]), 4), th["knob"])
+        if key not in cache:
+            cache[key] = _run_on(cfg, sub, th)
+        return cache[key]
+
     theta = {"tau": 1.0, "knob": "none"}
     version = 1
     events: List[dict] = []
     champion_chunks: List[dict] = []
+    static_window_pnls: List[float] = []
     consecutive_worse = 0
 
     for k in range(1, len(chunks)):
@@ -264,13 +298,18 @@ def run_evolve(cfg: MTFConfig,
         for cand in candidates:
             pooled = {}
             for sym, layers in data.items():
-                sub = _slice_layers(layers, cfg, trig0[fit_i0].open_time_ms, t_fit_end)
-                pooled[sym] = _run_on(cfg, sub, cand)
+                sub = _slice_sym(layers, trig0[fit_i0].open_time_ms, t_fit_end)
+                if sub is None:
+                    continue
+                pooled[sym] = _cached(sym, sub, cand)
             m = _pool_metrics(pooled)
             scores.append({"theta": cand, "n": m["n"], "expectancy": m["expectancy"],
                            "profit_factor": m["profit_factor"]})
 
         eligible = [s for s in scores if s["n"] >= rules["min_fit_trades"]]
+        if not scores:
+            scores = [{"theta": dict(theta), "n": 0, "expectancy": 0.0,
+                       "profit_factor": None}]
         if placebo:
             pick = rng.choice(eligible) if eligible else None
         else:
@@ -283,9 +322,11 @@ def run_evolve(cfg: MTFConfig,
         # ── ۲) ارزیابی روی آیندهٔ دیده‌نشده: قهرمان در برابر چالش‌گر ────────
         champ_by_sym, chal_by_sym = {}, {}
         for sym, layers in data.items():
-            sub = _slice_layers(layers, cfg, t_ev_start, t_ev_end)
-            champ_by_sym[sym] = _run_on(cfg, sub, theta)
-            chal_by_sym[sym] = _run_on(cfg, sub, new_theta)
+            sub = _slice_sym(layers, t_ev_start, t_ev_end)
+            if sub is None:
+                continue
+            champ_by_sym[sym] = _cached(sym, sub, theta)
+            chal_by_sym[sym] = _cached(sym, sub, new_theta)
         champ = _pool_metrics(champ_by_sym)
         chal = _pool_metrics(chal_by_sym)
 
@@ -293,9 +334,16 @@ def run_evolve(cfg: MTFConfig,
         static_theta = {"tau": 1.0, "knob": "none"}
         static_by_sym = {}
         for sym, layers in data.items():
-            sub = _slice_layers(layers, cfg, t_ev_start, t_ev_end)
-            static_by_sym[sym] = _run_on(cfg, sub, static_theta)
+            sub = _slice_sym(layers, t_ev_start, t_ev_end)
+            if sub is None:
+                continue
+            static_by_sym[sym] = _cached(sym, sub, static_theta)
         static_m = _pool_metrics(static_by_sym)
+
+        if champ["n"] == 0 and chal["n"] == 0:
+            if progress:
+                print(f"  گام {k}: ⏭ هیچ نمادی در این بازه داده نداشت")
+            continue
 
         gate = promotion_gate(champ, chal, rules)
         if rules.get("promotion_mode") == "rolling":
@@ -337,6 +385,7 @@ def run_evolve(cfg: MTFConfig,
             "placebo": placebo,
         })
         champion_chunks.append(_clean(champ))
+        static_window_pnls.extend(static_m["_pnls"])
         # اگر قهرمان از نسخهٔ ثابت بدتر بود، زنجیرهٔ «بدتر» را بلند کن
         consecutive_worse = (consecutive_worse + 1
                              if champ["expectancy"] < static_m["expectancy"] else 0)
@@ -350,29 +399,38 @@ def run_evolve(cfg: MTFConfig,
                   f"{chal['expectancy']:+.2f}$ → "
                   f"{'✅ ارتقا' if promoted else ('⏭ رد شد' if skipped else '⛔ رد')}")
 
+    # ── ۲.۵) خط پایهٔ «عادلانه»: ثابت، دقیقاً روی همان پنجره‌های ارزیابی ────
+    # بدون این، مقایسهٔ تطبیق (چند پنجرهٔ آینده) با ثابت (کل داده) گمراه‌کننده است:
+    # دو نسخه ممکن است دوره‌های زمانی متفاوتی را دیده باشند.
+    static_fair = {
+        "n": len(static_window_pnls),
+        "pnl": round(sum(static_window_pnls), 4),
+        "expectancy": (round(_mean(static_window_pnls), 4) if static_window_pnls else None),
+        "_pnls": static_window_pnls,
+    }
+
     # ── ۳) اجرای یکنواخت θ نهایی روی کل داده (برای گزارش) ──────────────────
-    final_full = {}
-    for sym, layers in data.items():
-        final_full[sym] = _clean(_run_on(cfg, layers, theta))
+    # این بخش گران است (چند اجرا روی کل داده)؛ در آزمون‌های چند-بذری خاموش می‌شود.
+    final_full, baselines, oracle = {}, {}, None
+    if full_baselines:
+        for sym, layers in data.items():
+            final_full[sym] = _clean(_run_on(cfg, layers, theta))
 
-    # ── ۴) خط پایه‌ها ────────────────────────────────────────────────────────
-    baselines = {}
-    for name, th in (("static_tau1", {"tau": 1.0, "knob": "none"}),
-                     ("static_pullback", {"tau": 1.0, "knob": "pullback"}),
-                     ("static_climax", {"tau": 1.0, "knob": "climax_1.0"})):
-        pooled = {sym: _run_on(cfg, layers, th) for sym, layers in data.items()}
-        baselines[name] = _clean(_pool_metrics(pooled))
+        for name, th in (("static_tau1", {"tau": 1.0, "knob": "none"}),
+                         ("static_pullback", {"tau": 1.0, "knob": "pullback"}),
+                         ("static_climax", {"tau": 1.0, "knob": "climax_1.0"})):
+            pooled = {sym: _run_on(cfg, layers, th) for sym, layers in data.items()}
+            baselines[name] = _clean(_pool_metrics(pooled))
 
-    # «اوراکل»: بهترین گزینهٔ ثابت روی کل داده — انتخابِ پس‌ازواقع‌بینانه.
-    # فقط به‌عنوان سقفِ خیالی گزارش می‌شود، نه به‌عنوان نتیجه.
-    oracle = None
-    best = -1e18
-    for cand in [{"tau": t, "knob": kn} for t in TEMPERAMENTS for kn, _ in SHALLOW_KNOBS]:
-        pooled = {sym: _run_on(cfg, layers, cand) for sym, layers in data.items()}
-        m = _pool_metrics(pooled)
-        if m["expectancy"] > best:
-            best, oracle = m["expectancy"], dict(cand, expectancy=m["expectancy"],
-                                                 n=m["n"])
+        # «اوراکل»: بهترین گزینهٔ ثابت روی کل داده — انتخابِ پس‌ازواقع‌بینانه.
+        best = -1e18
+        for cand in [{"tau": t, "knob": kn}
+                     for t in TEMPERAMENTS for kn, _ in SHALLOW_KNOBS]:
+            pooled = {sym: _run_on(cfg, layers, cand) for sym, layers in data.items()}
+            m = _pool_metrics(pooled)
+            if m["expectancy"] > best:
+                best, oracle = m["expectancy"], dict(cand, expectancy=m["expectancy"],
+                                                     n=m["n"])
 
     adaptive_pnls = [c["pnl"] for c in champion_chunks if c["n"]]
     result = {
@@ -390,6 +448,7 @@ def run_evolve(cfg: MTFConfig,
         "adaptive_expectancy": round(_mean([x for e in events
                                             for x in e["champion"].get("_pnls", [])]), 4)
         if False else None,
+        "static_same_windows": _clean(static_fair),
         "final_full": final_full,
         "baselines": baselines,
         "oracle_ceiling": oracle,
@@ -409,19 +468,74 @@ def run_evolve(cfg: MTFConfig,
 # ----------------------------------------------------------------------------
 # سنجش صادقانه: تطبیق در برابر بهترین ثابت
 # ----------------------------------------------------------------------------
+def placebo_distribution(real_exp: float, placebo_exps: Sequence[float]) -> dict:
+    """آیا نتیجهٔ واقعی از «توزیع تصادفی» جداست؟
+
+    یک پلاسیبو کافی نیست: ممکن است نفسِ «تغییر دادن پارامتر هر چند وقت» سود بدهد،
+    حتی وقتی انتخاب تصادفی است. پس توزیع می‌سازیم و می‌بینیم نتیجهٔ واقعی چندکِ
+    چندم است. اگر داخل توده بیفتد، هیچ ادعای یادگیری معتبر نیست.
+    """
+    vals = [v for v in placebo_exps if v is not None]
+    if not vals or real_exp is None:
+        return {"ok": False, "note": "نمونهٔ پلاسیبو کافی نیست"}
+    vals_sorted = sorted(vals)
+    below = sum(1 for v in vals if v < real_exp)
+    percentile = round(100.0 * below / len(vals), 1)
+    mean = sum(vals) / len(vals)
+    var = sum((v - mean) ** 2 for v in vals) / max(1, len(vals) - 1)
+    sd = math.sqrt(var)
+    z = round((real_exp - mean) / sd, 3) if sd > 1e-12 else None
+    best_placebo = max(vals)
+    beats_all = real_exp > best_placebo
+    return {
+        "ok": True,
+        "real": round(real_exp, 4),
+        "placebo_n": len(vals),
+        "placebo_mean": round(mean, 4),
+        "placebo_sd": round(sd, 4),
+        "placebo_best": round(best_placebo, 4),
+        "placebo_worst": round(min(vals), 4),
+        "placebo_values": [round(v, 4) for v in vals],
+        "percentile": percentile,
+        "z": z,
+        "beats_all_placebo": bool(beats_all),
+        "note": (f"✅ نتیجهٔ واقعی از همهٔ {len(vals)} پلاسیبو بهتر بود "
+                 f"(صدک {percentile}، z={z})"
+                 if beats_all else
+                 f"❌ نتیجهٔ واقعی داخل توزیع تصادفی افتاد "
+                 f"(صدک {percentile}، z={z}) → ادعای «یادگیری» معتبر نیست"),
+    }
+
+
 def verdict(result: dict) -> dict:
-    """آیا تطبیق چیزی به بهترین «ثابت» اضافه کرد؟"""
+    """آیا تطبیق چیزی به «ثابت» اضافه کرد؟
+
+    مقایسه باید روی **همان پنجره‌های ارزیابی** باشد. اگر تطبیق و ثابت دوره‌های
+    زمانی متفاوتی را دیده باشند، هر اختلافی می‌تواند تقویم باشد نه مهارت.
+    """
     ad = result.get("adaptive_expectancy")
-    best_name, best_exp = None, -1e18
-    for name, b in result.get("baselines", {}).items():
-        if b["n"] >= 10 and b["expectancy"] > best_exp:
-            best_name, best_exp = name, b["expectancy"]
+    fair = result.get("static_same_windows") or {}
+    if fair.get("expectancy") is not None and fair.get("n", 0) >= 10:
+        best_name, best_exp = "static (همان پنجره‌ها)", fair["expectancy"]
+    else:
+        best_name, best_exp = None, -1e18
+        for name, b in result.get("baselines", {}).items():
+            if b["n"] >= 10 and b["expectancy"] > best_exp:
+                best_name, best_exp = name, b["expectancy"]
     if ad is None or best_name is None:
         return {"ok": False, "note": "نمونهٔ کافی برای حکم نیست", "winner": "unknown"}
     diff = ad - best_exp
     # آستانه: تطبیق باید حداقل ۱۰٪ بهتر از بهترین ثابت باشد تا «ارزش» داشته باشد
     threshold = max(0.10, abs(best_exp) * 0.10)
     useful = diff > threshold
+
+    # دروازهٔ دوم: اگر توزیع پلاسیبو داریم، حکم باید با آن هم سازگار باشد.
+    # بدون این، گزارش می‌تواند هم‌زمان بگوید «ارزش داشت» و «از نویز جدا نیست» —
+    # و این بدترین نوع تناقض است.
+    pd_ = result.get("placebo_distribution") or {}
+    beaten_by_noise = bool(pd_.get("ok") and not pd_.get("beats_all_placebo"))
+    if beaten_by_noise:
+        useful = False
     return {
         "ok": True,
         "adaptive_expectancy": ad,
@@ -430,11 +544,16 @@ def verdict(result: dict) -> dict:
         "difference": round(diff, 4),
         "threshold": round(threshold, 4),
         "useful": useful,
+        "beaten_by_noise": beaten_by_noise,
+        "placebo_percentile": (pd_.get("percentile") if pd_.get("ok") else None),
         "winner": "adaptive" if useful else "static",
-        "note": (f"تطبیق {diff:+.2f}$ بهتر از بهترین ثابت (`{best_name}`) بود → ارزش داشت"
-                 if useful else
-                 f"تطبیق {diff:+.2f}$ بهتر از بهترین ثابت (`{best_name}`) نبود "
-                 f"→ ارزش قابل اثباتی نداشت"),
+        "note": ((f"تطبیق {diff:+.2f}$ بهتر از بهترین ثابت (`{best_name}`) بود → ارزش داشت"
+                  ) if useful else
+                 (f"بهتر از ثابت ({diff:+.2f}$) ولی **داخل توزیع پلاسیبو** "
+                  f"(صدک {pd_.get('percentile')}٪) → از نویز جدا نیست"
+                  if beaten_by_noise else
+                  f"تطبیق {diff:+.2f}$ بهتر از بهترین ثابت (`{best_name}`) نبود "
+                  f"→ ارزش قابل اثباتی نداشت")),
     }
 
 
@@ -517,6 +636,12 @@ def render_report(result: dict, out_path: str) -> str:
     else:
         w(f"{v.get('note')}\n")
 
+    if v.get("beaten_by_noise"):
+        w(f"> ⚠️ **تناقض ظاهری که عمداً نشان داده می‌شود:** تطبیق از نسخهٔ ثابت بهتر "
+          f"بود، ولی همین «بهبود» با انتخابِ کاملاً تصادفی هم به‌دست می‌آید "
+          f"(صدک {v.get('placebo_percentile')}٪). پس منبع سود، **مهارت انتخاب** "
+          f"نیست؛ فقط «ثابت نماندن» است.\n")
+
     w("## ۲) روند تصمیم‌ها\n")
     w("| گام | کاندید | پیشنهاد | قهرمان n/exp | چالش‌گر n/exp | دروازه | نتیجه |")
     w("|---:|---:|---|---|---|---|:--:|")
@@ -545,7 +670,38 @@ def render_report(result: dict, out_path: str) -> str:
         w("")
         w(f"**{pc['note']}** (اختلاف: {_f(pc['difference'])}$)\n")
 
-    w("## ۳) خط پایه‌ها (همان داده، همان هزینه)\n")
+    pd_ = result.get("placebo_distribution")
+    if pd_ and pd_.get("ok"):
+        w("## ۲.۲) توزیع پلاسیبو (چندین اجرای تصادفی)\n")
+        w("یک پلاسیبو کافی نیست: نفسِ «هر چند وقت پارامتر را عوض کن» ممکن است "
+          "سود بدهد، حتی با انتخاب تصادفی. پس توزیع می‌سازیم.\n")
+        w("| اجرا | expectancy تطبیقی |")
+        w("|---|---:|")
+        w(f"| **واقعی** | **{_f(pd_['real'])}$** |")
+        for i, v in enumerate(pd_["placebo_values"], 1):
+            w(f"| پلاسیبو #{i} | {_f(v)}$ |")
+        w("")
+        w(f"- میانگین پلاسیبو: `{_f(pd_['placebo_mean'])}$` ± `{pd_['placebo_sd']}` · "
+          f"بهترین پلاسیبو: `{_f(pd_['placebo_best'])}$` · "
+          f"بدترین: `{_f(pd_['placebo_worst'])}$`")
+        w(f"- صدک نتیجهٔ واقعی: **{pd_['percentile']}** · z = `{pd_['z']}`")
+        w(f"- **{pd_['note']}**\n")
+
+    w("## ۳) خط پایه‌ها\n")
+    w("دو جدول: اول مقایسهٔ **عادلانه** (همان پنجره‌های ارزیابی)، بعد نسخه‌های ثابت "
+      "روی کل دوره (فقط برای زمینه).\n")
+    sw = result.get("static_same_windows") or {}
+    if sw.get("n"):
+        w("| نسخه | n | expectancy |")
+        w("|---|---:|---:|")
+        w(f"| تطبیق (میانگین وزنی گام‌ها) | {result.get('adaptive_n')} | "
+          f"{_f(result.get('adaptive_expectancy'))}$ |")
+        w(f"| ثابت روی همان پنجره‌ها | {sw['n']} | {_f(sw.get('expectancy'))}$ |")
+        w("")
+        w("> اگر این دو عدد برابر باشند، یعنی تطبیق هیچ ارتقایی انجام نداده و عملاً "
+          "همان نسخهٔ ثابت است؛ در این حالت «اختلاف» معنایش بی‌عملی است، نه شکست "
+          "یا پیروزی.\n")
+
     w("| نسخه | n | expectancy | PF | افت٪ |")
     w("|---|---:|---:|---:|---:|")
     for name, b in result.get("baselines", {}).items():
@@ -607,6 +763,8 @@ def evolve_command(argv: Optional[List[str]] = None) -> int:
                    help="اجرا روی دادهٔ مصنوعی با تغییر رژیم نوسان (آزمون سلامت ماشین)")
     p.add_argument("--with-placebo", action="store_true",
                    help="هم واقعی و هم پلاسیبو + مقایسه (توصیه‌شده)")
+    p.add_argument("--placebo-seeds", type=int, default=0,
+                   help="N اجرای تصادفی برای ساخت توزیع پلاسیبو (توصیه: ۵ تا ۱۰)")
     p.add_argument("--out", default="results/evolve_report.md")
     p.add_argument("--html", default="results/dash_evolve.html")
     p.add_argument("--json", default="")
@@ -654,6 +812,7 @@ def evolve_command(argv: Optional[List[str]] = None) -> int:
         data[sym] = {"trigger": trig, "filter": filt, "bias": bias}
         print(f"  📦 {sym}: {len(trig)} کندل از {os.path.basename(path)}")
 
+    progress_on = True
     rules = dict(DEFAULT_RULES)
     if known.chunk_bars:
         rules["chunk_bars"] = known.chunk_bars
@@ -664,7 +823,21 @@ def evolve_command(argv: Optional[List[str]] = None) -> int:
     print(f"🧠 حلقهٔ تطبیق{' (پلاسیبو)' if known.placebo else ''} — "
           f"حالت {rules['promotion_mode']} · "
           f"{len(data)} نماد × {rules['chunk_bars']} کندل در هر گام")
-    if known.with_placebo and not known.placebo:
+    if known.placebo_seeds > 0 and not known.placebo:
+        # توزیع کامل: یک اجرای واقعی + N اجرای تصادفی روی همان ماشین
+        res = run_evolve(cfg, data, rules=rules, progress=True)
+        real_exp = res.get("adaptive_expectancy")
+        if progress_on:
+            print(f"🧪 ساخت توزیع پلاسیبو با {known.placebo_seeds} بذر …")
+        vals = []
+        for sd in range(1, known.placebo_seeds + 1):
+            rr = run_evolve(cfg, data, rules=rules, placebo=True, seed=sd,
+                            progress=False, full_baselines=False)
+            vals.append(rr.get("adaptive_expectancy"))
+            print(f"   بذر {sd}: {rr.get('adaptive_expectancy')}")
+        res["placebo_distribution"] = placebo_distribution(real_exp, vals)
+        res["placebo_runs"] = vals
+    elif known.with_placebo and not known.placebo:
         res = run_evolve_with_placebo(cfg, data, rules=rules)
     else:
         res = run_evolve(cfg, data, rules=rules, placebo=known.placebo)

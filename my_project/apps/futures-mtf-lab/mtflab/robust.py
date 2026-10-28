@@ -50,7 +50,8 @@ def _stamp_seed(symbol: str) -> int:
 
 
 def layers_for_symbol(cfg: MTFConfig, symbol: str, source: str,
-                      data_dir: str = "data") -> Tuple[Dict[str, List[Candle]], dict]:
+                      data_dir: str = "data",
+                      path: str = "") -> Tuple[Dict[str, List[Candle]], dict]:
     """سه لایهٔ زمانی یک نماد را بدون هیچ نشتی از آینده آماده می‌کند."""
     meta = {"symbol": symbol, "source": source}
 
@@ -63,12 +64,13 @@ def layers_for_symbol(cfg: MTFConfig, symbol: str, source: str,
         return {"trigger": trig, "filter": filt, "bias": bias}, meta
 
     if source == "csv":
-        if not cfg.csv_path or not os.path.exists(cfg.csv_path):
-            raise RuntimeError(f"CSV پیدا نشد: {cfg.csv_path}")
-        trig = csv_candles(cfg.csv_path)
+        csv_path = path or cfg.csv_path
+        if not csv_path or not os.path.exists(csv_path):
+            raise RuntimeError(f"CSV پیدا نشد: {csv_path}")
+        trig = csv_candles(csv_path)
         filt, _ = resample_up(trig, cfg.tf_trigger, cfg.tf_filter)
         bias, _ = resample_up(trig, cfg.tf_trigger, cfg.tf_bias)
-        meta["path"] = cfg.csv_path
+        meta["path"] = csv_path
         return {"trigger": trig, "filter": filt, "bias": bias}, meta
 
     if source == "bybit":
@@ -135,7 +137,8 @@ def _run_preset(cfg: MTFConfig, layers: Dict[str, List[Candle]], preset: str) ->
 
 def run_robust(cfg: MTFConfig, symbols: Sequence[str], presets: Sequence[str],
                source: str = "csv", n_windows: int = 4,
-               data_dir: str = "data", progress: bool = True) -> dict:
+               data_dir: str = "data", progress: bool = True,
+               paths: Optional[Dict[str, str]] = None) -> dict:
     base = "base"
     presets = list(dict.fromkeys([base] + list(presets)))
 
@@ -149,7 +152,8 @@ def run_robust(cfg: MTFConfig, symbols: Sequence[str], presets: Sequence[str],
         if progress:
             print(f"  🔎 نماد {sym} …")
         try:
-            layers, _meta = layers_for_symbol(cfg, sym, source, data_dir)
+            layers, _meta = layers_for_symbol(cfg, sym, source, data_dir,
+                                              path=(paths or {}).get(sym, ""))
         except Exception as e:                                   # noqa: BLE001
             errors.append(f"{sym}: {e}")
             continue
@@ -330,6 +334,8 @@ def robust_command(argv: Optional[List[str]] = None) -> int:
                                 description="آزمون بقا روی چند نماد و چند پنجره")
     p.add_argument("--source", choices=["csv", "bybit", "synthetic"], default="csv")
     p.add_argument("--symbols", nargs="+", default=["BTCUSDT"])
+    p.add_argument("--csv", action="append", default=[],
+                   help="CSV هر نماد: --csv BTCUSDT=path.csv (قابل تکرار)")
     p.add_argument("--presets", nargs="+", default=["entry_quality"])
     p.add_argument("--windows", type=int, default=4)
     p.add_argument("--data-dir", default="data")
@@ -340,18 +346,28 @@ def robust_command(argv: Optional[List[str]] = None) -> int:
     # منبع دادهٔ همین دستور، حالتِ دادهٔ موتور را تعیین می‌کند
     if "--data" not in rest:
         rest = list(rest) + ["--data", known.source]
+    paths: Dict[str, str] = {}
+    for item in known.csv:
+        if "=" in item:
+            sym, path = item.split("=", 1)
+            paths[sym.strip().upper()] = path.strip()
+    if paths and known.symbols == ["BTCUSDT"]:
+        known.symbols = list(paths)
+    if known.source == "csv" and not paths and "--csv" not in rest:
+        print("❌ در حالت csv باید --csv بدهید (یا --csv SYMBOL=path).")
+        return 2
+    if "--csv" not in rest:
+        rest = list(rest) + ["--csv", (paths or {}).get(known.symbols[0], "")]
     cfg = load_config(rest)
     cfg.verbose = False
     cfg.forensics = False
-    if known.source == "csv" and not cfg.csv_path:
-        print("❌ در حالت csv باید --csv بدهید.")
-        return 2
 
     t0 = time.time()
     print(f"🧪 آزمون بقا · منبع={known.source} · نمادها={len(known.symbols)} · "
           f"پریست‌ها={known.presets} · پنجره‌ها={known.windows}")
     res = run_robust(cfg, known.symbols, known.presets, source=known.source,
-                     n_windows=known.windows, data_dir=known.data_dir)
+                     n_windows=known.windows, data_dir=known.data_dir, paths=paths)
+    res["sources"] = paths
     out = render_robust_report(res, known.out)
     if known.json:
         with open(known.json, "w", encoding="utf-8") as f:

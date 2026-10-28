@@ -13,8 +13,9 @@ from mtflab.config import load_config                                  # noqa: E
 from mtflab.data import resample_up, synthetic_candles                 # noqa: E402
 from mtflab.evolve import (DISTANCE_KEYS, PROMOTION_MODES, SHALLOW_KNOBS,  # noqa: E402
                            apply_temperament, bootstrap_ci, build_shift_data,
-                           _chunks, promotion_gate, run_evolve, shrink,
-                           synthetic_vol_shift, theta_to_cfg, verdict)
+                           _chunks, placebo_distribution, promotion_gate,
+                           run_evolve, shrink, synthetic_vol_shift, theta_to_cfg,
+                           verdict)
 
 BASE_ARGV = ["--data", "synthetic", "--quiet", "--min-edge", "0",
              "--bias-ema", "20"]
@@ -200,11 +201,91 @@ def test_verdict_prefers_static_when_adaptive_is_not_better():
     assert v["useful"] is False
 
 
+def test_verdict_prefers_fair_same_window_baseline():
+    """اگر خط پایهٔ «همان پنجره‌ها» وجود دارد، مقایسه باید با همان باشد، نه کل دوره."""
+    res = {"adaptive_expectancy": -1.0, "adaptive_n": 100,
+           "static_same_windows": {"n": 100, "expectancy": -1.0},
+           "baselines": {"static_tau1": {"n": 500, "expectancy": 5.0}}}
+    v = verdict(res)
+    assert v["best_static"].startswith("static (همان پنجره‌ها)")
+    assert v["best_static_expectancy"] == -1.0
+    assert v["useful"] is False
+    assert abs(v["difference"]) < 1e-9
+
+
+def test_run_evolve_reports_static_on_same_windows():
+    cfg = _cfg(candles=2400)
+    data = build_shift_data(cfg, n=2400)
+    rules = {"chunk_bars": 600, "min_fit_trades": 5, "min_forward_trades": 5}
+    res = run_evolve(cfg, data, rules=rules, progress=False)
+    sw = res["static_same_windows"]
+    assert sw["n"] == sum(e["champion"]["n"] for e in res["events"])
+    assert set(sw) == {"n", "pnl", "expectancy"}
+
+
 def test_verdict_marks_adaptive_useful_only_with_clear_margin():
     res = {"adaptive_expectancy": 2.0, "adaptive_n": 100,
            "baselines": {"static_tau1": {"n": 100, "expectancy": 0.5}}}
     v = verdict(res)
     assert v["winner"] == "adaptive" and v["useful"] is True
+
+
+def test_unequal_symbol_histories_do_not_crash_or_bias():
+    """BTC تاریخ بلندتر از ETH دارد؛ گام‌های آخر نباید برای نماد کوتاه خالی شوند/بشکنند."""
+    cfg = _cfg(candles=2400)
+    data = build_shift_data(cfg, n=2400)
+    # نماد دوم را کوتاه می‌کنیم (مثل ETH در برابر BTC)
+    short = dict(data["SYN-B"])
+    short["trigger"] = short["trigger"][:1500]
+    short["filter"] = [c for c in short["filter"]
+                       if c.open_time_ms <= short["trigger"][-1].open_time_ms]
+    short["bias"] = [c for c in short["bias"]
+                     if c.open_time_ms <= short["trigger"][-1].open_time_ms]
+    data["SYN-B"] = short
+
+    rules = {"chunk_bars": 500, "min_fit_trades": 3, "min_forward_trades": 3}
+    res = run_evolve(cfg, data, rules=rules, progress=False)
+    assert res["decisions"] >= 2
+    # هر گام باید حداقل از یک نماد معامله دیده باشد
+    for e in res["events"]:
+        assert e["champion"]["n"] + e["challenger"]["n"] > 0
+
+
+# ── توزیع پلاسیبو ─────────────────────────────────────────────────────────
+def test_placebo_distribution_detects_real_sitting_inside_noise():
+    vals = [-1.05, -0.61, -1.28, -0.59, -0.86]
+    r = placebo_distribution(-0.71, vals)
+    assert r["ok"] and r["placebo_n"] == 5
+    assert r["beats_all_placebo"] is False
+    assert r["percentile"] == 60.0
+    assert "داخل توزیع" in r["note"] and "معتبر نیست" in r["note"]
+
+
+def test_placebo_distribution_recognises_a_real_edge():
+    vals = [-1.0, -0.8, -1.2, -0.5]
+    r = placebo_distribution(2.0, vals)
+    assert r["beats_all_placebo"] is True
+    assert r["percentile"] == 100.0
+    assert "بهتر بود" in r["note"]
+
+
+def test_placebo_distribution_needs_samples():
+    assert placebo_distribution(None, [])["ok"] is False
+    assert placebo_distribution(1.0, [])["ok"] is False
+
+
+def test_verdict_is_not_allowed_to_contradict_placebo():
+    """حکم نباید هم‌زمان بگوید «ارزش داشت» و «از نویز جدا نیست»."""
+    res = {"adaptive_expectancy": -0.71, "adaptive_n": 1008,
+           "static_same_windows": {"n": 1008, "expectancy": -1.186},
+           "placebo_distribution": placebo_distribution(
+               -0.71, [-1.0565, -0.6074, -1.2786, -0.5949, -0.8564])}
+    v = verdict(res)
+    assert v["winner"] == "static"
+    assert v["useful"] is False
+    assert v["beaten_by_noise"] is True
+    assert v["placebo_percentile"] == 60.0
+    assert "نویز" in v["note"]
 
 
 # ── پیکربندی حالت‌ها ──────────────────────────────────────────────────────
