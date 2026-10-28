@@ -1,0 +1,27 @@
+# ── خروجی‌های تولیدی (بازتولیدپذیر) ────────────────────────────────────────
+# داشبورد نسخه‌دار می‌ماند (برای دیدن روی GitHub)، بقیهٔ خروجی‌ها نه.
+results/*.json
+results/*.jsonl
+results/*.md
+results/mtf_report_*.json
+results/mtf_report_*.md
+results/trader_report_*.json
+results/trader_signals_*.jsonl
+results/trader_trades_*.jsonl
+results/*.tmp
+!results/README.md
+
+# ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
+data/*.csv
+data/raw/
+data/processed/
+!data/.gitkeep
+
+# ── پایتون / سیستم ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.log
+.DS_Store

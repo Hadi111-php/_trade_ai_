@@ -1,0 +1,98 @@
+{
+  "_comment": "کانفیگ پیش‌فرض سناریوی چندتایم‌فریمی. همهٔ مقادیر از اینجا/CLI خوانده می‌شوند؛ هیچ عددی در کد hardcode نیست. به‌جای YAML از JSON استفاده شده تا وابستگی به pyyaml لازم نباشد.",
+
+  "data": {
+    "symbol": "BTCUSDT",
+    "data_mode": "csv",
+    "tf_trigger": "15m",
+    "tf_filter": "1h",
+    "tf_bias": "4h",
+    "days": 365,
+    "data_dir": "data",
+    "bybit_base_url": "https://api.bybit.com",
+    "bybit_category": "linear"
+  },
+
+  "layers": {
+    "bias_enabled": true,
+    "bias_ema_period": 200,
+    "bias_slope_bars": 3,
+    "bias_slope_min_pct": 0.05,
+    "bias_donchian_window": 20,
+    "filter_adx_period": 14,
+    "filter_adx_min": 22.0,
+    "filter_ema_period": 50,
+    "filter_ema_fast_period": 21,
+    "filter_slope_bars": 3,
+    "filter_slope_min_pct": 0.02,
+    "filter_confirm_bars": 2,
+    "trigger_ema_period": 21,
+    "trigger_pullback_atr": 0.7,
+    "trigger_rsi_period": 14,
+    "trigger_rsi_long_max": 60.0,
+    "trigger_rsi_short_min": 40.0,
+    "trigger_donchian_window": 20,
+    "trigger_donchian_pos_long": 0.75,
+    "trigger_donchian_pos_short": 0.25,
+    "trigger_vol_window": 50,
+    "trigger_vol_z_min": 1.2,
+    "trigger_atr_period": 14,
+    "trigger_entry_modes": ["pullback", "breakout"]
+  },
+
+  "alignment": {
+    "alignment_version": "A"
+  },
+
+  "scores": {
+    "score_w_bias": 0.4,
+    "score_w_filter": 0.4,
+    "score_w_trigger": 0.2,
+    "score_min": 0.55
+  },
+
+  "fees": {
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "min_edge_multiplier": 1.5,
+    "edge_atr_mult": 2.0
+  },
+
+  "risk": {
+    "initial_equity": 1000.0,
+    "risk_per_trade_pct": 1.0,
+    "fixed_risk": 0.0,
+    "max_leverage": 5.0,
+    "stop_atr_mult": 1.5,
+    "take_profit_atr_mult": 3.0,
+    "trail_enabled": true,
+    "trail_start_r": 1.0,
+    "trail_atr_mult": 2.0,
+    "max_concurrent": 1,
+    "cooldown_bars_after_loss": 4,
+    "cb_losses": 3,
+    "cb_cooldown_bars": 12,
+    "daily_loss_limit_pct": 5.0,
+    "regime_change_exit": true,
+    "max_holding_bars": 0,
+    "entry_on_next_open": false,
+    "min_confidence": 0.0
+  },
+
+  "validation": {
+    "train_ratio": 0.6,
+    "validation_ratio": 0.2,
+    "out_of_sample_ratio": 0.2,
+    "walk_forward_windows": 6,
+    "walk_forward_reselect": true,
+    "monte_carlo_simulations": 1000,
+    "sensitivity_grid": true
+  },
+
+  "output": {
+    "out_dir": "results",
+    "forensics": true,
+    "verbose": true,
+    "seed": 42
+  }
+}
