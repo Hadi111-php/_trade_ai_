@@ -1,0 +1,57 @@
+# ── خروجی‌های تولیدی (بازتولیدپذیر) ────────────────────────────────────────
+# داشبورد نسخه‌دار می‌ماند (برای دیدن روی GitHub)، بقیهٔ خروجی‌ها نه.
+results/*.json
+results/*.jsonl
+results/*.md
+results/mtf_report_*.json
+results/mtf_report_*.md
+results/trader_report_*.json
+results/trader_signals_*.jsonl
+results/trader_trades_*.jsonl
+results/*.tmp
+!results/README.md
+!results/diagnosis_report.md
+!results/robust_report.md
+!results/evolve_report.md
+!results/evolve_report_rolling.md
+!results/robust_report_5y.md
+!results/robust_report_trend4h.md
+!results/evolve_report_5y_rolling.md
+!results/evolve_report_5y.md
+!results/auto_scan_sample_offline.md
+!results/reaudit_4h.md
+!results/phone_run_20261031.json
+!results/phone_run_20symbols_20261031.json
+!results/autoscan_20symbols_verdict.md
+!results/comove_method.md
+!results/phone_comove_20261031.json
+!results/comove_verdict.md
+!results/comove.md
+!results/phone_verification.md
+
+# ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
+data/*.csv
+data/json/
+data/raw/
+data/processed/
+!data/.gitkeep
+
+# ── پایتون / سیستم ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.log
+.DS_Store
+!results/phone_run_15m_20261031.json
+!results/phone_run_15m_20261031.md
+!results/autoscan_15m_verdict.md
+!results/data_digest_*.json
+!results/data_digest_*.md
+!results/cost_sweep_*.json
+!results/cost_sweep_*.md
+!results/cost_sweep_analysis_fa.md
+# Identify files are generated locally; only the README is tracked
+data_archive/*
+!data_archive/README.md
