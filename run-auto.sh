@@ -6,6 +6,7 @@
 #   bash run-auto.sh --offline             → اجرا روی دادهٔ همراه پروژه (آفلاین)
 #   bash run-auto.sh --probe-only          → فقط تشخیص شبکه
 #   bash run-auto.sh --data-index          → فهرست دادهٔ ذخیره‌شده (بدون شبکه)
+#   bash run-auto.sh --archive [--tag X]   → شناسنامهٔ داده برای بایگانی در گیت
 #   bash run-auto.sh --source json         → تحلیل مجدد روی دادهٔ ذخیره‌شده
 #
 # چرا این فایل هست: ابزار در my_project/apps/futures-mtf-lab است و اگر از ریشهٔ
@@ -54,6 +55,24 @@ for a in "$@"; do case "$a" in --lang|--lang=*) HAS_LANG=1;; esac; done
 if [ "${TERMUX_VERSION:-}" != "" ] && [ "$HAS_LANG" = "0" ]; then
   set -- "$@" --lang en
 fi
+
+# اگر --archive خواسته شد: شناسنامهٔ کوچک داده برای بایگانی در گیت (بدون شبکه)
+for a in "$@"; do
+  if [ "$a" = "--archive" ]; then
+    TAG=""
+    prev=""
+    for b in "$@"; do
+      [ "$prev" = "--tag" ] && TAG="$b"
+      case "$b" in --tag=*) TAG="${b#--tag=}";; esac
+      prev="$b"
+    done
+    if [ -n "$TAG" ]; then
+      exec python3 -m mtflab archive --out-dir data_archive --tag "$TAG"
+    else
+      exec python3 -m mtflab archive --out-dir data_archive
+    fi
+  fi
+done
 
 # اگر --data-index خواسته شد: فهرست بسته‌های دادهٔ ذخیره‌شده (بدون شبکه)
 for a in "$@"; do

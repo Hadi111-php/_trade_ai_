@@ -12,6 +12,7 @@
   comove     تحلیل هم‌حرکتی ارزها: آیا رابطهٔ پنهان و پایدار وجود دارد؟
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
+  archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
 
@@ -135,6 +136,10 @@ def main(argv=None) -> int:
             except Exception as e:                       # noqa: BLE001
                 print(f"   ❌ {tf}: {e}")
         return 0 if ok else 1
+
+    if cmd == "archive":
+        from .archive import archive_command
+        return archive_command(rest)
 
     if cmd in ("data-index", "data"):
         from .store import render_index

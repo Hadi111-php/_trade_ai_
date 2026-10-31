@@ -217,3 +217,66 @@ def test_index_report_says_no_download_is_needed():
     assert "BTCUSDT_15m" in fa and "BTCUSDT_15m" in en
     assert "دانلود" in fa
     assert "downloads nothing" in en
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۴) بایگانی: شناسنامهٔ کوچک از دادهٔ بزرگ
+# ═══════════════════════════════════════════════════════════════════════════
+def test_digest_carries_hashes_ranges_and_samples():
+    from mtflab.archive import build_digest
+    with tempfile.TemporaryDirectory() as td:
+        _make_dataset(td, n=900)
+        d = build_digest(td, tag="t")
+    assert d["n_datasets"] == 1 and d["n_candles"] == 900
+    one = d["datasets"]["BTCUSDT_15m"]
+    assert one["sha256"] and one["content_sha256"] and one["bytes"] > 0
+    assert one["first_ms"] < one["last_ms"]
+    assert len(one["samples"]["head"]) == 3 and len(one["samples"]["tail"]) == 3
+    assert d["problems"] == []
+
+
+def test_monthly_bars_use_utc_month_boundaries():
+    from mtflab.archive import monthly_bars
+    cs = _fresh(synthetic_candles("15m", 15 * 24 * 40, seed=3))   # ~۴۰ روز
+    m = monthly_bars(cs)
+    assert m
+    for row in m:
+        assert len(row) == 6
+    # open هر ماه باید با open اولین کندل همان ماه یکی باشد
+    assert m[0][1] == cs[0].open
+    assert m[-1][4] == cs[-1].close
+
+
+def test_digest_is_small_even_for_a_long_dataset():
+    """شناسنامه باید کوچک بماند: هدف چند صد کیلوبایت برای ۲۰ نماد، نه ۹۰ مگابایت."""
+    from mtflab.archive import build_digest
+    with tempfile.TemporaryDirectory() as td:
+        _make_dataset(td, n=9000)
+        js = json.dumps(build_digest(td), ensure_ascii=False, separators=(",", ":"))
+    assert len(js.encode("utf-8")) < 200_000, len(js)
+
+
+def test_digest_hash_changes_when_the_file_changes():
+    """اگر داده دست‌کاری شود، هش شناسنامه عوض می‌شود — همان چیزی که می‌خواهیم."""
+    from mtflab.archive import build_digest
+    with tempfile.TemporaryDirectory() as td:
+        path, _ = _make_dataset(td, n=600)
+        before = build_digest(td)["datasets"]["BTCUSDT_15m"]["content_sha256"]
+        payload = json.loads(open(path, encoding="utf-8").read())
+        payload["candles"][3][2] = float(payload["candles"][3][2]) + 0.5
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+        after = build_digest(td)["datasets"]["BTCUSDT_15m"]["content_sha256"]
+    assert before != after
+
+
+def test_archive_writes_json_and_markdown_manifest():
+    from mtflab.archive import write_archive
+    with tempfile.TemporaryDirectory() as td:
+        _make_dataset(td, n=600)
+        out = os.path.join(td, "out")
+        rep = write_archive(td, out, tag="x")
+        assert os.path.exists(rep["json"]) and os.path.exists(rep["md"])
+        assert rep["sha256"]
+        md = open(rep["md"], encoding="utf-8").read()
+    assert "BTCUSDT_15m" in md and "UTC" in md
