@@ -66,10 +66,31 @@ for a in "$@"; do
         _prev="$b"
       done
       if [ -n "$_TAG" ]; then
-        exec python3 -m mtflab archive --out-dir data_archive --tag "$_TAG"
+        python3 -m mtflab archive --out-dir data_archive --tag "$_TAG"
       else
-        exec python3 -m mtflab archive --out-dir data_archive
+        python3 -m mtflab archive --out-dir data_archive
       fi
+      _RC=$?
+      # خروجی مستقیم چاپ شد؛ اگر خطا داد، همان‌جا بمانِ (بدون کپی الکی)
+      [ "$_RC" -ne 0 ] && exit "$_RC"
+      # کپی به پوشهٔ Download گوشی (مثل بقیهٔ خروجی‌ها) تا پیدا کردنش ساده باشد
+      _DEST=""
+      for cand in "$HOME/storage/downloads" "/sdcard/Download"; do
+        [ -d "$cand" ] && _DEST="$cand" && break
+      done
+      if [ -n "$_DEST" ]; then
+        for f in data_archive/data_digest_*.json data_archive/data_digest_*.md; do
+          [ -f "$f" ] && cp -f "$f" "$_DEST/" 2>/dev/null
+        done
+        echo ""
+        echo "✅ copied to the phone Download folder: $_DEST"
+        echo "   pick it in your file manager / chat app"
+      else
+        echo ""
+        echo "⚠️  storage access not set up. run once:  termux-setup-storage"
+        echo "   or copy manually from: $(pwd)/data_archive/"
+      fi
+      exit 0
       ;;
     --data-index)
       _L="--lang en"; _D=""

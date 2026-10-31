@@ -372,3 +372,49 @@ def test_other_api_errors_still_fail_fast():
         bp.urllib.request.urlopen = real_open
         bp.time.sleep = real_sleep
     assert calls["n"] == 1
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۷) فایل بایگانی باید به پوشهٔ Download گوشی هم کپی شود
+# ═══════════════════════════════════════════════════════════════════════════
+def test_archive_copies_digest_to_the_phone_download_folder():
+    """کاربر باید فایل را در Download پیدا کند، نه در عمق مخزن.
+
+    یک‌بار همین اتفاق افتاد: شناسنامه ساخته شد ولی کاربر «فایل را پیدا نمی‌کنم».
+    """
+    import shutil
+    import subprocess
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    script = os.path.join(here, "run-auto.sh")
+    if not shutil.which("bash"):
+        return
+    with tempfile.TemporaryDirectory() as td:
+        home = os.path.join(td, "home")
+        dl = os.path.join(home, "storage", "downloads")
+        os.makedirs(dl)
+        # داده را کنار خود اپ می‌گذاریم، چون اسکریپت از پوشهٔ اپ اجرا می‌شود
+        data_dir = os.path.join(here, "data")
+        backup = None
+        made_json = os.path.join(data_dir, "json")
+        created = not os.path.exists(os.path.join(made_json, "btcusdt_15m.json"))
+        try:
+            _make_dataset(data_dir, n=300)
+            env = dict(os.environ, HOME=home)
+            r = subprocess.run(["bash", script, "--archive", "--tag", "unittest"],
+                               cwd=here, env=env, capture_output=True, text=True,
+                               timeout=180)
+            assert r.returncode == 0, r.stdout + r.stderr
+            files = os.listdir(dl)
+            assert any(f.startswith("data_digest_unittest") for f in files), files
+        finally:
+            for f in os.listdir(dl) if os.path.isdir(dl) else []:
+                os.remove(os.path.join(dl, f))
+            if created:
+                try:
+                    os.remove(os.path.join(made_json, "btcusdt_15m.json"))
+                    os.remove(os.path.join(made_json, "_index.json"))
+                except OSError:
+                    pass
+            for f in os.listdir(os.path.join(here, "data_archive")):
+                if f.startswith("data_digest_unittest"):
+                    os.remove(os.path.join(here, "data_archive", f))

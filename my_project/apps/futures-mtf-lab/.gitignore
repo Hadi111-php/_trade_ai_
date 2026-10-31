@@ -49,3 +49,6 @@ venv/
 !results/autoscan_15m_verdict.md
 !results/data_digest_*.json
 !results/data_digest_*.md
+# Identify files are generated locally; only the README is tracked
+data_archive/*
+!data_archive/README.md

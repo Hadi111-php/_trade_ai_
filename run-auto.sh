@@ -82,11 +82,27 @@ for a in "$@"; do
       case "$b" in --tag=*) TAG="${b#--tag=}";; esac
       prev="$b"
     done
+    # exec نمی‌کنیم تا مرحلهٔ «کپی به Download» هم اجرا شود
     if [ -n "$TAG" ]; then
-      exec python3 -m mtflab archive --out-dir data_archive --tag "$TAG"
+      python3 -m mtflab archive --out-dir data_archive --tag "$TAG"
     else
-      exec python3 -m mtflab archive --out-dir data_archive
+      python3 -m mtflab archive --out-dir data_archive
     fi
+    _RC=$?
+    [ "$_RC" -ne 0 ] && exit "$_RC"
+    _DEST=""
+    for cand in "$HOME/storage/downloads" "/sdcard/Download"; do
+      [ -d "$cand" ] && _DEST="$cand" && break
+    done
+    if [ -n "$_DEST" ]; then
+      for f in "$APP"/data_archive/data_digest_*.json "$APP"/data_archive/data_digest_*.md; do
+        [ -f "$f" ] && cp -f "$f" "$_DEST/" 2>/dev/null
+      done
+      echo ""
+      echo "✅ copied to the phone Download folder: $_DEST"
+      echo "   pick it in your file manager / chat app"
+    fi
+    exit 0
   fi
 done
 
