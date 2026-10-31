@@ -57,7 +57,8 @@ fi
 # اگر --probe-only خواسته شد، مستقیم به CLI پایتون بده (اسکریپت اصلی این را ندارد)
 for a in "$@"; do
   if [ "$a" = "--probe-only" ]; then
-    exec python3 -m mtflab autoscan --probe-only
+    # همهٔ آرگومان‌ها پاس می‌شوند تا --lang هم از دست نرود
+    exec python3 -m mtflab autoscan "$@"
   fi
 done
 

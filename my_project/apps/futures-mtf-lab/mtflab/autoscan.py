@@ -170,7 +170,8 @@ def print_diagnosis(report: Sequence[dict]) -> bool:
     any_ok = False
     for r in report:
         mark = "✅" if r["ok"] else "❌"
-        label = "کندل (دانلود واقعی)" if r["kind"] == "kline" else "ساعت سرور  "
+        label = _t("کندل (دانلود واقعی)" if r["kind"] == "kline" else "ساعت سرور  ",
+                   "kline (real download)" if r["kind"] == "kline" else "server time         ")
         print(f"  {mark} {label}  {r['base']}  →  {r['status']} · {r['note']}")
         if r["kind"] == "kline" and r["ok"]:
             any_ok = True
@@ -178,12 +179,17 @@ def print_diagnosis(report: Sequence[dict]) -> bool:
         time_ok = any(r["ok"] and r["kind"] == "time" for r in report)
         print("")
         if time_ok:
-            print("  📌 سرور Bybit پاسخ می‌دهد ولی *دادهٔ کندل* بسته است.")
-            print("     این یعنی IP شما برای معامله/داده مسدود شده، نه اینکه اینترنت قطع باشد.")
-            print("     راه‌حل: VPN/پروکسی، یا --base-url با یک آینه.")
+            print(_t("  📌 سرور Bybit پاسخ می‌دهد ولی *دادهٔ کندل* بسته است.",
+                     "  NOTE: the Bybit server answers but *candle data* is blocked."))
+            print(_t("     این یعنی IP شما برای معامله/داده مسدود شده، نه اینکه اینترنت قطع باشد.",
+                     "     Your IP is blocked for market data (not a general outage)."))
+            print(_t("     راه‌حل: VPN/پروکسی، یا --base-url با یک آینه.",
+                     "     Fix: VPN/proxy, or --base-url with a mirror."))
         else:
-            print("  📌 هیچ پاسخی از Bybit نیامد (فیلتر کامل یا قطعی اینترنت).")
-            print("     راه‌حل: VPN/پروکسی، یا --base-url با یک آینه.")
+            print(_t("  📌 هیچ پاسخی از Bybit نیامد (فیلتر کامل یا قطعی اینترنت).",
+                     "  NOTE: no response from Bybit at all (full block or offline)."))
+            print(_t("     راه‌حل: VPN/پروکسی، یا --base-url با یک آینه.",
+                     "     Fix: VPN/proxy, or --base-url with a mirror."))
     return any_ok
 
 

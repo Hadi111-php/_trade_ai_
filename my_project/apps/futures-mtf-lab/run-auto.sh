@@ -147,7 +147,9 @@ say "" "$(msg "📦 منبع داده: $SRC" "📦 data source: $SRC")"
 
 if [ "$SRC" = "bybit" ]; then
   say "" "$(msg "🌐 بررسی دسترسی به Bybit …" "🌐 checking Bybit access ...")"
-  if ! python3 -m mtflab autoscan --probe-only; then
+  PROBE_LANG=""
+  [ "$LANG_EN" = "1" ] && PROBE_LANG="--lang en"
+  if ! python3 -m mtflab autoscan --probe-only $PROBE_LANG; then
     err "$(msg "به Bybit دسترسی نیست (فیلتر شبکه یا قطعی اینترنت)." "Bybit is not reachable (network filter or offline).")"
     say "" "$(msg "  گزینه‌ها:" "  options:")"
     say "" "$(msg "   ۰) اجرای آفلاین روی دادهٔ همراه پروژه (۲ نماد، ۵ سال):" "   0) run offline on bundled data (2 symbols, 5 years):")"
