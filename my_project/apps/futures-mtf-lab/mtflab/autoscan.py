@@ -254,6 +254,53 @@ def discover_cached_symbols(data_dir: str, tf: str) -> List[str]:
     return out
 
 
+def data_integrity(cs: Sequence[Candle], tf: str, days: int,
+                   now_ms: Optional[int] = None) -> dict:
+    """سلامت دادهٔ یک نماد را می‌سنجد — پیش از آن‌که وارد دروازهٔ پذیرش شود.
+
+    چرا؟ در آزمون ۱۵ دقیقه‌ای، یک دانلودِ ناقص (مثلاً قطع شدن وسط صفحه‌بندی) فقط
+    یعنی «بازهٔ کوتاه‌تر» و در گزارش به‌صورت یک عدد بی‌ضرر دیده می‌شود؛ ولی
+    نتیجه را بی‌صدا خراب می‌کند. همان دستهٔ باگی که در «هم‌حرکتی» یک اجرای کامل
+    را باطل کرد.
+
+    سه چیز بررسی می‌شود:
+    1. **تازگی انتها**: آخرین کندل باید حداکثر ۲ روز عقب‌تر از «الان» باشد.
+    2. **گم‌شدگیِ داخلی**: نسبت کندل‌های غایب بین اولین و آخرین کندل.
+    3. **فاصلهٔ ابتدا**: چقدر دیرتر از بازهٔ درخواستی شروع شده (نماد جوان).
+
+    قاعده: (۱) و (۲) ⇒ دادهٔ نامعتبر (خطا). (۳) طبیعی است (نماد تازه لیست شده)
+    ولی در گزارش با علامت نشان داده می‌شود.
+    """
+    step = tf_to_minutes(tf) * 60_000
+    now = int(now_ms if now_ms is not None else time.time() * 1000)
+    out = {"n": len(cs), "tf": tf, "days": days,
+           "span_days": None, "stale_days": None, "front_gap_days": None,
+           "missing_ratio": 0.0, "ok": False, "reason": ""}
+    if not cs:
+        out["reason"] = "دادهٔ خالی"
+        return out
+
+    first, last = cs[0].open_time_ms, cs[-1].open_time_ms
+    requested_start = now - days * 86_400_000
+    out["span_days"] = round((last - first) / 86_400_000, 2)
+    out["stale_days"] = round((now - last) / 86_400_000, 2)
+    out["front_gap_days"] = round(max(0, first - requested_start) / 86_400_000, 2)
+    expected = (last - first) // step + 1
+    out["expected_n"] = int(expected)
+    out["missing_ratio"] = round(1.0 - len(cs) / expected, 4) if expected > 0 else 0.0
+
+    if out["stale_days"] > 2.0:
+        out["reason"] = (f"داده تازه نیست: آخرین کندل {out['stale_days']:.1f} روز "
+                         f"عقب‌تر از امروز است (احتمالاً دانلود نیمه‌کاره)")
+        return out
+    if out["missing_ratio"] > 0.05:
+        out["reason"] = (f"{out['missing_ratio'] * 100:.1f}٪ کندل‌های بازه غایب‌اند "
+                         f"(پرش در داده یا صفحهٔ ناموفق)")
+        return out
+    out["ok"] = True
+    return out
+
+
 def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
                   base_url: str, refresh: bool = False,
                   progress: bool = True) -> Tuple[List[Candle], dict]:
@@ -272,6 +319,7 @@ def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
                     print(f"    ↺ کش JSON: {os.path.basename(path)} ({len(cs)} کندل)")
                 meta = dict(payload.get("meta") or {})
                 meta["from_cache"] = True
+                meta["integrity"] = data_integrity(cs, tf, days)
                 return cs, meta
         except (OSError, ValueError, json.JSONDecodeError) as e:
             if progress:
@@ -280,7 +328,9 @@ def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
     from .bybit_public import fetch_klines_range
     cs = fetch_klines_range(symbol, tf, days, base_url=base_url,
                             cache_dir=os.path.join(data_dir, "csv"),
-                            progress=False, rate_sleep=0.35)
+                            progress=False, rate_sleep=0.35,
+                            save_csv=False)      # JSON منبع رسمی است؛ CSV دوباره‌کاری است
+    integ = data_integrity(cs, tf, days)
     meta = {
         "symbol": symbol, "tf": tf, "days": days,
         "downloaded_at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
@@ -290,6 +340,7 @@ def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
         "end": (time.strftime("%Y-%m-%d", time.gmtime(cs[-1].open_time_ms / 1000))
                 if cs else None),
         "base_url": base_url,
+        "integrity": integ,
     }
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -445,6 +496,12 @@ GATE = {
     "min_trades": 100,
 }
 
+#: سال «هسته» = سالی که حداقل این تعداد معامله داشته باشد. پنجرهٔ ۲ سالهٔ ۱۵m
+#: سه سال تقویمی می‌سازد که اولی/آخری‌شان چند ماه است؛ آن‌ها معیار «سال مثبت» را
+#: بی‌صدا تحریف می‌کنند. این عدد **دروازه را عوض نمی‌کند** — فقط یک نمای دوم
+#: است که از قبل اعلام می‌شود.
+MIN_YEAR_TRADES = 10
+
 
 def aggregate(per_symbol: Dict[str, Dict[str, dict]], variants: Sequence[str]) -> dict:
     out: Dict[str, dict] = {}
@@ -459,6 +516,15 @@ def aggregate(per_symbol: Dict[str, Dict[str, dict]], variants: Sequence[str]) -
         prof = sum(1 for x in pfs if x > 1.0)
         tot_years = sum(r["years_n"] for _, r in rows)
         pos_years = sum(r["positive_years"] for _, r in rows)
+
+        # نمای دوم: فقط سال‌هایی که نمونهٔ کافی دارند (از پیش اعلام‌شده)
+        core_n = core_pos = 0
+        for _, r in rows:
+            for y in (r.get("per_year") or {}).values():
+                if y.get("n", 0) >= MIN_YEAR_TRADES:
+                    core_n += 1
+                    if y.get("pnl", 0.0) > 0:
+                        core_pos += 1
         total_n = sum(r["n"] for _, r in rows)
         total_pnl = sum(r["pnl"] for _, r in rows)
 
@@ -497,6 +563,9 @@ def aggregate(per_symbol: Dict[str, Dict[str, dict]], variants: Sequence[str]) -
             "positive_years": pos_years,
             "years_n": tot_years,
             "positive_years_pct": round(100.0 * pos_years / max(1, tot_years), 2),
+            "positive_years_core": core_pos,
+            "core_years_n": core_n,
+            "positive_years_core_pct": round(100.0 * core_pos / max(1, core_n), 2),
             "sign_vs_base": sign,
             "checks": checks,
             "survived": bool(all(checks.values())),
@@ -512,7 +581,8 @@ def autoscan(cfg: MTFConfig, symbols: Sequence[str], days: int, tf: str,
              progress: bool = True, stop_on_network_error: bool = True,
              source: str = "bybit", csv_paths: Optional[Dict[str, str]] = None,
              csv_native_tf: str = "1h", base_url: str = "",
-             tf_filter: str = "1d", tf_bias: str = "1d") -> dict:
+             tf_filter: str = "1d", tf_bias: str = "1d",
+             allow_stale: bool = False) -> dict:
     tf_filter = (tf_filter or "").strip()
     tf_bias = (tf_bias or "").strip()
     validate_tf_stack(tf, tf_filter, tf_bias)
@@ -571,12 +641,22 @@ def autoscan(cfg: MTFConfig, symbols: Sequence[str], days: int, tf: str,
             errors.append(f"{sym}: دادهٔ خالی")
             continue
 
+        # سلامت داده: نماد ناسالم وارد دروازه نمی‌شود (نتیجهٔ بی‌صدا خراب نشود)
+        integ = data_integrity(cs, tf, days)
+        if not integ["ok"] and not allow_stale:
+            msg = f"{sym}: دادهٔ نامعتبر — {integ['reason']}"
+            errors.append(msg)
+            if progress:
+                print(f"    ❌ {msg}")
+            continue
+
         layers = build_layers(cs, tf, tf_filter, tf_bias, bias_enabled=True)
         coverage[sym] = {
             "n_trigger": len(cs),
             "years": round(len(cs) * tf_to_minutes(tf) / (365 * 1440), 2),
             "start": time.strftime("%Y-%m-%d", time.gmtime(cs[0].open_time_ms / 1000)),
             "end": time.strftime("%Y-%m-%d", time.gmtime(cs[-1].open_time_ms / 1000)),
+            "integrity": integ,
             "from_cache": meta.get("from_cache", False),
             "fingerprint": data_fingerprint(cs),
             "source": ("CSV محلی" if source == "csv"
@@ -597,6 +677,14 @@ def autoscan(cfg: MTFConfig, symbols: Sequence[str], days: int, tf: str,
                 if progress:
                     print(f"    ❌ {vid}: {e}")
 
+        # زمان‌سنجی زنده: روی گوشی معلوم باشد ادامه دادن چقدر طول می‌کشد
+        el_done = time.time() - t0
+        if progress and el_done > 0:
+            per_sym = el_done / i
+            if i < len(symbols):
+                eta = per_sym * (len(symbols) - i)
+                print(f"    ⏱ {per_sym:.0f}s/symbol → ~{eta / 60:.0f} min left")
+
     agg = aggregate(per_symbol, vids)
     rankings = sorted([(v, a) for v, a in agg.items() if a.get("ok")],
                       key=lambda kv: -(kv[1]["median_expectancy"] or -1e9))
@@ -615,6 +703,7 @@ def autoscan(cfg: MTFConfig, symbols: Sequence[str], days: int, tf: str,
             "max_concurrent": cfg.max_concurrent,
             "initial_equity": cfg.initial_equity,
             "base_url": base_url, "source": source,
+            "allow_stale": bool(allow_stale),
         },
         "gate": GATE,
         "coverage": coverage,
@@ -699,6 +788,21 @@ def render_report(res: dict) -> str:
     w("> «P در برابر پایه» = آزمون علامت: آیا این نسخه در اکثر نمادها از نسخهٔ پایه "
       "بهتر بود؟ عدد کوچک یعنی برتری سیستماتیک، نه شانسی.\n")
 
+    w(f"> **نمای دوم (از پیش اعلام‌شده):** سال‌هایی که کمتر از {MIN_YEAR_TRADES} "
+      f"معامله دارند از شمارش خارج می‌شوند، چون پنجرهٔ کوتاه چند «سال تقویمی "
+      f"ناقص» می‌سازد. این عدد در حکم **دخالت نمی‌کند** — فقط نشان می‌دهد نتیجه "
+      f"به سال‌های ناقص حساس است یا نه.\n")
+    w("| نسخه | سال مثبت (همه) | سال مثبت (هسته) |")
+    w("|---|---:|---:|")
+    for v in res["variants"]:
+        a = agg.get(v["id"]) or {}
+        if not a.get("ok"):
+            continue
+        w(f"| `{v['id']}` | {a['positive_years']}/{a['years_n']} "
+          f"({a['positive_years_pct']}٪) | {a.get('positive_years_core', 0)}/"
+          f"{a.get('core_years_n', 0)} ({a.get('positive_years_core_pct', 0)}٪) |")
+    w("")
+
     # ── ۳) جدول نماد‌به‌نماد برای بهترین نسخه ─────────────────────────────
     vid = res["winner"]
     if vid:
@@ -734,13 +838,25 @@ def render_report(res: dict) -> str:
               "«استراتژی» نیست؛ «شرط‌گذاری روی رژیم» است.\n")
 
     # ── ۵) پوشش داده ─────────────────────────────────────────────────────
-    w("## ۵) پوشش داده\n")
-    w("| نماد | کندل | سال | از | تا | منبع |")
-    w("|---|---:|---:|---|---|---|")
+    w("## ۵) پوشش و سلامت داده\n")
+    w("| نماد | کندل | سال | از | تا | تأخیر انتها (روز) | دیرتر از بازه (روز) | غایب٪ | منبع |")
+    w("|---|---:|---:|---|---|---:|---:|---:|---|")
     for sym, c in cov.items():
+        ig = c.get("integrity") or {}
         w(f"| {sym} | {c['n_trigger']} | {c['years']} | {c['start']} | {c['end']} | "
-          f"{c.get('source', '—')} |")
+          f"{ig.get('stale_days', '—')} | {ig.get('front_gap_days', '—')} | "
+          f"{round(100 * ig.get('missing_ratio', 0.0), 2)} | {c.get('source', '—')} |")
     w("")
+    young = [s2 for s2, c in cov.items()
+             if ((c.get("integrity") or {}).get("front_gap_days") or 0) > 30]
+    if young:
+        w(f"> ℹ️ **{len(young)} نماد تاریخ کوتاه‌تری از بازهٔ درخواستی دارند** "
+          f"(احتمالاً بعد از شروع بازه لیست شده‌اند): {', '.join(young)}. "
+          f"این نقص داده نیست، ولی وزن‌شان کمتر است.\n")
+    bad = [s2 for s2, c in cov.items() if (c.get("integrity") or {}).get("ok") is False]
+    if bad:
+        w(f"> ⚠️ **{len(bad)} نماد دادهٔ ناسالم داشتند** و وارد دروازه نشدند: "
+          f"{', '.join(bad)}.\n")
 
     # ── ۶) محدودیت‌ها ────────────────────────────────────────────────────
     w("## ۶) محدودیت‌ها (که خودمان اعلام می‌کنیم)\n")
@@ -748,6 +864,9 @@ def render_report(res: dict) -> str:
       "نمادهایی که حذف شده‌اند (و بازنده بودند) در نمونه نیستند.")
     w(f"- همهٔ نمادها تاریخ یکسان ندارند؛ پوشش در جدول ۵ آمده است. نمادهای جوان‌تر "
       f"وزن کمتری دارند ولی در شمارش «سال مثبت» حضور دارند.")
+    w(f"- **سال‌های ناقص**: پنجرهٔ {st['days']} روزه چند سال تقویمی را نصفه می‌گیرد. "
+      f"«سال مثبت (هسته)» در بخش ۲ همین را جدا می‌کند تا حکم روی چند ماه دادهٔ "
+      f"پرنوسان سوار نشود.")
     w("- فهرست نمادها ثابت است و با نتایج تغییر داده نشده — تغییری هم داده نشود، "
       "وگرنه دقیقاً همان انتخابی می‌شود که می‌خواستیم از آن پرهیز کنیم.")
     w("- این ابزار PAPER است: هیچ سفارشی به صرافی فرستاده نمی‌شود و اعداد سود واقعی نیستند.\n")
@@ -810,6 +929,20 @@ def render_report_en(res: dict) -> str:
           f"({a['positive_years_pct']}%) | {p_txt} | "
           f"{'PASS' if a['survived'] else 'FAIL'} |")
     w("")
+    w(f"> **Second view (declared up front):** years with fewer than "
+      f"{MIN_YEAR_TRADES} trades are excluded, because a short window creates "
+      f"partial calendar years. This does **not** enter the gate — it only shows "
+      f"whether the verdict hinges on those partial years.\n")
+    w("| variant | pos. years (all) | pos. years (core) |")
+    w("|---|---:|---:|")
+    for v in res["variants"]:
+        a = agg.get(v["id"]) or {}
+        if not a.get("ok"):
+            continue
+        w(f"| `{v['id']}` | {a['positive_years']}/{a['years_n']} "
+          f"({a['positive_years_pct']}%) | {a.get('positive_years_core', 0)}/"
+          f"{a.get('core_years_n', 0)} ({a.get('positive_years_core_pct', 0)}%) |")
+    w("")
 
     vid = res["winner"]
     if vid:
@@ -841,19 +974,34 @@ def render_report_en(res: dict) -> str:
                 w(f"| {sym} | " + " | ".join(cells) + " |")
             w("")
 
-    w("## 5) Data coverage\n")
-    w("| symbol | candles | years | from | to | source |")
-    w("|---|---:|---:|---|---|---|")
+    w("## 5) Coverage and data integrity\n")
+    w("| symbol | candles | years | from | to | stale (days) | late start (days) | missing% | source |")
+    w("|---|---:|---:|---|---|---:|---:|---:|---|")
     for sym, c in cov.items():
+        ig = c.get("integrity") or {}
         w(f"| {sym} | {c['n_trigger']} | {c['years']} | {c['start']} | {c['end']} | "
-          f"{c.get('source', '—')} |")
+          f"{ig.get('stale_days', '—')} | {ig.get('front_gap_days', '—')} | "
+          f"{round(100 * ig.get('missing_ratio', 0.0), 2)} | {c.get('source', '—')} |")
     w("")
+    young = [s2 for s2, c in cov.items()
+             if ((c.get("integrity") or {}).get("front_gap_days") or 0) > 30]
+    if young:
+        w(f"> ℹ️ **{len(young)} symbol(s) have a shorter history than requested** "
+          f"(likely listed after the window start): {', '.join(young)}. "
+          f"Not a data fault, but they carry less weight.\n")
+    bad = [s2 for s2, c in cov.items() if (c.get("integrity") or {}).get("ok") is False]
+    if bad:
+        w(f"> ⚠️ **{len(bad)} symbol(s) had invalid data** and were excluded from "
+          f"the gate: {', '.join(bad)}.\n")
 
     w("## 6) Limitations\n")
     w("- **Survivorship bias**: the symbol list contains coins alive *today*; "
       "delisted (losing) coins are missing.")
     w("- Symbols have different histories; younger ones carry less weight but "
       "still count in 'positive years'.")
+    w(f"- **Partial years**: a {st['days']}-day window splits several calendar "
+      f"years in half. The 'positive years (core)' table in section 2 isolates "
+      f"this so the verdict does not rest on a few months of noisy data.")
     w("- The symbol list is fixed in code and was not tuned after seeing results.")
     w("- PAPER only: no orders are sent and none of these are realized profits.\n")
     w("---\n_Backtest on historical data, not trading advice._")
@@ -893,6 +1041,9 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    help="در حالت csv: --csv SYMBOL=path.csv (قابل تکرار)")
     p.add_argument("--csv-native-tf", default="1h",
                    help="تایم‌فریم فایل‌های CSV (پیش‌فرض 1h)")
+    p.add_argument("--allow-stale", action="store_true",
+                   help="پذیرش دادهٔ قدیمی/ناقص (فقط برای دادهٔ ساختگی یا آفلاین؛ "
+                        "در اجرای واقعی هرگز)")
     p.add_argument("--probe-only", action="store_true",
                    help="فقط بررسی دسترسی شبکه و خروج")
     known, rest = p.parse_known_args(argv if argv is not None else None)
@@ -939,15 +1090,16 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     else:
         symbols = list(DEFAULT_SYMBOLS)
 
+    now_utc = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
     print("=" * 70)
     if _LANG == "en":
         print(f"AUTOSCAN — {len(symbols)} symbols | trigger {known.tf} / "
               f"filter {known.tf_filter} / bias {known.tf_bias} | "
-              f"{known.days} days | source {known.source}")
+              f"{known.days} days | source {known.source} | now {now_utc}")
     else:
         print(f"🔎 اسکن خودکار — {len(symbols)} نماد · تریگر {known.tf} / "
               f"فیلتر {known.tf_filter} / بایاس {known.tf_bias} · "
-              f"{known.days} روز · منبع {known.source}")
+              f"{known.days} روز · منبع {known.source} · الان {now_utc}")
     print("=" * 70)
 
     try:
@@ -955,7 +1107,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                        refresh=known.refresh, source=known.source,
                        csv_paths=csv_paths, csv_native_tf=known.csv_native_tf,
                        base_url=known.base_url,
-                       tf_filter=known.tf_filter, tf_bias=known.tf_bias)
+                       tf_filter=known.tf_filter, tf_bias=known.tf_bias,
+                       allow_stale=known.allow_stale)
     except ValueError as e:
         # ترکیب تایم‌فریم نامعتبر — پیش از دانلود گرفته می‌شود
         print(_t(f"\n❌ ترکیب تایم‌فریم نامعتبر: {e}",

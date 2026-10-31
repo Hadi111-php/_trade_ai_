@@ -346,7 +346,7 @@ def test_english_report_is_ascii_readable():
     }
     out = A.render_report_en(res)
     assert "# Multi-symbol autoscan report" in out
-    assert "## 1) Verdict" in out and "## 5) Data coverage" in out
+    assert "## 1) Verdict" in out and "## 5) Coverage and data integrity" in out
     assert "PASS" in out or "FAIL" in out
     # هیچ حرف فارسی‌ای نباید در گزارش انگلیسی باشد
     assert not re.search(r"[\u0600-\u06FF]", out), "گزارش انگلیسی نباید فارسی داشته باشد"
@@ -515,3 +515,100 @@ def test_validation_error_is_english_when_lang_is_en():
         A.set_lang("fa")
     assert "finer than the trigger" in msg
     assert "ریزتر" not in msg
+
+
+# ── ۹) سلامت داده: دادهٔ ناقص/کهنه نباید بی‌صدا وارد دروازه شود ──────────────
+def _fresh(cs, tf="15m"):
+    """کندل‌ها را طوری جابه‌جا می‌کند که آخرین کندل «الان» باشد (برای تست)."""
+    from dataclasses import replace as _replace
+    import time as _time
+    step = {"15m": 15, "1h": 60, "4h": 240, "1d": 1440}[tf] * 60_000
+    last = cs[-1].open_time_ms
+    shift = ((int(_time.time() * 1000) // step) * step) - last
+    return [_replace(c, open_time_ms=c.open_time_ms + shift) for c in cs]
+
+
+def test_integrity_accepts_fresh_complete_data():
+    """دادهٔ تازه و کامل باید ok باشد."""
+    from mtflab.autoscan import data_integrity
+    cs = _fresh(synthetic_candles("15m", 2000, seed=5))
+    ig = data_integrity(cs, "15m", 30)
+    assert ig["ok"] is True, ig
+    assert ig["missing_ratio"] < 0.01
+    assert ig["front_gap_days"] > 0      # ۲۰ روز داده داریم، بازه ۳۰ روز بود
+
+
+def test_integrity_rejects_a_stale_tail():
+    """اگر آخرین کندل قدیمی باشد (دانلود نیمه‌کاره) باید رد شود."""
+    from mtflab.autoscan import data_integrity
+    cs = synthetic_candles("15m", 2000, seed=5)      # تاریخ ثابت در گذشته
+    ig = data_integrity(cs, "15m", 30)
+    assert ig["ok"] is False
+    assert "تازه نیست" in ig["reason"]
+
+
+def test_integrity_rejects_missing_candles_in_the_middle():
+    """پرش ۲۰٪ در وسط داده ⇒ رد؛ چون یعنی صفحهٔ ناموفق یا دادهٔ ناقص."""
+    from mtflab.autoscan import data_integrity
+    cs = _fresh(synthetic_candles("15m", 2000, seed=5))
+    holed = cs[:800] + cs[1200:]                     # ۴۰۰ کندل وسط حذف شد
+    ig = data_integrity(holed, "15m", 30)
+    assert ig["ok"] is False
+    assert "غایب" in ig["reason"]
+
+
+def test_integrity_accepts_a_young_symbol_but_reports_the_gap():
+    """نماد تازه‌لیست‌شده نقص داده نیست؛ باید ok باشد ولی فاصله گزارش شود."""
+    from mtflab.autoscan import data_integrity
+    cs = _fresh(synthetic_candles("15m", 500, seed=5))   # ~۵ روز داده
+    ig = data_integrity(cs, "15m", 730)                  # بازه ۲ سال
+    assert ig["ok"] is True
+    assert ig["front_gap_days"] > 700
+
+
+def test_autoscan_excludes_invalid_data_unless_explicitly_allowed():
+    """دادهٔ کهنه نباید وارد نتیجه شود — مگر با --allow-stale (که در گزارش هم می‌آید)."""
+    from mtflab.autoscan import autoscan
+    cs = synthetic_candles("15m", 3000, seed=9)          # کهنه
+    with tempfile.TemporaryDirectory() as td:
+        os.makedirs(os.path.join(td, "json"), exist_ok=True)
+        with open(os.path.join(td, "json", "btcusdt_15m.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(candles_to_json(cs, {"symbol": "BTCUSDT", "tf": "15m"}), f)
+        cfg = load_config(["--data", "synthetic", "--quiet"])
+
+        res = autoscan(cfg, ["BTCUSDT"], 30, "15m", td, source="json",
+                       progress=False)
+        assert res["per_symbol"] == {}
+        assert any("نامعتبر" in e for e in res["errors"]), res["errors"]
+
+        res2 = autoscan(cfg, ["BTCUSDT"], 30, "15m", td, source="json",
+                        progress=False, allow_stale=True)
+        assert "BTCUSDT" in res2["per_symbol"]
+        assert res2["settings"]["allow_stale"] is True
+        ig = res2["coverage"]["BTCUSDT"]["integrity"]
+        assert ig["ok"] is False          # در گزارش هم دیده می‌شود
+
+
+def test_csv_cache_of_downloads_is_optional():
+    """autoscan نباید CSV دوم بسازد؛ JSON منبع رسمی است (صرفه‌جویی فضای گوشی)."""
+    import inspect
+    from mtflab.bybit_public import fetch_klines_range
+    sig = inspect.signature(fetch_klines_range)
+    assert sig.parameters["save_csv"].default is True   # رفتار قبلی برای بقیه
+
+
+def test_core_year_view_is_declared_and_separate_from_the_gate():
+    """نمای «سال هسته» باید وجود داشته باشد ولی در survived دخالت نکند."""
+    from mtflab.autoscan import MIN_YEAR_TRADES, aggregate
+    per = {"A": {"base": {"n": 40, "profit_factor": 1.2, "expectancy": 1.0,
+                          "pnl": 10.0, "years_n": 3, "positive_years": 3,
+                          "per_year": {"2024": {"pnl": 1.0, "n": 2},
+                                       "2025": {"pnl": 5.0, "n": 25},
+                                       "2026": {"pnl": 4.0, "n": 13}}}}}
+    a = aggregate(per, ["base"])["base"]
+    assert a["years_n"] == 3 and a["positive_years"] == 3
+    assert a["core_years_n"] == 2 and a["positive_years_core"] == 2
+    assert MIN_YEAR_TRADES == 10
+    # دروازه همان قاعدهٔ قبلی است
+    assert a["checks"]["positive_years"] is True

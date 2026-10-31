@@ -115,21 +115,28 @@ def fetch_klines_range(symbol: str, timeframe: str, days: int = 365,
                        cache_dir: str = "data", use_cache: bool = True,
                        end_time_ms: Optional[int] = None,
                        rate_sleep: float = 0.25,
-                       progress: bool = True) -> List[Candle]:
+                       progress: bool = True,
+                       save_csv: bool = True) -> List[Candle]:
     """دریافت `days` روز گذشته با صفحه‌بندی (۱۰۰۰ کندل در هر درخواست) + کش CSV.
 
     الگوریتم صفحه‌بندی: از انتها به ابتدا (`end` را عقب می‌بریم) چون پارامتر
     `end` در Bybit قابل اتکاتر از ترکیب start/limit برای پوشش کامل است.
+
+    :param save_csv: اگر False، نسخهٔ CSV نوشته نمی‌شود. autoscan این را False
+        می‌دهد چون خودش JSON را ذخیره می‌کند؛ نسخهٔ دوم فقط دو برابر فضا می‌برد
+        (روی ۲۰ نماد ۱۵ دقیقه‌ای یعنی ~۱۰۰ مگابایت اضافه روی گوشی).
     """
     step = _timeframe_to_ms(timeframe)
     end = int(end_time_ms if end_time_ms is not None else time.time() * 1000)
     end = (end // step) * step                      # مرز دقیق تایم‌فریم
     start = end - days * 86_400_000
 
-    os.makedirs(cache_dir or ".", exist_ok=True)
-    cache_path = os.path.join(cache_dir or ".",
-                              f"{symbol.lower()}_{timeframe}_{days}d_bybit.csv")
-    if use_cache and os.path.exists(cache_path):
+    cache_path = (os.path.join(cache_dir or ".",
+                               f"{symbol.lower()}_{timeframe}_{days}d_bybit.csv")
+                  if save_csv or (use_cache and cache_dir) else "")
+    if save_csv:
+        os.makedirs(cache_dir or ".", exist_ok=True)
+    if use_cache and cache_path and os.path.exists(cache_path):
         cs = csv_candles(cache_path)
         if cs and cs[-1].open_time_ms + step >= end - step:
             if progress:
@@ -166,7 +173,7 @@ def fetch_klines_range(symbol: str, timeframe: str, days: int = 365,
             continue
         seen.add(c.open_time_ms)
         out.append(c)
-    if out:
+    if out and save_csv and cache_path:
         write_csv(cache_path, out)
         if progress:
             print(f"  ✅ {len(out)} کندل {timeframe} ذخیره شد: {cache_path}")
