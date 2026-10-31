@@ -5,6 +5,7 @@
 #   bash run-auto.sh                       → اسکن ۲۰ نمادی (نیاز به اینترنت)
 #   bash run-auto.sh --offline             → اجرا روی دادهٔ همراه پروژه (آفلاین)
 #   bash run-auto.sh --probe-only          → فقط تشخیص شبکه
+#   bash run-auto.sh --data-index          → فهرست دادهٔ ذخیره‌شده (بدون شبکه)
 #   bash run-auto.sh --source json         → تحلیل مجدد روی دادهٔ ذخیره‌شده
 #
 # چرا این فایل هست: ابزار در my_project/apps/futures-mtf-lab است و اگر از ریشهٔ
@@ -53,6 +54,21 @@ for a in "$@"; do case "$a" in --lang|--lang=*) HAS_LANG=1;; esac; done
 if [ "${TERMUX_VERSION:-}" != "" ] && [ "$HAS_LANG" = "0" ]; then
   set -- "$@" --lang en
 fi
+
+# اگر --data-index خواسته شد: فهرست بسته‌های دادهٔ ذخیره‌شده (بدون شبکه)
+for a in "$@"; do
+  if [ "$a" = "--data-index" ]; then
+    LANG_ARG="--lang en"
+    DEEP=""
+    for b in "$@"; do
+      case "$b" in
+        --lang=fa|--fa) LANG_ARG="--lang fa" ;;
+        --deep) DEEP="--deep" ;;
+      esac
+    done
+    exec python3 -m mtflab data-index --reindex $LANG_ARG $DEEP
+  fi
+done
 
 # اگر --probe-only خواسته شد، مستقیم به CLI پایتون بده (اسکریپت اصلی این را ندارد)
 for a in "$@"; do

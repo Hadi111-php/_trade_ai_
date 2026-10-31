@@ -104,8 +104,28 @@ class Candle:
                 "l": self.low, "c": self.close, "v": self.volume}
 
 
+#: جداکنندهٔ واحد زمان کندل. اگر ورودی ثانیه/میکرو/نانو باشد، بی‌صدا
+#: «۱۹۷۰» نمی‌شود؛ به میلی‌ثانیه نرمال می‌شود. (باگ کلاسیک: CSV ثانیه‌ای)
+_MS_MIN, _MS_MAX = 10 ** 11, 10 ** 14
+
+
+def normalize_epoch_ms(ts) -> int:
+    """هر واحدی (s/ms/µs/ns) را به میلی‌ثانیهٔ یونیکس تبدیل می‌کند."""
+    x = int(float(ts))
+    if x < 0:
+        raise ValueError(f"زمان منفی نامعتبر است: {ts!r}")
+    if x >= _MS_MAX * 100:          # نانوثانیه
+        return x // 1_000_000
+    if x >= _MS_MAX:                # میکروثانیه
+        return x // 1_000
+    if x < _MS_MIN:                 # ثانیه
+        return x * 1000
+    return x
+
+
 def candle_from_row(ts, o, h, l, c, v=0.0) -> Candle:
-    return Candle(int(float(ts)), float(o), float(h), float(l), float(c), float(v or 0.0))
+    return Candle(normalize_epoch_ms(ts), float(o), float(h), float(l),
+                  float(c), float(v or 0.0))
 
 
 # ----------------------------------------------------------------------------
@@ -144,6 +164,16 @@ def csv_candles(path: str) -> List[Candle]:
                 idx["volume"] = i
     if "ts" not in idx:
         idx = {"ts": 0, "open": 1, "high": 2, "low": 3, "close": 4, "volume": 5}
+
+    # ستون زمان باید عدد یونیکس باشد. تاریخ متنی (مثل "2024-01-01") منطقهٔ زمانی
+    # ندارد؛ اگر بی‌صدا رد شود، کاربر «CSV خالی» می‌بیند و علت را نمی‌فهمد.
+    if rows[start:]:
+        _probe = rows[start][idx["ts"]].strip()
+        if _probe and not _probe.replace(".", "", 1).replace("-", "", 1).isdigit():
+            raise ValueError(
+                f"ستون زمان باید عدد یونیکس باشد (ثانیه یا میلی‌ثانیه)، نه تاریخ متنی: "
+                f"{_probe[:24]!r} — تاریخ متنی منطقهٔ زمانی ندارد و آزمون را "
+                f"به‌طور پنهان جابه‌جا می‌کند.")
 
     out: List[Candle] = []
     for r in rows[start:]:

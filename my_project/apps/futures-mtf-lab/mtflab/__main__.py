@@ -12,6 +12,7 @@
   comove     تحلیل هم‌حرکتی ارزها: آیا رابطهٔ پنهان و پایدار وجود دارد؟
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
+  data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
 
 نمونه‌ها:
@@ -134,6 +135,33 @@ def main(argv=None) -> int:
             except Exception as e:                       # noqa: BLE001
                 print(f"   ❌ {tf}: {e}")
         return 0 if ok else 1
+
+    if cmd in ("data-index", "data"):
+        from .store import render_index
+        import argparse as _ap
+        ap = _ap.ArgumentParser(
+            prog="mtflab data-index",
+            description="فهرست بسته‌های دادهٔ ذخیره‌شدهٔ محلی (بدون نیاز به شبکه)")
+        ap.add_argument("--data-dir", default="data")
+        ap.add_argument("--lang", choices=["fa", "en"], default="fa")
+        ap.add_argument("--deep", action="store_true",
+                        help="بازخوانی فایل‌ها و مقایسهٔ هش محتوا (کندتر)")
+        ap.add_argument("--reindex", action="store_true",
+                        help="اسکن فایل‌های روی دیسک و ثبت‌شان در فهرست")
+        a = ap.parse_args(rest)
+        if a.reindex:
+            from .store import reindex
+            rep = reindex(a.data_dir)
+            if a.lang == "en":
+                print(f"indexed: {rep['added']} · skipped: {rep['skipped']}"
+                      + (f" · errors: {len(rep['errors'])}" if rep["errors"] else ""))
+            else:
+                print(f"ثبت شد: {rep['added']} · رد شد: {rep['skipped']}"
+                      + (f" · خطا: {len(rep['errors'])}" if rep["errors"] else ""))
+            for e in rep["errors"][:5]:
+                print(f"  ⚠️ {e}")
+        print(render_index(a.data_dir, lang=a.lang, deep=a.deep), end="")
+        return 0
 
     if cmd == "dashboard":
         import argparse

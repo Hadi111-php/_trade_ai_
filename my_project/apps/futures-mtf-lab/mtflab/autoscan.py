@@ -313,14 +313,27 @@ def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
             with open(path, encoding="utf-8") as f:
                 payload = json.load(f)
             cs = candles_from_json(payload)
-            # کش فقط وقتی معتبر است که تا نزدیک «الان» داده داشته باشد
-            if cs and cs[-1].open_time_ms + step >= int(time.time() * 1000) - 3 * 86_400_000:
+            meta = dict(payload.get("meta") or {})
+            # کش فقط وقتی معتبر است که (۱) تا نزدیک «الان» داده داشته باشد و
+            # (۲) **دست‌کم به اندازهٔ بازهٔ درخواستی** باشد. بدون شرط دوم، اجرای
+            # دوباره با --days بیشتر، بی‌صدا دادهٔ کوتاه‌تر را به‌کار می‌برد و
+            # گزارش «بازهٔ ۱۴۶۰ روز» روی ۷۳۰ روز داده می‌نویسد.
+            cached_days = int(meta.get("days") or 0)
+            fresh = (cs and cs[-1].open_time_ms + step
+                     >= int(time.time() * 1000) - 3 * 86_400_000)
+            long_enough = cached_days >= days
+            if fresh and long_enough:
                 if progress:
-                    print(f"    ↺ کش JSON: {os.path.basename(path)} ({len(cs)} کندل)")
-                meta = dict(payload.get("meta") or {})
+                    print(f"    ↺ کش JSON: {os.path.basename(path)} ({len(cs)} کندل، "
+                          f"{cached_days} روز)")
                 meta["from_cache"] = True
                 meta["integrity"] = data_integrity(cs, tf, days)
                 return cs, meta
+            if progress and cs:
+                why = ("کش کوتاه‌تر از بازهٔ درخواستی است "
+                       f"({cached_days} < {days} روز)" if not long_enough
+                       else "کش قدیمی است (به امروز نمی‌رسد)")
+                print(f"    ♻️ {why} — دوباره دانلود می‌شود")
         except (OSError, ValueError, json.JSONDecodeError) as e:
             if progress:
                 print(f"    ⚠️ کش خراب ({e}) — دوباره دانلود می‌شود")
@@ -347,6 +360,14 @@ def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
         json.dump(candles_to_json(cs, meta), f, ensure_ascii=False, separators=(",", ":"))
     if progress:
         print(f"    ✅ {len(cs)} کندل → {path}")
+
+    # ثبت در فهرست انبار: از این به بعد هیچ ابزاری لازم نیست دوباره دانلود کند
+    try:
+        from .store import build_entry, upsert
+        upsert(data_dir, build_entry(symbol, tf, path, meta, cs, integ))
+    except Exception as e:                                  # noqa: BLE001
+        if progress:
+            print(f"    ⚠️ ثبت در فهرست داده انجام نشد ({e})")
     return cs, meta
 
 
