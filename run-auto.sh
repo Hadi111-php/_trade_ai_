@@ -108,19 +108,13 @@ for a in "$@"; do
   fi
 done
 
-# اگر --sweep خواسته شد: حساسیت هزینه روی دادهٔ ذخیره‌شده (بدون دانلود)
-# همهٔ آرگومان‌ها همان‌طور به `mtflab sweep` می‌روند؛ فقط --sweep حذف می‌شود.
+# اگر --sweep خواسته شد: کل کار را به لانچر خودِ اپ بسپار.
+# چرا: یک‌بار اینجا مستقیم `python3 -m mtflab sweep` صدا زده شد و چون با `exec`
+# بود، مرحلهٔ کپی به پوشهٔ Download گوشی اجرا نشد — فایل‌ها ساخته شدند ولی
+# کاربر پیدایشان نکرد. کپی و پیام‌ها فقط در یک جا زندگی می‌کنند: لانچر اپ.
 for a in "$@"; do
   if [ "$a" = "--sweep" ]; then
-    _SW=()
-    for b in "$@"; do
-      [ "$b" = "--sweep" ] && continue
-      _SW+=("$b")
-    done
-    _HAS_LANG=0
-    for b in "${_SW[@]+"${_SW[@]}"}"; do case "$b" in --lang*) _HAS_LANG=1;; esac; done
-    [ "$_HAS_LANG" = "0" ] && _SW+=("--lang" "en")
-    exec python3 -m mtflab sweep --out-dir results "${_SW[@]+"${_SW[@]}"}"
+    exec bash "$APP/run-auto.sh" "$@"
   fi
 done
 

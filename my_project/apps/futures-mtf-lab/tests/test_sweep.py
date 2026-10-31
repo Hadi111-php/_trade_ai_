@@ -266,3 +266,93 @@ def test_verdict_flags_mirage_when_only_all_maker_works():
     v = verdict(_summary(taker=0.98, maker_tp=0.99, all_maker=1.04,
                          zero=1.05), lang="fa")
     assert "سراب" in v or "مرزی" in v
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۷) فایل‌ها باید به پوشهٔ Download برسند — نه گم شوند در عمق مخزن
+# ═══════════════════════════════════════════════════════════════════════════
+def test_root_launcher_delegates_sweep_to_the_app_launcher():
+    """لانچر ریشه نباید خودش `mtflab sweep` را صدا بزند.
+
+    یک‌بار همین کار را کرد و چون با `exec` بود، مرحلهٔ کپی به Download اجرا نشد؛
+    فایل ساخته شد ولی کاربر گفت «تولید نشد».
+    """
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))))))
+    script = os.path.join(root, "run-auto.sh")
+    if not os.path.exists(script):
+        return
+    text = open(script, encoding="utf-8").read()
+    assert '"--sweep"' in text
+    code = "\n".join(ln for ln in text.splitlines()
+                     if not ln.lstrip().startswith("#"))
+    assert "mtflab sweep" not in code, (
+        "لانچر ریشه نباید مستقیم sweep را اجرا کند؛ باید به لانچر اپ بسپارد "
+        "تا کپی به Download انجام شود")
+    assert 'exec bash "$APP/run-auto.sh" "$@"' in text
+
+
+def test_delivery_is_handled_in_python_not_in_the_shell():
+    """کپی باید جایی باشد که مسیر واقعی خروجی معلوم است.
+
+    اسکریپت شل مسیر را حدس می‌زد (`results/cost_sweep*`)؛ با `--out-dir` کپی
+    بی‌صدا شکست می‌خورد و کاربر فکر می‌کرد فایل تولید نشده.
+    """
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    text = open(os.path.join(here, "run-auto.sh"), encoding="utf-8").read()
+    assert "--sweep" in text
+    # فقط همان بلوکِ --sweep را نگاه کن؛ بقیهٔ اسکریپت برای دستورهای دیگر هم
+    # کپی به Download دارد و اشکالی ندارد.
+    block = text[text.index("    --sweep)"):]
+    block = block[:block.index("exit $?") + 7]
+    assert "mtflab sweep" in block
+    assert "storage/downloads" not in block, (
+        "کپی به Download باید در mtflab.sweep.deliver باشد، نه در اسکریپت")
+
+    import inspect
+    from mtflab import sweep as sw
+    src = inspect.getsource(sw.deliver)
+    assert "storage" in src and "shutil.copy2" in src
+
+
+def test_sweep_run_end_to_end_and_file_delivery():
+    """اجرای واقعی اسکریپت: فایل ساخته می‌شود و به Download هم می‌رسد."""
+    import json as _json
+    import shutil
+    import subprocess
+    import tempfile
+
+    if not shutil.which("bash"):
+        return
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    script = os.path.join(here, "run-auto.sh")
+    from mtflab.autoscan import candles_to_json
+    from mtflab.data import synthetic_candles
+
+    with tempfile.TemporaryDirectory() as td:
+        data_dir = os.path.join(td, "data")
+        os.makedirs(os.path.join(data_dir, "json"))
+        for i, sym in enumerate(["AAAUSDT", "BBBUSDT"]):
+            cs = synthetic_candles("4h", 3000, seed=70 + i)
+            with open(os.path.join(data_dir, "json", f"{sym.lower()}_4h.json"),
+                      "w", encoding="utf-8") as f:
+                _json.dump(candles_to_json(cs, {"symbol": sym, "tf": "4h",
+                                                "days": 400}), f)
+        home = os.path.join(td, "home")
+        dl = os.path.join(home, "storage", "downloads")
+        os.makedirs(dl)
+        out = os.path.join(td, "out")
+        env = dict(os.environ, HOME=home)
+        # `bash` صریح: shebang اسکریپت مسیر Termux است و روی لینوکس اجرا نمی‌شود
+        r = subprocess.run(["bash", script, "--sweep", "--tf", "4h",
+                            "--variants", "base",
+                            "--data-dir", data_dir, "--out-dir", out,
+                            "--tag", "unittest", "--lang", "en"],
+                           cwd=here, env=env, capture_output=True, text=True,
+                           timeout=300)
+        assert r.returncode == 0, (r.stdout + r.stderr)[-1500:]
+        made = [f for f in os.listdir(out) if f.startswith("cost_sweep_unittest")]
+        assert sorted(made) == ["cost_sweep_unittest.json",
+                                "cost_sweep_unittest.md"], made
+        got = [f for f in os.listdir(dl) if f.startswith("cost_sweep_unittest")]
+        assert len(got) == 2, ("فایل به Download نرسید", got, r.stdout[-800:])

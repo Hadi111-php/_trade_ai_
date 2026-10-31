@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import statistics as st
 import time
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -529,6 +530,51 @@ def render_report(res: dict, lang: str = "fa") -> str:
 
 
 # ---------------------------------------------------------------------------
+# تحویل فایل به گوشی
+# ---------------------------------------------------------------------------
+def download_dir() -> Optional[str]:
+    """پوشهٔ Download گوشی، اگر در دسترس باشد (Termux)."""
+    home = os.path.expanduser("~")
+    for cand in (os.path.join(home, "storage", "downloads"), "/sdcard/Download"):
+        if os.path.isdir(cand):
+            return cand
+    return None
+
+
+def deliver(paths: Sequence[str], out_dir: str, lang: str = "fa") -> None:
+    """فایل‌ها را به Download کپی می‌کند و مسیرشان را صریح چاپ می‌کند.
+
+    چرا داخل پایتون و نه در اسکریپت شل: اسکریپت مسیر خروجی را حدس می‌زد
+    (`results/cost_sweep*`)، پس اگر کاربر `--out-dir` می‌داد، کپی بی‌صدا شکست
+    می‌خورد. اینجا مسیر واقعیِ همان فایل‌هایی که نوشتیم معلوم است.
+    """
+    from .autoscan import _t
+
+    dest = download_dir()
+    copied = 0
+    if dest:
+        for p_ in paths:
+            try:
+                shutil.copy2(p_, dest)
+                copied += 1
+            except OSError:
+                pass
+    print("")
+    if copied:
+        print(_t(f"✅ کپی شد به پوشهٔ Download گوشی: {dest}/",
+                 f"✅ copied to the phone Download folder: {dest}/"))
+        print(_t("   از همان‌جا در فایل‌منیجر یا چت انتخاب و ارسال کنید.",
+                 "   pick them there in your file manager / chat app."))
+        return
+    print(_t("⚠️  پوشهٔ Download در دسترس نبود — فایل‌ها اینجا هستند:",
+             "⚠️  Download folder not accessible — the files are here:"))
+    print(f"   {os.path.abspath(out_dir)}/")
+    print(_t("   یک‌بار `termux-setup-storage` را بزنید، یا همین حالا کپی کنید:",
+             "   run `termux-setup-storage` once, or copy them right now:"))
+    print(f"   cp {os.path.abspath(out_dir)}/cost_sweep*.\* ~/storage/downloads/")
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 def sweep_command(argv: Optional[List[str]] = None) -> int:
@@ -614,7 +660,10 @@ def sweep_command(argv: Optional[List[str]] = None) -> int:
                      f"{be.get('never', 0)} negative even at zero"))
         print("  " + verdict(d, lang=a.lang))
 
-    print(f"\n📄 {md}\n🗂 {js}")
+    # مسیر **مطلق**: کاربر نباید حدس بزند فایل کجاست. یک‌بار مسیر نسبی چاپ شد
+    # و فایل‌ها «تولید نشده» به نظر رسیدند.
+    print(f"\n📄 {os.path.abspath(md)}\n🗂 {os.path.abspath(js)}")
     print("=" * 70)
     print(_t("👉 این دو فایل را بفرستید.", "👉 send these two files back."))
+    deliver([md, js], a.out_dir, lang=a.lang)
     return 0

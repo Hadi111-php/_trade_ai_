@@ -101,8 +101,9 @@ for a in "$@"; do
       exec python3 -m mtflab data-index --reindex $_L $_D
       ;;
     --sweep)
-      # تحلیل هزینه روی دادهٔ ذخیره‌شده — مثل بقیهٔ ابزارها، بدون شبکه.
-      # همهٔ آرگومان‌ها به `mtflab sweep` می‌روند؛ فقط --sweep حذف می‌شود.
+      # تحلیل هزینه روی دادهٔ ذخیره‌شده — بدون شبکه.
+      # کپی به Download **داخل خودِ پایتون** انجام می‌شود (mtflab.sweep.deliver)،
+      # چون آنجا مسیر واقعی فایل‌ها معلوم است. اینجا فقط اجرا می‌کنیم.
       _SW=()
       for b in "$@"; do
         [ "$b" = "--sweep" ] && continue
@@ -113,21 +114,14 @@ for a in "$@"; do
       if [ "$_HAS_LANG" = "0" ]; then
         if [ "$LANG_EN" = "1" ]; then _SW+=("--lang" "en"); else _SW+=("--lang" "fa"); fi
       fi
-      python3 -m mtflab sweep --out-dir results "${_SW[@]+"${_SW[@]}"}"
-      _RC=$?
-      [ "$_RC" -ne 0 ] && exit "$_RC"
-      _DEST=""
-      for cand in "$HOME/storage/downloads" "/sdcard/Download"; do
-        [ -d "$cand" ] && _DEST="$cand" && break
-      done
-      if [ -n "$_DEST" ]; then
-        for f in results/cost_sweep*.md results/cost_sweep*.json; do
-          [ -f "$f" ] && cp -f "$f" "$_DEST/" 2>/dev/null
-        done
-        echo ""
-        echo "✅ copied to the phone Download folder: $_DEST"
+      _HAS_OUT=0
+      for b in "${_SW[@]+"${_SW[@]}"}"; do case "$b" in --out-dir*) _HAS_OUT=1;; esac; done
+      if [ "$_HAS_OUT" = "0" ]; then
+        python3 -m mtflab sweep --out-dir results "${_SW[@]+"${_SW[@]}"}"
+      else
+        python3 -m mtflab sweep "${_SW[@]+"${_SW[@]}"}"
       fi
-      exit 0
+      exit $?
       ;;
   esac
 done
