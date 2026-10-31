@@ -24,6 +24,8 @@ results/*.tmp
 !results/phone_run_20symbols_20261031.json
 !results/autoscan_20symbols_verdict.md
 !results/comove_method.md
+!results/phone_comove_20261031.json
+!results/comove_verdict.md
 !results/comove.md
 !results/phone_verification.md
 
