@@ -21,6 +21,8 @@ results/*.tmp
 !results/auto_scan_sample_offline.md
 !results/reaudit_4h.md
 !results/phone_run_20261031.json
+!results/phone_run_20symbols_20261031.json
+!results/autoscan_20symbols_verdict.md
 !results/phone_verification.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
