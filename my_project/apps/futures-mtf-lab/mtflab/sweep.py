@@ -470,8 +470,8 @@ def sweep_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--tf", default="4h", help="تایم‌فریم تریگر (باید در کش باشد)")
     p.add_argument("--tf-filter", default="1d")
     p.add_argument("--tf-bias", default="1d")
-    p.add_argument("--variants", nargs="+", default=["trend"],
-                   help="کدام نسخه‌ها (پیش‌فرض: trend)")
+    p.add_argument("--variants", nargs="+", default=["trend", "base"],
+                   help="کدام نسخه‌ها (پیش‌فرض: trend base)")
     p.add_argument("--symbols", nargs="+", default=None,
                    help="محدود کردن به چند نماد (برای تست سریع)")
     p.add_argument("--out-dir", default="results")
