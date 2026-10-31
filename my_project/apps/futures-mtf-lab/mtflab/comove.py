@@ -125,22 +125,52 @@ def monthly_returns(candles: Sequence[Candle]) -> Dict[str, float]:
 
 
 def build_panel(returns: Dict[str, Dict[str, float]], min_months: int = 24,
-                min_coverage: float = 0.8) -> Tuple[List[str], Dict[str, List[float]]]:
-    """ماتریس ماه × نماد. فقط ماه‌هایی که اکثر نمادها داده دارند."""
+                ) -> Tuple[List[str], Dict[str, List[float]], Dict[str, str]]:
+    """ماتریس ماه × نماد با **هم‌ترازی تقویمی اجباری**.
+
+    ⚠️ **باگی که یک‌بار خوردیم:** نسخهٔ اول ماه‌های گمشده را حذف می‌کرد و بعد
+    `v[-cutoff:]` می‌گرفت. یعنی نمادی که داده‌اش زودتر تمام شده بود (مثل TON که
+    ۴ ماه از بقیه عقب‌تر بود) روی **ماه‌های متفاوتی** با بقیه مقایسه می‌شد.
+    نتیجه: همبستگی بین دو تقویم جابه‌جا‌شده — بی‌معنا.
+
+    حالا: فقط ماه‌هایی استفاده می‌شوند که **همهٔ** نمادهای انتخاب‌شده در آن‌ها
+    داده دارند (تقاطع تقویمی). اگر تقاطع کمتر از حد لازم بود، نمادی که بیشترین
+    محدودیت را ایجاد می‌کند کنار گذاشته و ثبت می‌شود.
+
+    Returns: (months, panel, dropped) — dropped توضیح می‌دهد چه چیزی و چرا حذف شد.
+    """
     if not returns:
-        return [], {}
-    all_months = sorted({m for r in returns.values() for m in r})
-    n = len(returns)
-    keep = [m for m in all_months
-            if sum(1 for r in returns.values() if m in r) >= min_coverage * n]
-    if len(keep) < min_months:
-        keep = all_months
-    panel: Dict[str, List[float]] = {}
-    for sym in sorted(returns):
-        row = [returns[sym][m] for m in keep if m in returns[sym]]
-        if len(row) >= min_months:
-            panel[sym] = row
-    return keep, panel
+        return [], {}, {}
+    dropped: Dict[str, str] = {}
+    cand = {}
+    for sym, r in returns.items():
+        if len(r) >= min_months:
+            cand[sym] = r
+        else:
+            dropped[sym] = f"فقط {len(r)} ماه داده (حداقل {min_months})"
+
+    def intersection(syms: Sequence[str]) -> List[str]:
+        months: Optional[set] = None
+        for sym in syms:
+            ms = set(returns[sym])
+            months = ms if months is None else (months & ms)
+        return sorted(months or set())
+
+    months = intersection(list(cand))
+    while len(months) < min_months and len(cand) > 2:
+        # نمادی که بیشترین ماه‌های کل را از دست می‌دهد (محدودکننده‌ترین) حذف شود
+        worst = min(cand, key=lambda x: len(set(returns[x]) & set(months)))
+        dropped[worst] = (f"تقاطع تقویمی را به {len(months)} ماه محدود می‌کرد")
+        del cand[worst]
+        months = intersection(list(cand))
+
+    if len(cand) < 3:
+        raise RuntimeError(
+            f"بعد از هم‌ترازی تقویمی فقط {len(cand)} نماد با {len(months)} ماه مشترک "
+            f"باقی ماند — برای تحلیل هم‌حرکتی حداقل ۳ نماد و {min_months} ماه لازم است.")
+
+    panel = {sym: [returns[sym][m] for m in months] for sym in sorted(cand)}
+    return months, panel, dropped
 
 
 def demean_by_month(panel: Dict[str, List[float]]) -> Dict[str, List[float]]:
@@ -321,10 +351,46 @@ def stability_h2(panel: Dict[str, List[float]], k: int = 3,
 
     a = labels_of(cluster(c1, k))
     b = labels_of(cluster(c2, k))
+    threshold = 0.30
     return {"ok": True, "k": k, "months_half": half,
             "mantel_r": round(obs, 4), "p_value": round(p, 4),
             "ari": round(adjusted_rand(a, b), 4),
-            "supported": (obs > 0.30 and p < 0.05)}
+            "threshold": threshold,
+            "margin": round(obs - threshold, 4),
+            # «حاشیه‌ای» = قبول شده ولی با فاصلهٔ کمتر از ۲۰٪ از آستانه
+            "marginal": bool(obs > threshold and obs < threshold * 1.2),
+            "supported": (obs > threshold and p < 0.05)}
+
+
+def split_robustness(panel: Dict[str, List[float]], n_splits: int = 200,
+                     seed: int = 31, min_half: int = 12,
+                     threshold: float = 0.30) -> dict:
+    """پایداری روی **برش‌های تصادفی** — به‌جای یک برش ثابت که ممکن است شانسی باشد.
+
+    چرا لازم است: اگر فقط یک برش (وسط) را نگاه کنیم و نتیجه لب مرز باشد، نمی‌دانیم
+    واقعیت است یا شانسِ همان یک برش. اینجا ۲۰۰ برش تصادفی گرفته و توزیع
+    Mantel r گزارش می‌شود. اگر میانه هم بالای آستانه بود، نتیجه به انتخاب برش
+    حساس نیست.
+    """
+    syms = sorted(panel)
+    n = min(len(panel[s]) for s in syms)
+    if n < 2 * min_half:
+        return {"ok": False, "note": "داده برای این آزمون کافی نیست"}
+    rng = random.Random(seed)
+    vals: List[float] = []
+    for _ in range(n_splits):
+        h = rng.randint(min_half, n - min_half)
+        c1 = corr_matrix({s: panel[s][:h] for s in syms})[1]
+        c2 = corr_matrix({s: panel[s][h:] for s in syms})[1]
+        vals.append(pearson(_pair_vector(c1), _pair_vector(c2)))
+    vals.sort()
+    q = lambda q_: vals[min(len(vals) - 1, int(q_ * len(vals)))]
+    return {"ok": True, "n_splits": n_splits,
+            "median": round(st.median(vals), 4),
+            "p10": round(q(0.10), 4), "p90": round(q(0.90), 4),
+            "share_above_threshold": round(
+                sum(1 for x in vals if x > threshold) / len(vals), 4),
+            "threshold": threshold}
 
 
 # ----------------------------------------------------------------------------
@@ -335,8 +401,12 @@ def run_comove(data_dir: str = "data", tf: str = "4h", min_months: int = 24,
                panel_override: Optional[Dict[str, List[float]]] = None) -> dict:
     t0 = time.time()
     if panel_override is not None:
-        panel_raw = panel_override
-        months = [f"M{i:03d}" for i in range(min(len(v) for v in panel_raw.values()))]
+        n = min(len(v) for v in panel_override.values())
+        panel_raw = {s: v[-n:] for s, v in panel_override.items()}
+        months = [f"M{i:03d}" for i in range(n)]
+    dropped: Dict[str, str] = {}
+    if panel_override is not None:
+        pass
     else:
         cached = load_cached(data_dir, tf)
         if len(cached) < 3:
@@ -344,7 +414,7 @@ def run_comove(data_dir: str = "data", tf: str = "4h", min_months: int = 24,
                 f"کمتر از ۳ نماد در {data_dir}/json برای {tf} پیدا شد. "
                 f"یک‌بار autoscan را اجرا کنید.")
         rets = {s: monthly_returns(cs) for s, cs in cached.items()}
-        months, panel_raw = build_panel(rets)
+        months, panel_raw, dropped = build_panel(rets, min_months=min_months)
         if len(panel_raw) < 3:
             raise RuntimeError("دادهٔ ماهانهٔ کافی برای مقایسهٔ نمادها نیست.")
 
@@ -353,8 +423,11 @@ def run_comove(data_dir: str = "data", tf: str = "4h", min_months: int = 24,
             "برای حذف عامل بازار حداقل ۳ نماد لازم است. با ۲ نماد، باقیمانده‌ها "
             "همیشه ±قرینه می‌شوند و همبستگی مصنوعاً ۱- یا ۱ می‌شود.")
 
-    cutoff = min(len(v) for v in panel_raw.values())
-    panel_raw = {s: v[-cutoff:] for s, v in panel_raw.items()}
+    # داده از build_panel هم‌ترازِ تقویمی است؛ طول‌ها باید دقیقاً برابر باشند
+    lens = {len(v) for v in panel_raw.values()}
+    assert len(lens) == 1, f"هم‌ترازی تقویمی شکسته: طول‌ها {lens}"
+    cutoff = lens.pop()
+    months = months[-cutoff:] if len(months) >= cutoff else months
     panel_res = demean_by_month(panel_raw)
     syms = sorted(panel_raw)
     _, c_raw = corr_matrix(panel_raw)
@@ -363,6 +436,7 @@ def run_comove(data_dir: str = "data", tf: str = "4h", min_months: int = 24,
     obs = mean_abs_corr(c_res)
     h1 = permutation_h1(panel_res, obs, n_iter=n_iter)
     h2 = stability_h2(panel_res, k=k)
+    rob = split_robustness(panel_res)
 
     groups = cluster(c_res, k=min(k, len(syms)))
     named = [[syms[i] for i in g] for g in groups]
@@ -379,13 +453,17 @@ def run_comove(data_dir: str = "data", tf: str = "4h", min_months: int = 24,
         "elapsed_s": round(time.time() - t0, 1),
         "settings": {"tf": tf, "months": cutoff, "k": k,
                      "min_months": min_months, "n_iter": n_iter,
-                     "n_symbols": len(syms), "months_label": months[-cutoff:]},
+                     "n_symbols": len(syms), "months_label": months,
+                     "first_month": months[0] if months else "",
+                     "last_month": months[-1] if months else "",
+                     "dropped_symbols": dropped},
         "symbols": syms,
         "corr_raw": c_raw,
         "corr_residual": c_res,
         "clusters": named,
         "hypothesis_h1": h1,
         "hypothesis_h2": h2,
+        "split_robustness": rob,
         "mean_abs_corr_raw": round(mean_abs_corr(c_raw), 4),
         "mean_abs_corr_residual": round(obs, 4),
         "verdict": {
@@ -420,6 +498,10 @@ def render_report(res: dict) -> str:
     w("## ۱) حکم\n")
     if h1["supported"] and h2.get("supported"):
         w("✅ **هر دو فرضیه تأیید شد:** رابطهٔ پنهان وجود دارد و گروه‌بندی پایدار است.\n")
+        if h2.get("marginal"):
+            w(f"> ⚠️ **حاشیه‌ای:** Mantel r = {h2['mantel_r']} فقط "
+              f"{h2['margin']} بالای آستانهٔ {h2['threshold']} است. "
+              f"این «قبول لب‌مرزی» است، نه قبول محکم. بخش ۳.۵ را ببینید.\n")
     elif h1["supported"]:
         w("🟡 **رابطهٔ پنهان هست، ولی پایدار نیست.** یعنی در یک دوره گروه‌هایی "
           "شکل می‌گیرند و در دورهٔ بعد عوض می‌شوند ⇒ قابل استفاده برای آینده نیست.\n")
@@ -451,8 +533,24 @@ def render_report(res: dict) -> str:
         w(f"| ARI (توافق افراز) | {h2['ari']} |")
         w(f"| نتیجه | {'✅ پایدار' if h2['supported'] else '❌ ناپایدار'} |")
         w("")
-        w("> Mantel r = همبستگی بین بردار جفت‌همبستگی‌های دو نیمه. ۱ یعنی ساختار "
-          "کاملاً یکسان، ۰ یعنی بی‌ربط. شرط از پیش ثبت‌شده: r > ۰.۳۰ و p < ۰.۰۵.\n")
+        w("> **آمارهٔ تصمیم، Mantel r است، نه ARI.** ARI با تعداد کم نماد در هر "
+          "گروه درشت و گسسته می‌شود و می‌تواند نزدیک صفر باشد در حالی که ساختار "
+          "کاملاً پایدار است؛ فقط برای اطلاع چاپ می‌شود.")
+        w("> شرط از پیش ثبت‌شده: r > ۰.۳۰ و p < ۰.۰۵.\n")
+
+    rob = res.get("split_robustness") or {}
+    if rob.get("ok"):
+        w("## ۳.۵) استحکام — آیا نتیجه به انتخاب برش حساس است؟\n")
+        w(f"{rob['n_splits']} برش تصادفی از داده:\n")
+        w("| | مقدار |")
+        w("|---|---:|")
+        w(f"| میانهٔ Mantel r | **{rob['median']}** |")
+        w(f"| صدک ۱۰ / ۹۰ | {rob['p10']} / {rob['p90']} |")
+        w(f"| سهم برش‌های بالای آستانه | {100*rob['share_above_threshold']:.1f}٪ |")
+        w("")
+        w(f"> این آزمون **بخشی از دروازهٔ از پیش ثبت‌شده نیست**؛ فقط برای شفافیت "
+          f"اضافه شده. اگر میانهٔ برش‌های تصادفی هم بالای {rob['threshold']} بود، "
+          f"نتیجه به انتخاب یک برش خاص وابسته نیست.\n")
 
     w("## ۴) گروه‌های پیدا‌شده (روی باقیمانده)\n")
     for gi, g in enumerate(res["clusters"], 1):
@@ -488,6 +586,10 @@ def render_report_en(res: dict) -> str:
     if h1["supported"] and h2.get("supported"):
         w("PASS: **both hypotheses hold** — hidden co-movement exists and the "
           "grouping is stable across halves.\n")
+        if h2.get("marginal"):
+            w(f"> ⚠️ **MARGINAL:** Mantel r = {h2['mantel_r']} is only "
+              f"{h2['margin']} above the {h2['threshold']} threshold. "
+              f"This is a borderline pass, not a solid one. See section 3.5.\n")
     elif h1["supported"]:
         w("PARTIAL: **co-movement exists but is not stable.** Groups form in one "
           "period and dissolve in the next, so it is not usable forward.\n")
@@ -514,11 +616,32 @@ def render_report_en(res: dict) -> str:
         w("| | value |")
         w("|---|---:|")
         w(f"| months per half | {h2['months_half']} |")
-        w(f"| ARI (agreement) | **{h2['ari']}** |")
+        w(f"| **Mantel r** (structure agreement) | **{h2['mantel_r']}** |")
         w(f"| p | {h2['p_value']} |")
+        w(f"| ARI (partition agreement) | {h2['ari']} |")
         w(f"| result | {'PASS (stable)' if h2['supported'] else 'FAIL (unstable)'} |")
         w("")
-        w("> ARI=1 means identical grouping; ARI~0 means random.\n")
+        w("> **Decision statistic is Mantel r**, not ARI. Mantel r = correlation "
+          "between the two halves' pair-correlation vectors (1 = identical "
+          "structure, 0 = unrelated). ARI is shown for information only: with few "
+          "symbols per cluster it is coarse and can look near-random even when the "
+          "structure is highly stable.")
+        w("> Pre-registered gate: r > 0.30 and p < 0.05.\n")
+
+    rob = res.get("split_robustness") or {}
+    if rob.get("ok"):
+        w("## 3.5) Robustness — is the result sensitive to where we split?\n")
+        w(f"{rob['n_splits']} random splits:\n")
+        w("| | value |")
+        w("|---|---:|")
+        w(f"| median Mantel r | **{rob['median']}** |")
+        w(f"| p10 / p90 | {rob['p10']} / {rob['p90']} |")
+        w(f"| share of splits above threshold | "
+          f"{100*rob['share_above_threshold']:.1f}% |")
+        w("")
+        w(f"> **Not part of the pre-registered gate** — added for transparency only. "
+          f"If the median over random splits also clears {rob['threshold']}, the "
+          f"result does not hinge on one particular split.\n")
 
     w("## 4) Clusters (on residuals)\n")
     w("| cluster | members |")

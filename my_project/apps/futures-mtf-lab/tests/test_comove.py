@@ -179,3 +179,79 @@ def test_monthly_returns_are_computed_from_closes():
     assert set(r) == {"2024-02", "2024-03"}
     assert abs(r["2024-02"] - 0.10) < 1e-9
     assert abs(r["2024-03"] + 0.10) < 1e-9
+
+
+# ── هم‌ترازی تقویمی: باگی که نتیجهٔ ۲۰ نمادی را باطل کرد ────────────────────
+def test_build_panel_aligns_by_calendar_not_position():
+    """نمادی که داده‌اش زودتر تمام شده نباید بقیه را جابه‌جا کند.
+
+    باگ واقعی: نسخهٔ اول ماه‌های گمشده را حذف می‌کرد و بعد `v[-cutoff:]` می‌گرفت.
+    نمادی با ۸ ماه داده روی ماه‌های ۱..۸ می‌ماند و نمادی با ۱۲ ماه روی ۵..۱۲ →
+    مقایسهٔ دو تقویم مختلف. با TONUSDT در اجرای واقعی دقیقاً همین رخ داد.
+    """
+    rets = {s: {f"2024-{m:02d}": 0.01 * (i + 1) for m in range(1, 13)}
+            for i, s in enumerate(["BTCUSDT", "ETHUSDT", "SOLUSDT", "ADAUSDT"])}
+    rets["TONUSDT"] = {f"2024-{m:02d}": 0.01 for m in range(1, 9)}  # ۸ ماه
+
+    months, panel, dropped = C.build_panel(rets, min_months=8)
+    assert len({len(v) for v in panel.values()}) == 1, "طول‌ها باید برابر باشند"
+    assert months == [f"2024-{m:02d}" for m in range(1, 9)], months
+    # TON پنجره را محدود کرد ولی خودش حذف نشد (چون ۸ ماه ≥ حد)
+    assert "TONUSDT" in panel
+    assert dropped == {}
+
+
+def test_build_panel_drops_symbol_that_shrinks_window_too_much():
+    """اگر نمادی پنجره را زیر حداقل بیاورد، باید حذف و **ثبت** شود."""
+    rets = {s: {f"2024-{m:02d}": 0.01 for m in range(1, 13)}
+            for s in ["A", "B", "C", "D"]}
+    rets["E"] = {f"2024-{m:02d}": 0.01 for m in range(1, 5)}   # فقط ۴ ماه
+    months, panel, dropped = C.build_panel(rets, min_months=10)
+    assert "E" not in panel
+    assert "E" in dropped, "نماد حذف‌شده باید با دلیل ثبت شود"
+    assert len(months) == 12
+
+
+def test_build_panel_refuses_when_alignment_leaves_too_few():
+    rets = {"A": {"2024-01": 0.1, "2024-02": 0.1},
+            "B": {"2024-02": 0.1, "2024-03": 0.1},
+            "C": {"2024-03": 0.1, "2024-04": 0.1}}
+    try:
+        C.build_panel(rets, min_months=3)
+    except RuntimeError as e:
+        assert "۳" in str(e) or "3" in str(e)
+    else:
+        raise AssertionError("باید خطا می‌داد")
+
+
+def test_run_comove_panel_is_always_rectangular():
+    """خروجی اجرای کامل باید ماه‌های برچسب‌دار و طول‌های برابر داشته باشد."""
+    res = C.run_comove(panel_override=_two_groups(months=48), n_iter=120, k=2)
+    st_ = res["settings"]
+    assert len(st_["months_label"]) == st_["months"]
+    assert st_["first_month"] and st_["last_month"]
+
+
+# ── استحکام برش تصادفی ──────────────────────────────────────────────────────
+def test_split_robustness_high_for_real_structure():
+    panel = C.demean_by_month(_two_groups(months=80))
+    rob = C.split_robustness(panel, n_splits=60, min_half=20)
+    assert rob["ok"] and rob["median"] > 0.6, rob
+    assert rob["share_above_threshold"] > 0.9
+
+
+def test_split_robustness_low_for_noise():
+    rng = random.Random(5)
+    panel = C.demean_by_month({f"S{i}": [rng.gauss(0, 0.05) for _ in range(60)]
+                               for i in range(8)})
+    rob = C.split_robustness(panel, n_splits=60, min_half=15)
+    assert rob["ok"] and rob["median"] < 0.30, rob
+
+
+def test_marginal_flag_marks_borderline_pass():
+    """قبول لب‌مرز باید «حاشیه‌ای» علامت بخورد تا با قبول محکم اشتباه نشود."""
+    panel = C.demean_by_month(_two_groups(months=80))
+    h2 = C.stability_h2(panel, k=2, n_iter=200)
+    assert h2["supported"] is True
+    assert h2["margin"] == round(h2["mantel_r"] - 0.30, 4)
+    assert isinstance(h2["marginal"], bool)
