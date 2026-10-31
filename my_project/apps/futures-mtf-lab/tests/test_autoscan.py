@@ -187,3 +187,114 @@ def test_fingerprint_is_stable_and_detects_any_change():
     cs2[-1] = Candle(cs[-1].open_time_ms, cs[-1].open, cs[-1].high, cs[-1].low,
                      cs[-1].close * 1.001, cs[-1].volume)
     assert data_fingerprint(cs2) != f1
+
+
+# ── ۶) پروب شبکه: همان دامی که کاربر واقعاً خورد ────────────────────────────
+def _serve(routes):
+    """سرور محلی که پاسخ Bybit را شبیه‌سازی می‌کند. routes: path_prefix -> (code, body)"""
+    import json as _json
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self):                                    # noqa: N802
+            for prefix, (code, body) in routes.items():
+                if self.path.startswith(prefix):
+                    raw = _json.dumps(body).encode()
+                    self.send_response(code)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(raw)))
+                    self.end_headers()
+                    self.wfile.write(raw)
+                    return
+            self.send_response(404)
+            self.end_headers()
+
+        def log_message(self, *a):                            # ساکت
+            pass
+
+    srv = HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv, f"http://127.0.0.1:{srv.server_address[1]}"
+
+
+_TIME_OK = (200, {"retCode": 0, "retMsg": "OK", "result": {"timeNano": "1"}})
+_KLINE_OK = (200, {"retCode": 0, "retMsg": "OK",
+                   "result": {"list": [["1", "1", "2", "1", "2", "9"]]}})
+_KLINE_403 = (403, {"retCode": 403, "retMsg": "Forbidden"})
+
+
+def test_probe_detects_blocked_kline_even_when_time_endpoint_works():
+    """🐞 همان باگ کاربر: /market/time سالم ولی /market/kline مسدود.
+
+    قبلاً پروب فقط time را می‌دید ⇒ «شبکه سالم است» چاپ می‌شد و بعد
+    هر نماد با ۴۰۳ شکست می‌خورد.
+    """
+    from mtflab.autoscan import (_probe, KLINE_PROBE_PATH, TIME_PROBE_PATH,
+                                 probe_endpoint)
+    srv, base = _serve({"/v5/market/time": _TIME_OK, "/v5/market/kline": _KLINE_403})
+    try:
+        assert probe_endpoint(base, TIME_PROBE_PATH)["ok"] is True
+        assert probe_endpoint(base, KLINE_PROBE_PATH)["ok"] is False
+        assert _probe(base) is False, "پروب باید شکست بخورد نه اینکه بگوید سالم است"
+    finally:
+        srv.shutdown()
+
+
+def test_probe_passes_when_kline_really_works():
+    from mtflab.autoscan import _probe, probe_endpoint, KLINE_PROBE_PATH
+    srv, base = _serve({"/v5/market/time": _TIME_OK, "/v5/market/kline": _KLINE_OK})
+    try:
+        assert _probe(base) is True
+        r = probe_endpoint(base, KLINE_PROBE_PATH)
+        assert r["ok"] and r["status"] == 200
+    finally:
+        srv.shutdown()
+
+
+def test_probe_rejects_empty_candle_list():
+    """retCode=0 ولی لیست خالی ⇒ داده‌ای برای دانلود نیست."""
+    from mtflab.autoscan import _probe
+    srv, base = _serve({"/v5/market/kline": (200, {"retCode": 0, "result": {"list": []}})})
+    try:
+        assert _probe(base) is False
+    finally:
+        srv.shutdown()
+
+
+def test_pick_base_url_skips_blocked_mirror_and_picks_working_one():
+    """آینهٔ اول مسدود، دومی سالم → باید دومی انتخاب شود."""
+    from mtflab.autoscan import pick_base_url
+    bad, bad_url = _serve({"/v5/market/time": _TIME_OK, "/v5/market/kline": _KLINE_403})
+    good, good_url = _serve({"/v5/market/kline": _KLINE_OK})
+    try:
+        assert pick_base_url([bad_url, good_url], progress=False) == good_url
+    finally:
+        bad.shutdown()
+        good.shutdown()
+
+
+def test_pick_base_url_raises_when_nothing_works():
+    from mtflab.autoscan import pick_base_url
+    srv, base = _serve({"/v5/market/kline": _KLINE_403})
+    try:
+        try:
+            pick_base_url([base], progress=False)
+        except RuntimeError as e:
+            assert "Bybit" in str(e)
+        else:
+            raise AssertionError("باید خطا می‌داد")
+    finally:
+        srv.shutdown()
+
+
+def test_diagnosis_reports_which_layer_is_blocked():
+    """تشخیص باید بگوید «ساعت سالم، کندل مسدود» — نه یک «شبکه خراب» مبهم."""
+    from mtflab.autoscan import diagnose_network
+    srv, base = _serve({"/v5/market/time": _TIME_OK, "/v5/market/kline": _KLINE_403})
+    try:
+        rep = diagnose_network([base])
+        kinds = {r["kind"]: r["ok"] for r in rep}
+        assert kinds == {"time": True, "kline": False}
+    finally:
+        srv.shutdown()

@@ -30,6 +30,27 @@ ok()   { say "$G" "✅ $*"; }
 warn() { say "$Y" "⚠️  $*"; }
 err()  { say "$R" "❌ $*"; }
 
+# ── --offline: اجرا روی دادهٔ همراهِ خود پروژه، بدون اینترنت ─────────────────
+OFFLINE=0
+_ARGS=()
+for a in "$@"; do
+  if [ "$a" = "--offline" ]; then OFFLINE=1; else _ARGS+=("$a"); fi
+done
+set -- ${_ARGS[@]+"${_ARGS[@]}"}
+CSS_ARGS=()
+if [ "$OFFLINE" = "1" ]; then
+  BDATA="../futures-scalp-lab/data"
+  for pair in "BTCUSDT:btcusdt_1h_bybit.csv" "ETHUSDT:ethusdt_1h_bybit.csv"; do
+    sym="${pair%%:*}"; file="${pair#*:}"
+    [ -f "$BDATA/$file" ] && CSS_ARGS+=(--csv "$sym=$BDATA/$file")
+  done
+  if [ ${#CSS_ARGS[@]} -eq 0 ]; then
+    echo "❌ --offline: فایل دادهٔ همراه پروژه پیدا نشد ($BDATA)"
+    exit 2
+  fi
+  set -- "$@" --source csv --csv-native-tf 1h "${CSS_ARGS[@]}"
+fi
+
 say "$B" "════════════════════════════════════════════════════════════"
 say "$B" "  Futures MTF Lab — اسکن خودکار چندنمادی"
 say "$B" "════════════════════════════════════════════════════════════"
@@ -62,6 +83,13 @@ for a in "$@"; do
   esac
   prev="$a"
 done
+SRC="bybit"
+prev=""
+for a in "$@"; do
+  [ "$prev" = "--source" ] && SRC="$a"
+  case "$a" in --source=*) SRC="${a#--source=}";; esac
+  prev="$a"
+done
 say "" "📦 منبع داده: $SRC"
 
 if [ "$SRC" = "bybit" ]; then
@@ -69,6 +97,8 @@ if [ "$SRC" = "bybit" ]; then
   if ! python3 -m mtflab autoscan --probe-only; then
     err "به Bybit دسترسی نیست (فیلتر شبکه یا قطعی اینترنت)."
     say "" "  گزینه‌ها:"
+    say "" "   ۰) اجرای آفلاین روی دادهٔ همراه پروژه (۲ نماد، ۵ سال):"
+    say "" "        bash run-auto.sh --offline"
     say "" "   ۱) VPN/پروکسی را روشن کنید و دوباره اجرا کنید"
     say "" "   ۲) اگر قبلاً داده گرفته‌اید:  bash run-auto.sh --source json"
     exit 2

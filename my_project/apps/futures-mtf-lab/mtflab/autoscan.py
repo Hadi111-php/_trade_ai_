@@ -93,29 +93,97 @@ def _json_path(data_dir: str, symbol: str, tf: str) -> str:
 # ----------------------------------------------------------------------------
 # دانلود
 # ----------------------------------------------------------------------------
-def _probe(base_url: str, timeout: int = 10) -> bool:
-    """آیا این آدرس در دسترس است؟ (سریع‌ترین راه برای انتخاب mirror)"""
-    url = f"{base_url}/v5/market/time"
+#: آدرسی که *واقعاً* برای دانلود استفاده می‌شود (دام: قبلاً /market/time تست می‌شد)
+KLINE_PROBE_PATH = ("/v5/market/kline?category=linear&symbol=BTCUSDT"
+                    "&interval=240&limit=2")
+TIME_PROBE_PATH = "/v5/market/time"
+
+
+def _http_json(url: str, timeout: int = 10):
+    """(status, payload, error) — بدون استثنا؛ خطا را برمی‌گرداند تا گزارش شود."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": f"mtf-autoscan/{VERSION}"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
-        return int(payload.get("retCode", 1)) == 0
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError,
-            json.JSONDecodeError):
-        return False
+            return getattr(resp, "status", 200), json.loads(resp.read().decode("utf-8")), ""
+    except urllib.error.HTTPError as e:
+        return e.code, None, f"HTTP {e.code} {e.reason}"
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        return 0, None, str(getattr(e, "reason", e))
+    except (ValueError, json.JSONDecodeError) as e:
+        return -1, None, f"پاسخ نامعتبر: {e}"
+
+
+def probe_endpoint(base_url: str, path: str, timeout: int = 10) -> dict:
+    """یک endpoint مشخص را تست می‌کند و دلیل دقیق را برمی‌گرداند."""
+    status, payload, err = _http_json(base_url + path, timeout)
+    ok, note = False, err
+    if payload is not None:
+        rc = payload.get("retCode")
+        if rc == 0:
+            if path == TIME_PROBE_PATH:
+                ok, note = True, "ok"
+            else:
+                rows = (payload.get("result") or {}).get("list") or []
+                ok = bool(rows)
+                note = "ok" if ok else "پاسخ خالی (لیست کندل خالی است)"
+        else:
+            note = f"retCode={rc} · {payload.get('retMsg')}"
+    return {"url": base_url + path, "ok": ok, "status": status, "note": note}
+
+
+def _probe(base_url: str, timeout: int = 10) -> bool:
+    """آیا دانلود از این آدرس واقعاً کار می‌کند؟
+
+    ⚠️ درس گرفته‌شده: قبلاً `/v5/market/time` تست می‌شد. بعضی فیلترها همان را
+    اجازه می‌دهند ولی `/v5/market/kline` را می‌بندند ⇒ «شبکه سالم است» چاپ می‌شد و
+    بعد هر ۲۰ نماد شکست می‌خوردند. حالا همان endpointِ واقعی تست می‌شود.
+    """
+    return bool(probe_endpoint(base_url, KLINE_PROBE_PATH, timeout)["ok"])
+
+
+def diagnose_network(candidates: Sequence[str] = BASE_URLS, timeout: int = 10) -> list:
+    """گزارش کامل «چه چیزی مسدود است» برای هر آدرس — بدون حدس زدن."""
+    report = []
+    for base in candidates:
+        for path in (TIME_PROBE_PATH, KLINE_PROBE_PATH):
+            r = probe_endpoint(base, path, timeout)
+            kind = "time" if path == TIME_PROBE_PATH else "kline"
+            report.append({"base": base, "kind": kind, **r})
+    return report
+
+
+def print_diagnosis(report: Sequence[dict]) -> bool:
+    """چاپ جدول تشخیص. True اگر حداقل یک آدرس برای دانلود سالم باشد."""
+    any_ok = False
+    for r in report:
+        mark = "✅" if r["ok"] else "❌"
+        label = "کندل (دانلود واقعی)" if r["kind"] == "kline" else "ساعت سرور  "
+        print(f"  {mark} {label}  {r['base']}  →  {r['status']} · {r['note']}")
+        if r["kind"] == "kline" and r["ok"]:
+            any_ok = True
+    if not any_ok:
+        time_ok = any(r["ok"] and r["kind"] == "time" for r in report)
+        print("")
+        if time_ok:
+            print("  📌 سرور Bybit پاسخ می‌دهد ولی *دادهٔ کندل* بسته است.")
+            print("     این یعنی IP شما برای معامله/داده مسدود شده، نه اینکه اینترنت قطع باشد.")
+            print("     راه‌حل: VPN/پروکسی، یا --base-url با یک آینه.")
+        else:
+            print("  📌 هیچ پاسخی از Bybit نیامد (فیلتر کامل یا قطعی اینترنت).")
+            print("     راه‌حل: VPN/پروکسی، یا --base-url با یک آینه.")
+    return any_ok
 
 
 def pick_base_url(candidates: Sequence[str] = BASE_URLS, progress: bool = True) -> str:
     for url in candidates:
         if _probe(url):
             if progress:
-                print(f"  🌐 آدرس در دسترس: {url}")
+                print(f"  🌐 آدرس در دسترس (دانلود تست شد): {url}")
             return url
         if progress:
-            print(f"  ⚠️ پاسخ نداد: {url}")
-    raise RuntimeError("هیچ‌کدام از آدرس‌های Bybit در دسترس نیستند. "
-                       "اتصال/فیلتر شبکه را بررسی کنید.")
+            print(f"  ⚠️ دانلود از این آدرس کار نکرد: {url}")
+    raise RuntimeError("هیچ‌کدام از آدرس‌های Bybit برای دانلود کار نمی‌کنند. "
+                       "برای تشخیص دقیق: python3 -m mtflab autoscan --probe-only")
 
 
 def load_csv_symbol(symbol: str, path: str, native_tf: str, tf: str,
@@ -652,18 +720,13 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     known, rest = p.parse_known_args(argv if argv is not None else None)
 
     if known.probe_only:
-        try:
-            if known.base_url:
-                if not _probe(known.base_url):
-                    raise RuntimeError(f"آدرس دستی پاسخ نداد: {known.base_url}")
-                print(f"✅ آدرس دستی سالم است: {known.base_url}")
-                return 0
-            url = pick_base_url()
-            print(f"✅ شبکه سالم است: {url}")
-            return 0
-        except RuntimeError as e:
-            print(f"❌ {e}")
-            return 1
+        targets = [known.base_url] if known.base_url else list(BASE_URLS)
+        print("🔍 تشخیص شبکه — هر آدرس با دو endpoint تست می‌شود:")
+        rep = diagnose_network(targets)
+        ok = print_diagnosis(rep)
+        print("")
+        print("✅ آماده برای دانلود." if ok else "❌ دانلود ممکن نیست.")
+        return 0 if ok else 1
 
     csv_paths: Dict[str, str] = {}
     for item in known.csv:
@@ -733,7 +796,16 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
               f"PF>1={a['profitable_symbols_pct']:5.1f}% "
               f"سال+={a['positive_years_pct']:5.1f}%")
     if res["errors"]:
-        print(f"\n  ⚠️ {len(res['errors'])} خطا (جزئیات در گزارش)")
+        n_err, n_ok = len(res["errors"]), len(res.get("per_symbol") or {})
+        print(f"\n  ⚠️ {n_err} خطا" + ("" if n_ok else "  ← هیچ نمادی داده نگرفت"))
+        for e in res["errors"][:3]:
+            print(f"     • {e}")
+        if n_err > 3:
+            print(f"     … و {n_err - 3} خطای دیگر (همه در گزارش)")
+        if not n_ok:
+            print("")
+            print("  📌 برای دیدن علت دقیق:  python3 -m mtflab autoscan --probe-only")
+            print("  📌 اجرای آفلاین روی دادهٔ همراه پروژه:  bash run-auto.sh --offline")
     print(f"\n📄 گزارش : {md_path}")
     print(f"🗂 بستهٔ داده: {json_path}")
     print("=" * 70)
