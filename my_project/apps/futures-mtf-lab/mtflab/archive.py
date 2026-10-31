@@ -31,6 +31,10 @@ from .store import content_sha256, read_index, sha256_file, verify
 DIGEST_VERSION = 1
 
 
+def _t(fa: str, en: str, lang: str = "fa") -> str:
+    return en if str(lang).lower().startswith("en") else fa
+
+
 # ---------------------------------------------------------------------------
 # تبدیل کندل → شناسنامه
 # ---------------------------------------------------------------------------
@@ -240,7 +244,26 @@ def archive_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--out-dir", default="data_archive")
     p.add_argument("--tag", default="",
                    help="برچسب فایل‌ها (پیش‌فرض: زمان UTC)")
+    p.add_argument("--verify-against", default="",
+                   help="مسیر یک شناسنامهٔ JSON مرجع؛ داده‌های فعلی با آن مقایسه می‌شود")
+    p.add_argument("--lang", choices=["fa", "en"], default="fa")
     a = p.parse_args(argv)
+
+    if a.verify_against:
+        try:
+            ref = json.load(open(a.verify_against, encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError) as e:
+            print(f"❌ شناسنامهٔ مرجع خوانده نشد: {e}")
+            return 2
+        try:
+            cur = build_digest(a.data_dir, tag="current")
+        except Exception as e:                              # noqa: BLE001
+            print(f"❌ خواندن دادهٔ فعلی ناموفق: {e}")
+            return 2
+        cmp = compare_digests(ref, cur, lang=a.lang)
+        print(render_comparison(cmp, lang=a.lang), end="")
+        return 3 if cmp["source_changed"] else 0
+
     try:
         rep = write_archive(a.data_dir, a.out_dir, a.tag)
     except Exception as e:                                  # noqa: BLE001
@@ -258,3 +281,111 @@ def archive_command(argv: Optional[List[str]] = None) -> int:
     print("   👉 همین فایل JSON را برای بایگانی در گیت‌هاب بفرستید.")
     print("   (دادهٔ کامل روی گوشی می‌ماند؛ این فقط شناسنامه است.)")
     return 0
+
+
+# ---------------------------------------------------------------------------
+# مقایسهٔ دو شناسنامه — «آیا دادهٔ منبع عوض شده؟»
+# ---------------------------------------------------------------------------
+def compare_digests(ref: dict, new: dict, lang: str = "fa") -> dict:
+    """دو شناسنامه را مقایسه می‌کند و هر بسته را یکی از چهار حالت می‌دهد.
+
+    چرا این تفکیک لازم است؟ چون هش فقط وقتی قابل مقایسه است که **پنجره یکی
+    باشد**. اگر بازهٔ زمانی جابه‌جا شده باشد (پنجرهٔ غلتان)، هش عوض می‌شود
+    بدون این‌که دادهٔ منبع عوض شده باشد. مقایسهٔ خام هش، «تغییر داده» و «پنجرهٔ
+    متفاوت» را قاطی می‌کند و آدم را به نتیجهٔ غلط می‌رساند.
+
+    حالت‌ها:
+      identical  — همان پنجره، همان هش  ⇒ داده تغییری نکرده
+      changed    — **همان پنجره**، هش متفاوت ⇒ دادهٔ منبع عوض/اصلاح شده
+      moved      — پنجره جابه‌جا شده ⇒ هش قابل مقایسه نیست
+      missing    — در یکی از دو طرف نیست
+    """
+    r, n = ref.get("datasets") or {}, new.get("datasets") or {}
+    rows: Dict[str, dict] = {}
+    for key in sorted(set(r) | set(n)):
+        a, b = r.get(key), n.get(key)
+        if a is None:
+            rows[key] = {"status": "missing",
+                         "detail": _t("در شناسنامهٔ مرجع نبود، الان هست",
+                                       "not in the reference digest", lang)}
+            continue
+        if b is None:
+            rows[key] = {"status": "missing",
+                         "detail": _t("در دادهٔ فعلی نیست",
+                                       "not in the current data", lang)}
+            continue
+        if a.get("first_ms") != b.get("first_ms") or a.get("last_ms") != b.get("last_ms"):
+            rows[key] = {
+                "status": "moved",
+                "detail": _t(
+                    f"پنجره جابه‌جا: {a.get('first_utc')}→{a.get('last_utc')} "
+                    f"در برابر {b.get('first_utc')}→{b.get('last_utc')}",
+                    f"window moved: {a.get('first_utc')}→{a.get('last_utc')} vs "
+                    f"{b.get('first_utc')}→{b.get('last_utc')}", lang),
+                "ref_last": a.get("last_ms"), "new_last": b.get("last_ms"),
+            }
+            continue
+        if a.get("content_sha256") and a.get("content_sha256") == b.get("content_sha256"):
+            rows[key] = {"status": "identical", "detail": ""}
+        else:
+            rows[key] = {
+                "status": "changed",
+                "detail": _t(
+                    "همان پنجره ولی محتوا متفاوت است "
+                    f"({(a.get('content_sha256') or '')[:12]} ≠ "
+                    f"{(b.get('content_sha256') or '')[:12]})",
+                    "same window, different content "
+                    f"({(a.get('content_sha256') or '')[:12]} != "
+                    f"{(b.get('content_sha256') or '')[:12]})", lang),
+            }
+    counts: Dict[str, int] = {}
+    for v in rows.values():
+        counts[v["status"]] = counts.get(v["status"], 0) + 1
+    empty_new = not (new.get("datasets") or {})
+    return {"reference_tag": ref.get("tag"), "new_tag": new.get("tag"),
+            "empty_new": empty_new,
+            "reference_created": ref.get("created_at"),
+            "new_created": new.get("created_at"),
+            "counts": counts, "rows": rows,
+            "source_changed": bool(counts.get("changed"))}
+
+
+def render_comparison(cmp: dict, lang: str = "fa") -> str:
+    c = cmp["counts"]
+    out: List[str] = []
+    if lang == "en":
+        out.append("# Archive comparison\n")
+        out.append(f"reference `{cmp['reference_tag']}` ({cmp['reference_created']}) "
+                   f"vs new `{cmp['new_tag']}` ({cmp['new_created']})\n")
+        out.append(f"identical **{c.get('identical', 0)}** · changed "
+                   f"**{c.get('changed', 0)}** · moved {c.get('moved', 0)} · "
+                   f"missing {c.get('missing', 0)}\n")
+        if cmp.get("empty_new"):
+            out.append("> ℹ️ No data on this machine — nothing to compare. The reference "
+                       "digest is still the archive of record for run 1.\n")
+        if cmp["source_changed"]:
+            out.append("> ⚠️ **SOURCE DATA CHANGED.** Same window, different content — "
+                       "the exchange re-wrote history. Previous results must be re-run.\n")
+        out.append("| dataset | status | detail |")
+        out.append("|---|---|---|")
+        for k, v in cmp["rows"].items():
+            out.append(f"| `{k}` | {v['status']} | {v['detail']} |")
+        return "\n".join(out) + "\n"
+
+    out.append("# مقایسهٔ شناسنامه‌ها\n")
+    out.append(f"مرجع `{cmp['reference_tag']}` ({cmp['reference_created']}) در برابر "
+               f"جدید `{cmp['new_tag']}` ({cmp['new_created']})\n")
+    out.append(f"یکسان **{c.get('identical', 0)}** · تغییرکرده "
+               f"**{c.get('changed', 0)}** · جابه‌جا {c.get('moved', 0)} · "
+               f"غایب {c.get('missing', 0)}\n")
+    if cmp.get("empty_new"):
+        out.append("> ℹ️ روی این دستگاه داده‌ای نیست — چیزی برای مقایسه وجود ندارد. "
+                   "شناسنامهٔ مرجع همچنان سند بایگانی اجرای ۱ است.\n")
+    if cmp["source_changed"]:
+        out.append("> ⚠️ **دادهٔ منبع عوض شده.** همان پنجره، محتوای متفاوت — صرافی "
+                   "تاریخ را بازنویسی کرده. نتایج قبلی باید دوباره اجرا شوند.\n")
+    out.append("| بسته | وضعیت | توضیح |")
+    out.append("|---|---|---|")
+    for k, v in cmp["rows"].items():
+        out.append(f"| `{k}` | {v['status']} | {v['detail']} |")
+    return "\n".join(out) + "\n"

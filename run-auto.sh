@@ -7,6 +7,7 @@
 #   bash run-auto.sh --probe-only          → فقط تشخیص شبکه
 #   bash run-auto.sh --data-index          → فهرست دادهٔ ذخیره‌شده (بدون شبکه)
 #   bash run-auto.sh --archive [--tag X]   → شناسنامهٔ داده برای بایگانی در گیت
+#   bash run-auto.sh --verify-archive      → مقایسهٔ دادهٔ فعلی با شناسنامهٔ مرجع
 #   bash run-auto.sh --source json         → تحلیل مجدد روی دادهٔ ذخیره‌شده
 #
 # چرا این فایل هست: ابزار در my_project/apps/futures-mtf-lab است و اگر از ریشهٔ
@@ -103,6 +104,21 @@ for a in "$@"; do
       echo "   pick it in your file manager / chat app"
     fi
     exit 0
+  fi
+done
+
+# اگر --verify-archive خواسته شد: دادهٔ فعلی را با شناسنامهٔ مرجع مقایسه کن
+for a in "$@"; do
+  if [ "$a" = "--verify-archive" ]; then
+    REF=""
+    prev=""
+    for b in "$@"; do
+      [ "$prev" = "--against" ] && REF="$b"
+      case "$b" in --against=*) REF="${b#--against=}";; esac
+      prev="$b"
+    done
+    [ -z "$REF" ] && REF="$APP/results/data_digest_15m_20261031.json"
+    exec python3 -m mtflab archive --out-dir data_archive --verify-against "$REF" --lang en
   fi
 done
 

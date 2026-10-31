@@ -418,3 +418,99 @@ def test_archive_copies_digest_to_the_phone_download_folder():
             for f in os.listdir(os.path.join(here, "data_archive")):
                 if f.startswith("data_digest_unittest"):
                     os.remove(os.path.join(here, "data_archive", f))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۸) مقایسهٔ شناسنامه‌ها: تغییر داده در برابر جابه‌جایی پنجره
+# ═══════════════════════════════════════════════════════════════════════════
+def _digest_fixture():
+    return {
+        "tag": "ref", "created_at": "2026-01-01 00:00 UTC",
+        "datasets": {
+            "BTCUSDT_15m": {"n": 100, "first_ms": 1000, "last_ms": 2000,
+                            "first_utc": "a", "last_utc": "b",
+                            "content_sha256": "aaa", "sha256": "x"},
+            "ETHUSDT_15m": {"n": 100, "first_ms": 1000, "last_ms": 2000,
+                            "first_utc": "a", "last_utc": "b",
+                            "content_sha256": "bbb", "sha256": "y"},
+        },
+    }
+
+
+def test_identical_digests_report_no_change():
+    from mtflab.archive import compare_digests
+    ref = _digest_fixture()
+    c = compare_digests(ref, dict(ref))
+    assert c["counts"] == {"identical": 2}
+    assert c["source_changed"] is False
+
+
+def test_same_window_different_content_is_flagged_as_source_change():
+    """مهم‌ترین حالت: صرافی تاریخ را بازنویسی کرده ⇒ باید هشدار بدهد."""
+    from mtflab.archive import compare_digests
+    ref = _digest_fixture()
+    new = _digest_fixture()
+    new["datasets"]["BTCUSDT_15m"]["content_sha256"] = "zzz"
+    c = compare_digests(ref, new)
+    assert c["counts"]["changed"] == 1
+    assert c["source_changed"] is True
+    assert c["rows"]["BTCUSDT_15m"]["status"] == "changed"
+
+
+def test_rolled_window_is_not_reported_as_a_source_change():
+    """پنجرهٔ غلتان هش را عوض می‌کند ولی معنایش «تغییر داده» نیست."""
+    from mtflab.archive import compare_digests
+    ref = _digest_fixture()
+    new = _digest_fixture()
+    new["datasets"]["BTCUSDT_15m"]["last_ms"] = 3000
+    new["datasets"]["BTCUSDT_15m"]["content_sha256"] = "zzz"
+    c = compare_digests(ref, new)
+    assert c["rows"]["BTCUSDT_15m"]["status"] == "moved"
+    assert c["source_changed"] is False
+
+
+def test_missing_dataset_is_reported_separately():
+    from mtflab.archive import compare_digests
+    ref = _digest_fixture()
+    new = _digest_fixture()
+    del new["datasets"]["ETHUSDT_15m"]
+    c = compare_digests(ref, new)
+    assert c["rows"]["ETHUSDT_15m"]["status"] == "missing"
+    assert c["counts"]["identical"] == 1
+    assert c["source_changed"] is False
+
+
+def test_verify_against_cli_exit_code_signals_source_change(tmp_path=None):
+    """کد خروج ۳ برای «دادهٔ منبع عوض شده» تا در اسکریپت قابل تشخیص باشد."""
+    from mtflab.archive import archive_command
+    import contextlib
+    import io
+    with tempfile.TemporaryDirectory() as td:
+        data_dir = os.path.join(td, "data")
+        _make_dataset(data_dir, n=300)
+        ref_path = os.path.join(td, "ref.json")
+        from mtflab.archive import build_digest
+        with open(ref_path, "w", encoding="utf-8") as f:
+            json.dump(build_digest(data_dir, tag="ref"), f)
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc_same = archive_command(["--data-dir", data_dir,
+                                       "--verify-against", ref_path, "--lang", "en"])
+        assert rc_same == 0, buf.getvalue()
+        assert "identical" in buf.getvalue()
+
+        # حالا یک کندل را عوض کن
+        path = os.path.join(data_dir, "json", "btcusdt_15m.json")
+        payload = json.loads(open(path, encoding="utf-8").read())
+        payload["candles"][5][4] = float(payload["candles"][5][4]) + 3.0
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+
+        buf2 = io.StringIO()
+        with contextlib.redirect_stdout(buf2):
+            rc_changed = archive_command(["--data-dir", data_dir,
+                                          "--verify-against", ref_path,
+                                          "--lang", "en"])
+        assert rc_changed == 3, buf2.getvalue()
+        assert "SOURCE DATA CHANGED" in buf2.getvalue()
