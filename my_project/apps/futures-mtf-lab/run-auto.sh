@@ -72,6 +72,38 @@ if [ "$OFFLINE" = "1" ]; then
   set -- "$@" --source csv --csv-native-tf 1h "${CSS_ARGS[@]}"
 fi
 
+# ── --files: خروجی‌های آخر را نشان بده و (روی گوشی) کپی کن ──────────────────
+for a in "$@"; do
+  if [ "$a" = "--files" ]; then
+    LATEST_MD=$(ls -1t results/auto_scan_*.md 2>/dev/null | head -1)
+    if [ -z "$LATEST_MD" ]; then
+      err "$(msg "هنوز هیچ خروجی‌ای ساخته نشده." "no output yet.")"
+      say "" "    bash run-auto.sh --offline"
+      exit 1
+    fi
+    TAGF=$(basename "$LATEST_MD" .md | sed 's/^auto_scan_//')
+    F1="results/auto_scan_${TAGF}.md"
+    F2="results/auto_scan_${TAGF}.json"
+    say "" "$(msg "📂 مسیر کامل :" "📂 full path :") $(pwd)/results"
+    for f in "$F1" "$F2" "results/auto_scan_${TAGF}.zip"; do
+      [ -f "$f" ] && say "" "   • $(pwd)/$f"
+    done
+    for cand in "$HOME/storage/downloads" "/sdcard/Download"; do
+      if [ -d "$cand" ]; then
+        for f in "$F1" "$F2" "results/auto_scan_${TAGF}.zip"; do
+          [ -f "$f" ] && cp -f "$f" "$cand/" 2>/dev/null
+        done
+        ok "$(msg "کپی شد به: $cand/" "copied to: $cand/")"
+        break
+      fi
+    done
+    if [ -n "${PREFIX:-}" ] && [ ! -d "$HOME/storage/downloads" ] && [ ! -d /sdcard/Download ]; then
+      warn "$(msg "دسترسی به حافظه نبود. یک‌بار بزنید:" "no storage access. run once:") termux-setup-storage"
+    fi
+    exit 0
+  fi
+done
+
 say "$B" "════════════════════════════════════════════════════════════"
 say "$B" "  $(msg "Futures MTF Lab — اسکن خودکار چندنمادی" "Futures MTF Lab — multi-symbol autoscan")"
 say "$B" "════════════════════════════════════════════════════════════"
@@ -182,6 +214,33 @@ if [ -f "$MD" ] && [ -f "$JS" ]; then
   fi
 else
   err "$(msg "فایل خروجی پیدا نشد — لاگ را ببینید: $LOG" "output file missing — see log: $LOG")"
+fi
+
+echo
+# ── ۴.۵) بیرون آوردن فایل از گوشی ────────────────────────────────────────────
+ABS_DIR="$(pwd)/results"
+say "" "$(msg "📂 مسیر کامل خروجی‌ها:" "📂 full output path:")"
+say "" "   $ABS_DIR"
+COPIED=""
+if [ -n "${PREFIX:-}" ] || [ -d "$HOME/storage/downloads" ] || [ -d /sdcard/Download ]; then
+  DEST=""
+  for cand in "$HOME/storage/downloads" "/sdcard/Download"; do
+    [ -d "$cand" ] && { DEST="$cand"; break; }
+  done
+  if [ -n "$DEST" ]; then
+    COPIED=1
+    for f in "$MD" "$JS"; do
+      [ -f "$f" ] && cp -f "$f" "$DEST/" 2>/dev/null
+    done
+    [ -f "$ZIP" ] && cp -f "$ZIP" "$DEST/" 2>/dev/null
+    say "$G" "$(msg "✅ کپی شد به پوشهٔ Download گوشی:" "✅ copied to the phone Download folder:")"
+    say "$G" "   $DEST/"
+    say "" "$(msg "   از همان‌جا در فایل‌منیجر یا چت انتخاب و ارسال کنید." "   pick them there in your file manager / chat app.")"
+  fi
+fi
+if [ -z "$COPIED" ] && [ -n "${PREFIX:-}" ]; then
+  warn "$(msg "دسترسی به حافظهٔ مشترک نبود. یک‌بار این را بزنید و دوباره اجرا کنید:" "shared storage not accessible. run this once, then retry:")"
+  say "" "    termux-setup-storage"
 fi
 
 echo
