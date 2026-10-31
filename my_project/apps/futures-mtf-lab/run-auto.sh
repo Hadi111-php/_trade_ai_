@@ -15,6 +15,7 @@
 #   bash run-auto.sh --source json   # فقط تحلیل مجدد روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --archive        # شناسنامهٔ داده (بدون شبکه)
 #   bash run-auto.sh --data-index     # فهرست داده‌ها (بدون شبکه)
+#   bash run-auto.sh --sweep --tf 4h  # حساسیت به هزینه/اجرا (بدون شبکه)
 # =============================================================================
 set -u
 
@@ -98,6 +99,35 @@ for a in "$@"; do
         case "$b" in --lang=fa|--fa) _L="--lang fa";; --deep) _D="--deep";; esac
       done
       exec python3 -m mtflab data-index --reindex $_L $_D
+      ;;
+    --sweep)
+      # تحلیل هزینه روی دادهٔ ذخیره‌شده — مثل بقیهٔ ابزارها، بدون شبکه.
+      # همهٔ آرگومان‌ها به `mtflab sweep` می‌روند؛ فقط --sweep حذف می‌شود.
+      _SW=()
+      for b in "$@"; do
+        [ "$b" = "--sweep" ] && continue
+        _SW+=("$b")
+      done
+      _HAS_LANG=0
+      for b in "${_SW[@]+"${_SW[@]}"}"; do case "$b" in --lang*) _HAS_LANG=1;; esac; done
+      if [ "$_HAS_LANG" = "0" ]; then
+        if [ "$LANG_EN" = "1" ]; then _SW+=("--lang" "en"); else _SW+=("--lang" "fa"); fi
+      fi
+      python3 -m mtflab sweep --out-dir results "${_SW[@]+"${_SW[@]}"}"
+      _RC=$?
+      [ "$_RC" -ne 0 ] && exit "$_RC"
+      _DEST=""
+      for cand in "$HOME/storage/downloads" "/sdcard/Download"; do
+        [ -d "$cand" ] && _DEST="$cand" && break
+      done
+      if [ -n "$_DEST" ]; then
+        for f in results/cost_sweep*.md results/cost_sweep*.json; do
+          [ -f "$f" ] && cp -f "$f" "$_DEST/" 2>/dev/null
+        done
+        echo ""
+        echo "✅ copied to the phone Download folder: $_DEST"
+      fi
+      exit 0
       ;;
   esac
 done

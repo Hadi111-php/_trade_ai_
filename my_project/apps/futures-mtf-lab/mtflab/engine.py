@@ -345,9 +345,20 @@ class MTFEngine:
             self.positions.remove(pos)
 
         share = (q / pos.initial_qty) if pos.initial_qty else 1.0
-        fill = slip_price(price, cfg.slippage_pct, -pos.direction)   # خروج: پرشدنِ بدتر
+        # کیفیت پرشدن بسته به نوع سفارش:
+        #   TP و خروج جزئی = سفارش محدودِ نشسته ⇒ کارمزد میکر، بدون اسلیپیج
+        #   بقیه (stop/trail/time/regime) = سفارش بازار ⇒ تیکر + اسلیپیج
+        # پیش‌فرض `limit_exits=False` است تا نتایج قبلی بیت‌به‌بیت بازتولید شوند.
+        _r = str(reason)
+        is_limit_fill = bool(getattr(cfg, "limit_exits", False)) and (
+            _r == "take_profit" or _r.startswith("partial_take"))
+        if is_limit_fill:
+            fill = price
+            close_fee = fee_on_notional(q * pos.entry, cfg.maker_fee_bps)
+        else:
+            fill = slip_price(price, cfg.slippage_pct, -pos.direction)  # بدتر
+            close_fee = fee_on_notional(q * pos.entry, cfg.fee_bps)
         gross_pnl = pos.direction * (fill - pos.entry) * q
-        close_fee = fee_on_notional(q * pos.entry, cfg.fee_bps)
         open_fee_leg = pos.open_fee * share
         net_pnl = gross_pnl - open_fee_leg - close_fee
         self.equity += gross_pnl - close_fee

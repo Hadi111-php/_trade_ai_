@@ -473,7 +473,25 @@ def run_variant(cfg: MTFConfig, layers: Dict[str, List[Candle]],
         "years_n": len(years),
         "veto_top": dict(sorted((s.get("veto_stats") or {}).items(),
                                 key=lambda kv: -kv[1])[:5]),
+        # توزیع دلیل خروج: برای تحلیل هزینه حیاتی است، چون فقط خروج‌هایی که
+        # می‌توانند «سفارش محدود» باشند از کارمزد میکر سود می‌برند.
+        "exit_reasons": _exit_reason_counts(res["trades"]),
     }
+
+
+def _exit_reason_counts(trades) -> Dict[str, int]:
+    """شمارش دلیل خروج، با ادغام شاخه‌های هم‌خانواده (خروج جزئی/رژیم)."""
+    out: Dict[str, int] = {}
+    for t in trades:
+        r = str(t.get("reason") or "?")
+        if r.startswith("partial_take"):
+            r = "partial_take"
+        elif r.startswith("regime_flip"):
+            r = "regime_flip"
+        elif r == "stop/trail":
+            r = "stop_trail"
+        out[r] = out.get(r, 0) + 1
+    return dict(sorted(out.items(), key=lambda kv: -kv[1]))
 
 
 # ----------------------------------------------------------------------------
@@ -1074,7 +1092,9 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     # تبدیل می‌شوند (parse_known_args آن‌ها را دور نمی‌ریزد، نادیده می‌گیرد).
     # یک‌بار همین اتفاق افتاد و `--archive` یک اسکن ۴ ساعته راه انداخت.
     _TOOL_FLAGS = {"--archive": "bash run-auto.sh --archive",
-                   "--data-index": "bash run-auto.sh --data-index"}
+                   "--data-index": "bash run-auto.sh --data-index",
+                   "--verify-archive": "bash run-auto.sh --verify-archive",
+                   "--sweep": "bash run-auto.sh --sweep --tf 4h"}
     for flag, how in _TOOL_FLAGS.items():
         if flag in rest or flag in (argv or []):
             print(_t(f"❌ `{flag}` یک اسکن نیست؛ دستور درستش: {how}",

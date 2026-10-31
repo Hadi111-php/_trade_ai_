@@ -129,6 +129,13 @@ class MTFConfig:
     slippage_pct: float = 0.02          # اسلیپیج هر طرف (درصد)
     min_edge_multiplier: float = 1.5    # سود موردانتظار >= این × هزینهٔ رفت‌وبرگشت
     edge_atr_mult: float = 2.0          # حرکت موردانتظار = این × ATR%
+    # ── کیفیت اجرا (اجراگذار) ─────────────────────────────────────────────
+    # پیش‌فرض خاموش است تا نتایج قبلی پروژه دقیقاً بازتولید شوند. روشن کردنش
+    # مدل را **واقع‌بینانه‌تر** می‌کند، نه خوش‌بینانه‌تر:
+    #   TP یک سفارش محدودِ نشسته است ⇒ کارمزد میکر، بدون اسلیپیج
+    #   بقیهٔ خروج‌ها (stop/trail/time/regime) سفارش بازار ⇒ کارمزد تیکر + اسلیپیج
+    limit_exits: bool = False
+    maker_fee_bps: float = 2.0          # کارمزد میکر (سفارش محدود) هر طرف
 
     # ── حساب / ریسک (PAPER) ───────────────────────────────────────────────
     initial_equity: float = 1000.0
@@ -257,6 +264,10 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--slippage-pct", dest="slippage_pct", type=float, default=None)
     g.add_argument("--min-edge", dest="min_edge_multiplier", type=float, default=None)
     g.add_argument("--edge-atr", dest="edge_atr_mult", type=float, default=None)
+    g.add_argument("--limit-exits", dest="limit_exits", action="store_true",
+                   default=None, help="TP با کارمزد میکر و بدون اسلیپیج پر می‌شود")
+    g.add_argument("--maker-fee-bps", dest="maker_fee_bps", type=float, default=None,
+                   help="کارمزد میکر (پیش‌فرض ۲ bps)")
 
     g = p.add_argument_group("ریسک")
     g.add_argument("--equity", dest="initial_equity", type=float, default=None)

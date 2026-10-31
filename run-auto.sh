@@ -8,6 +8,7 @@
 #   bash run-auto.sh --data-index          → فهرست دادهٔ ذخیره‌شده (بدون شبکه)
 #   bash run-auto.sh --archive [--tag X]   → شناسنامهٔ داده برای بایگانی در گیت
 #   bash run-auto.sh --verify-archive      → مقایسهٔ دادهٔ فعلی با شناسنامهٔ مرجع
+#   bash run-auto.sh --sweep [--tf 4h]     → حساسیت به هزینه (بدون دانلود)
 #   bash run-auto.sh --source json         → تحلیل مجدد روی دادهٔ ذخیره‌شده
 #
 # چرا این فایل هست: ابزار در my_project/apps/futures-mtf-lab است و اگر از ریشهٔ
@@ -104,6 +105,22 @@ for a in "$@"; do
       echo "   pick it in your file manager / chat app"
     fi
     exit 0
+  fi
+done
+
+# اگر --sweep خواسته شد: حساسیت هزینه روی دادهٔ ذخیره‌شده (بدون دانلود)
+# همهٔ آرگومان‌ها همان‌طور به `mtflab sweep` می‌روند؛ فقط --sweep حذف می‌شود.
+for a in "$@"; do
+  if [ "$a" = "--sweep" ]; then
+    _SW=()
+    for b in "$@"; do
+      [ "$b" = "--sweep" ] && continue
+      _SW+=("$b")
+    done
+    _HAS_LANG=0
+    for b in "${_SW[@]+"${_SW[@]}"}"; do case "$b" in --lang*) _HAS_LANG=1;; esac; done
+    [ "$_HAS_LANG" = "0" ] && _SW+=("--lang" "en")
+    exec python3 -m mtflab sweep --out-dir results "${_SW[@]+"${_SW[@]}"}"
   fi
 done
 
