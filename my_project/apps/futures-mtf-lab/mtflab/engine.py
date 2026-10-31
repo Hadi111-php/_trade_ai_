@@ -58,6 +58,8 @@ class Position:
     trail_active: bool = False
     partial_taken: bool = False
     breakeven_done: bool = False
+    mfe_r: float = 0.0            # اوج سود بر حسب R (فقط برای قاعدهٔ افت سود)
+    giveback_armed: bool = False
     initial_qty: float = 0.0
     realized_partial_pnl: float = 0.0
     legs: int = 0
@@ -234,7 +236,8 @@ class MTFEngine:
         pos.breakeven_done = True
 
     def manage_position(self, pos: Position, candle: Candle, i: int,
-                        ctxs: Dict[str, TFContext], filt_dir_now: int) -> Optional[dict]:
+                        ctxs: Dict[str, TFContext], filt_dir_now: int,
+                        final_in_bar: bool = True) -> Optional[dict]:
         """مدیریت یک پوزیشن در یک کندل — ترتیب بررسی عمداً محافظه‌کارانه است.
 
         ۱) stop (اول از همه؛ اگر با TP هم‌زمان لمس شود، ضرر فرض می‌شود)
@@ -243,6 +246,10 @@ class MTFEngine:
         ۴) انتقال استاپ به نقطهٔ ورود در breakeven_at_r
         ۵) خروج رژیمی / time-stop در close
         ۶) به‌روزرسانی تریلینگ در **پایان** کندل (علی)
+
+        `final_in_bar=False` یعنی هنوز داخل کندلِ تریگر هستیم (اجرا در تایم‌فریم
+        ریزتر): خروج رژیمی و time-stop فقط در پایان کندلِ تریگر معنا دارند، پس
+        رد می‌شوند. حد ضرر/TP/افت سود با کندل ریزتر دقیق‌تر می‌شوند.
         """
         cfg = self.cfg
         sd = pos.stop_distance
@@ -289,15 +296,28 @@ class MTFEngine:
             if hit:
                 self._move_to_breakeven(pos)
 
-        # ۵) خروج رژیمی / time-stop
+        # ۴.۵) قاعدهٔ «افت سود» (giveback) — فقط اگر روشن و مسلح باشد
+        if cfg.giveback_arm_r > 0 and cfg.giveback_frac > 0 and sd > 0:
+            if pos.giveback_armed:
+                keep_r = pos.mfe_r * cfg.giveback_frac
+                lvl = pos.entry + pos.direction * sd * keep_r
+                hit = (candle.low <= lvl) if pos.direction == 1 else (candle.high >= lvl)
+                if hit:
+                    px = min(candle.open, lvl) if pos.direction == 1 \
+                        else max(candle.open, lvl)
+                    self._append_path(pos, candle)
+                    return self._close(pos, px, candle.open_time_ms, "giveback", i)
+
+        # ۵) خروج رژیمی / time-stop (فقط در پایان کندلِ تریگر)
         exit_price: Optional[float] = None
         reason = ""
-        if cfg.regime_change_exit and filt_dir_now != 0 \
+        if final_in_bar and cfg.regime_change_exit and filt_dir_now != 0 \
                 and filt_dir_now == -pos.direction \
                 and self.filter_flip_streak >= cfg.filter_confirm_bars:
             exit_price = candle.close
             reason = f"regime_flip_confirmed_{self.filter_flip_streak}"
-        elif cfg.max_holding_bars > 0 and (i - pos.open_bar) >= cfg.max_holding_bars:
+        elif final_in_bar and cfg.max_holding_bars > 0 \
+                and (i - pos.open_bar) >= cfg.max_holding_bars:
             exit_price = candle.close
             reason = "time_stop"
 
@@ -306,13 +326,27 @@ class MTFEngine:
         if exit_price is not None:
             return self._close(pos, exit_price, candle.open_time_ms, reason, i)
 
+        # ۵.۵) به‌روزرسانی اوج سود — **پایان** کندل، تا قاعدهٔ افت سود از
+        # اطلاعِ همان کندل استفاده نکند (همان منطق محافظه‌کارانهٔ stop).
+        if sd > 0:
+            ext = ((candle.high - pos.entry) if pos.direction == 1
+                   else (pos.entry - candle.low))
+            pos.mfe_r = max(pos.mfe_r, ext / sd)
+            if cfg.giveback_arm_r > 0 and pos.mfe_r >= cfg.giveback_arm_r:
+                pos.giveback_armed = True
+
         # ۶) تریلینگ در پایان کندل (علی)
         if cfg.trail_enabled and sd > 0:
             r_now = pos.direction * (candle.close - pos.entry) / sd
             if r_now >= cfg.trail_start_r:
                 pos.trail_active = True
             if pos.trail_active:
-                atr_now = ctxs["trigger"].atr[i] or pos.atr_at_entry
+                # با اجرای درون‌کندلی، ATR کندل جاری شامل آیندهٔ همین کندل
+                # است؛ پس از کندل قبلیِ بسته‌شده استفاده می‌شود.
+                if cfg.exec_tf and i > 0:
+                    atr_now = ctxs["trigger"].atr[i - 1] or pos.atr_at_entry
+                else:
+                    atr_now = ctxs["trigger"].atr[i] or pos.atr_at_entry
                 trail_dist = atr_now * cfg.trail_atr_mult
                 if pos.direction == 1:
                     pos.stop_current = max(pos.stop_current, pos.high_water - trail_dist)
@@ -382,7 +416,9 @@ class MTFEngine:
         exc = [pos.direction * (c["c"] - pos.entry) / pos.entry for c in pos.path[1:]]
         mfe = max(exc) if exc else 0.0
         mae = min(exc) if exc else 0.0
-        bars_held = len(pos.path) - 1
+        # با اجرای درون‌کندلی، path شامل کندل‌های ریزتر هم هست؛ پس تعداد
+        # کندل‌های تریگر شمرده می‌شود، نه تعداد ردیف‌های path.
+        bars_held = (i - pos.open_bar) if cfg.exec_tf else (len(pos.path) - 1)
         r_multiple = (net_pnl / pos.risk_amount) if pos.risk_amount else 0.0
 
         rec = {
@@ -533,6 +569,27 @@ def run_backtest(cfg: MTFConfig, layers: Dict[str, List[Candle]],
                 TFContext(layers["filter"], cfg, "filter"),
     }
 
+    # ── کندل‌های ریزترِ اجرا (اختیاری) ──────────────────────────────────────
+    # هر کندل تریگر به زیربازه‌های exec_tf شکسته می‌شود تا پوزیشن باز ۱۶ بار
+    # (۴h → ۱۵m) بررسی شود، نه یک بار. اگر دادهٔ ریزتر نبود، بی‌صدا خاموش
+    # می‌شود تا اجرای عادی خراب نشود.
+    sub_map: Optional[List[List[Candle]]] = None
+    if cfg.exec_tf and layers.get("exec"):
+        sub_min = tf_to_minutes(cfg.exec_tf)
+        bar_ms = t_min * 60_000
+        sub_ms = sub_min * 60_000
+        if 0 < sub_ms < bar_ms:
+            buckets: Dict[int, List[Candle]] = {}
+            for c in layers["exec"]:
+                buckets.setdefault(c.open_time_ms // bar_ms, []).append(c)
+            sub_map = [
+                [c for c in buckets.get(bar.low_tf_candle.open_time_ms // bar_ms, [])
+                 if c.open_time_ms >= bar.low_tf_candle.open_time_ms]
+                for bar in bars
+            ]
+            if not any(sub_map):
+                sub_map = None
+
     engine = MTFEngine(cfg, signals_w, trades_w)
     coverage = alignment_coverage(bars)
     audit = leakage_audit(bars, f_min, b_min if cfg.bias_enabled else None)
@@ -554,8 +611,18 @@ def run_backtest(cfg: MTFConfig, layers: Dict[str, List[Candle]],
         engine.last_filter_dir = filt_dir_now if filt_dir_now != 0 else engine.last_filter_dir
 
         # 1) مدیریت پوزیشن‌های باز
+        subs = sub_map[i] if sub_map else None
         for pos in list(engine.positions):
-            rec = engine.manage_position(pos, candle, i, ctxs, filt_dir_now)
+            rec = None
+            if subs:
+                # درون‌کندلی: هر کندل ریزتر به ترتیب زمانی بررسی می‌شود.
+                for k, sc in enumerate(subs):
+                    rec = engine.manage_position(pos, sc, i, ctxs, filt_dir_now,
+                                                 final_in_bar=(k == len(subs) - 1))
+                    if rec or pos not in engine.positions:
+                        break
+            else:
+                rec = engine.manage_position(pos, candle, i, ctxs, filt_dir_now)
             if rec and cfg.verbose:
                 tag = "💰" if rec["is_win"] else "🛡️"
                 print(f"[{i:6d}] {tag} خروج {'LONG' if rec['side']>0 else 'SHORT'} "

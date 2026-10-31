@@ -136,6 +136,15 @@ class MTFConfig:
     #   بقیهٔ خروج‌ها (stop/trail/time/regime) سفارش بازار ⇒ کارمزد تیکر + اسلیپیج
     limit_exits: bool = False
     maker_fee_bps: float = 2.0          # کارمزد میکر (سفارش محدود) هر طرف
+    # ── اجرا در تایم‌فریم ریزتر (ایدهٔ کاربر) ───────────────────────────────
+    # تصمیم ورود روی تایم‌فریم تریگر (مثلاً 4h) گرفته می‌شود، ولی پوزیشن باز
+    # با کندل‌های ریزتر (مثلاً 15m) مدیریت می‌شود: ۱۶ بررسی در هر کندل ۴ساعته
+    # به‌جای یکی. خالی = خاموش (نتایج قبلی بیت‌به‌بیت بازتولید می‌شوند).
+    exec_tf: str = ""
+    # قاعدهٔ «افت سود»: وقتی سود شناور به giveback_arm_r رسید، اگر به کسری از
+    # اوجش برگشت، ببند. صفر = خاموش.
+    giveback_arm_r: float = 0.0         # آستانهٔ مسلح‌شدن (بر حسب R)
+    giveback_frac: float = 0.0          # کسرِ اوج که زیرش بسته می‌شود (۰.۵ = ۵۰٪)
 
     # ── حساب / ریسک (PAPER) ───────────────────────────────────────────────
     initial_equity: float = 1000.0
@@ -268,6 +277,12 @@ def build_parser() -> argparse.ArgumentParser:
                    default=None, help="TP با کارمزد میکر و بدون اسلیپیج پر می‌شود")
     g.add_argument("--maker-fee-bps", dest="maker_fee_bps", type=float, default=None,
                    help="کارمزد میکر (پیش‌فرض ۲ bps)")
+    g.add_argument("--exec-tf", dest="exec_tf", default=None,
+                   help="مدیریت پوزیشن در این تایم‌فریم ریزتر (مثلاً 15m)")
+    g.add_argument("--giveback-arm-r", dest="giveback_arm_r", type=float, default=None,
+                   help="مسلح‌شدن قاعدهٔ افت سود در این R (۰ = خاموش)")
+    g.add_argument("--giveback-frac", dest="giveback_frac", type=float, default=None,
+                   help="کسرِ اوج سود که زیرش بسته می‌شود (۰.۵ = ۵۰٪)")
 
     g = p.add_argument_group("ریسک")
     g.add_argument("--equity", dest="initial_equity", type=float, default=None)

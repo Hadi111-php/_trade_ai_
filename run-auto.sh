@@ -9,6 +9,7 @@
 #   bash run-auto.sh --archive [--tag X]   → شناسنامهٔ داده برای بایگانی در گیت
 #   bash run-auto.sh --verify-archive      → مقایسهٔ دادهٔ فعلی با شناسنامهٔ مرجع
 #   bash run-auto.sh --sweep [--tf 4h]     → حساسیت به هزینه (بدون دانلود)
+#   bash run-auto.sh --exec-scan           → مدیریت خروج ۱۵دقیقه‌ای (بدون دانلود)
 #   bash run-auto.sh --source json         → تحلیل مجدد روی دادهٔ ذخیره‌شده
 #
 # چرا این فایل هست: ابزار در my_project/apps/futures-mtf-lab است و اگر از ریشهٔ
@@ -113,7 +114,7 @@ done
 # بود، مرحلهٔ کپی به پوشهٔ Download گوشی اجرا نشد — فایل‌ها ساخته شدند ولی
 # کاربر پیدایشان نکرد. کپی و پیام‌ها فقط در یک جا زندگی می‌کنند: لانچر اپ.
 for a in "$@"; do
-  if [ "$a" = "--sweep" ]; then
+  if [ "$a" = "--sweep" ] || [ "$a" = "--exec-scan" ]; then
     exec bash "$APP/run-auto.sh" "$@"
   fi
 done

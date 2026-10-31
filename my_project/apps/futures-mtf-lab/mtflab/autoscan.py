@@ -415,8 +415,16 @@ def validate_tf_stack(tf_trigger: str, tf_filter: str, tf_bias: str) -> None:
 
 
 def build_layers(trig: Sequence[Candle], tf_trigger: str, tf_filter: str,
-                 tf_bias: str, bias_enabled: bool) -> Dict[str, List[Candle]]:
+                 tf_bias: str, bias_enabled: bool,
+                 exec_candles: Optional[Sequence[Candle]] = None) -> Dict[str, List[Candle]]:
+    """لایه‌های فیلتر/بایاس از کندل تریگر ساخته می‌شوند.
+
+    `exec_candles` اختیاری است: کندل‌های ریزترِ مدیریت پوزیشن (مثلاً ۱۵ دقیقه
+    در کنار تریگر ۴ ساعته). اگر نباشد، رفتار موتور دقیقاً همان قبلی است.
+    """
     layers = {"trigger": list(trig)}
+    if exec_candles:
+        layers["exec"] = list(exec_candles)
     if tf_filter and tf_filter != tf_trigger:
         layers["filter"] = resample_up(trig, tf_trigger, tf_filter)[0]
     else:
@@ -1094,7 +1102,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     _TOOL_FLAGS = {"--archive": "bash run-auto.sh --archive",
                    "--data-index": "bash run-auto.sh --data-index",
                    "--verify-archive": "bash run-auto.sh --verify-archive",
-                   "--sweep": "bash run-auto.sh --sweep --tf 4h"}
+                   "--sweep": "bash run-auto.sh --sweep --tf 4h",
+                   "--exec-scan": "bash run-auto.sh --exec-scan"}
     for flag, how in _TOOL_FLAGS.items():
         if flag in rest or flag in (argv or []):
             print(_t(f"❌ `{flag}` یک اسکن نیست؛ دستور درستش: {how}",

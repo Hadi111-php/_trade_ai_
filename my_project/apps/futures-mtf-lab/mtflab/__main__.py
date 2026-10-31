@@ -13,6 +13,7 @@
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
   sweep      حساسیت به هزینه: هزینه کشنده است یا سیگنال؟ (بدون دانلود)
+  exec-scan  مدیریت خروج در تایم‌فریم ریزتر + قاعدهٔ افت سود (بدون دانلود)
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -141,6 +142,10 @@ def main(argv=None) -> int:
     if cmd == "sweep":
         from .sweep import sweep_command
         return sweep_command(rest)
+
+    if cmd in ("exec-scan", "exec_scan", "exectf"):
+        from .execscan import exec_command
+        return exec_command(rest)
 
     if cmd == "archive":
         from .archive import archive_command

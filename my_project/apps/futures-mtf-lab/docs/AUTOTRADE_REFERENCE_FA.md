@@ -43,6 +43,8 @@
 | جمع کندل بایگانی‌شده | ۱٬۱۲۱٬۲۸۰ (۱۶ × ۷۰٬۰۸۰) · بدون شکاف · UTC |
 | بازبینی | `bash run-auto.sh --verify-archive` |
 | **تحلیل هزینه** | `bash run-auto.sh --sweep --tf 4h` → `results/cost_sweep.md` |
+| **مدیریت خروج ۱۵دقیقه‌ای** | `bash run-auto.sh --exec-scan` → `results/exec_tf.md` |
+| آرشیو نتیجهٔ هزینه | `results/cost_sweep_4h_20261031.json` + تحلیل `results/cost_sweep_analysis_fa.md` |
 
 > **این پیکربندی بسته است.** اجرای دوباره فقط برای تکمیل ۴ نماد حذف‌شده معنا
 > دارد (با قابلیت retry سقف نرخ) و حکم را عوض نمی‌کند: فاصله تا سربه‌سر

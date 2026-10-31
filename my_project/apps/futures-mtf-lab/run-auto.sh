@@ -16,6 +16,7 @@
 #   bash run-auto.sh --archive        # شناسنامهٔ داده (بدون شبکه)
 #   bash run-auto.sh --data-index     # فهرست داده‌ها (بدون شبکه)
 #   bash run-auto.sh --sweep --tf 4h  # حساسیت به هزینه/اجرا (بدون شبکه)
+#   bash run-auto.sh --exec-scan      # مدیریت خروج ۱۵دقیقه‌ای (بدون شبکه)
 # =============================================================================
 set -u
 
@@ -99,6 +100,26 @@ for a in "$@"; do
         case "$b" in --lang=fa|--fa) _L="--lang fa";; --deep) _D="--deep";; esac
       done
       exec python3 -m mtflab data-index --reindex $_L $_D
+      ;;
+    --exec-scan)
+      _EX=()
+      for b in "$@"; do
+        [ "$b" = "--exec-scan" ] && continue
+        _EX+=("$b")
+      done
+      _HAS_LANG=0
+      for b in "${_EX[@]+"${_EX[@]}"}"; do case "$b" in --lang*) _HAS_LANG=1;; esac; done
+      if [ "$_HAS_LANG" = "0" ]; then
+        if [ "$LANG_EN" = "1" ]; then _EX+=("--lang" "en"); else _EX+=("--lang" "fa"); fi
+      fi
+      _HAS_OUT=0
+      for b in "${_EX[@]+"${_EX[@]}"}"; do case "$b" in --out-dir*) _HAS_OUT=1;; esac; done
+      if [ "$_HAS_OUT" = "0" ]; then
+        python3 -m mtflab exec-scan --out-dir results "${_EX[@]+"${_EX[@]}"}"
+      else
+        python3 -m mtflab exec-scan "${_EX[@]+"${_EX[@]}"}"
+      fi
+      exit $?
       ;;
     --sweep)
       # تحلیل هزینه روی دادهٔ ذخیره‌شده — بدون شبکه.

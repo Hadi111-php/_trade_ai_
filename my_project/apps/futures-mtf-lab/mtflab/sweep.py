@@ -359,6 +359,52 @@ def verdict(d: dict, lang: str = "fa") -> str:
     return "❌ **Abandon** — PF never clears 1 at any cost level"
 
 
+def ensure_breakeven(res: dict) -> dict:
+    """فیلدهای سربه‌سر را از `detail` بازمحاسبه می‌کند اگر در آرشیو نبودند.
+
+    چرا لازم است: JSONهایی که با نسخهٔ ۱.۱ ساخته شدند فقط `n` و `per_symbol`
+    دارند. بدون این تابع، گزارشِ دوباره‌سازی‌شده از همان آرشیو، «۰ از ۲۰» چاپ
+    می‌کند — همان خطایی که یک‌بار کاربر را گمراه کرد. آرشیو باید همیشه خوانا
+    بماند، حتی وقتی کد جلو رفته است.
+    """
+    det = res.get("detail") or {}
+    pols = (res.get("settings") or {}).get("policies") or []
+    rt = {p.get("name"): p.get("round_trip_bps", 0.0) for p in pols}
+    max_rt = max(rt.values(), default=0.0)
+    for vid, per_pol in det.items():
+        row = (res.get("summary") or {}).get(vid)
+        if not isinstance(row, dict):
+            continue
+        be = row.get("breakeven") or {}
+        if "above_max" in be and "never" in be:
+            continue                                   # نسخهٔ جدید؛ کاری لازم نیست
+        symbols = sorted(next(iter(per_pol.values()), {}).keys()) if per_pol else []
+        status, crossing = {}, {}
+        for sym in symbols:
+            pts = []
+            for pol in pols:
+                name = pol.get("name")
+                m = (per_pol.get(name) or {}).get(sym) or {}
+                if "error" not in m and "expectancy" in m:
+                    pts.append((rt.get(name, 0.0), m["expectancy"]))
+            st_, val = breakeven_status(pts)
+            status[sym] = st_
+            if val is not None:
+                crossing[sym] = val
+        row["breakeven"] = {
+            "n": len(crossing),
+            "median_round_trip_bps": (round(st.median(crossing.values()), 3)
+                                      if crossing else None),
+            "cross": len(crossing),
+            "above_max": sum(1 for v in status.values() if v == "above"),
+            "never": sum(1 for v in status.values() if v == "never"),
+            "max_tested_bps": max_rt,
+            "per_symbol": dict(sorted(status.items())),
+            "of_symbols": len(symbols) or be.get("of_symbols", 0),
+        }
+    return res
+
+
 def _breakeven_block(be: dict, lang: str = "fa") -> str:
     """سه وضعیت سربه‌سر را جدا نشان می‌دهد — نه یک عدد گمراه‌کننده.
 
@@ -432,6 +478,7 @@ def _structure_block(d: dict, lang: str = "fa") -> str:
 # گزارش
 # ---------------------------------------------------------------------------
 def render_report(res: dict, lang: str = "fa") -> str:
+    ensure_breakeven(res)
     s = res["settings"]
     L: List[str] = []
     w = L.append
@@ -571,7 +618,8 @@ def deliver(paths: Sequence[str], out_dir: str, lang: str = "fa") -> None:
     print(f"   {os.path.abspath(out_dir)}/")
     print(_t("   یک‌بار `termux-setup-storage` را بزنید، یا همین حالا کپی کنید:",
              "   run `termux-setup-storage` once, or copy them right now:"))
-    print(f"   cp {os.path.abspath(out_dir)}/cost_sweep*.\* ~/storage/downloads/")
+    names = " ".join(os.path.basename(x) for x in paths)
+    print(f"   cp {os.path.abspath(out_dir)}/{{{names}}} ~/storage/downloads/")
 
 
 # ---------------------------------------------------------------------------
