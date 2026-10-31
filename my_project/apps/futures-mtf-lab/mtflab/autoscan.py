@@ -302,6 +302,46 @@ def fetch_or_load(symbol: str, tf: str, days: int, data_dir: str,
 # ----------------------------------------------------------------------------
 # ساخت لایه‌ها
 # ----------------------------------------------------------------------------
+def validate_tf_stack(tf_trigger: str, tf_filter: str, tf_bias: str) -> None:
+    """پیش از دانلود بررسی می‌کند که لایه‌های فیلتر/بایاس روی تریگر ساختنی باشند.
+
+    چرا لازم است؟ `resample_up` فقط «به بالا» و فقط «مضرب صحیح» را می‌پذیرد
+    (قید ضدِ lookahead). اگر این بررسی نباشد، خطا **بعد از** دانلودِ اولین نماد
+    بیرون می‌زند — روی گوشی یعنی چند دقیقه دانلودِ هدررفته.
+
+    مثال درست: تریگر 15m · فیلتر 1h (60/15=4) · بایاس 4h (240/15=16).
+    """
+    from .data import tf_to_minutes
+
+    try:
+        trig = tf_to_minutes(tf_trigger)
+    except (KeyError, ValueError):
+        raise ValueError(_t(f"تایم‌فریم تریگر ناشناخته است: {tf_trigger!r}",
+                           f"Unknown trigger timeframe: {tf_trigger!r}"))
+    for name, val in (("filter", tf_filter), ("bias", tf_bias)):
+        if not val:
+            continue
+        try:
+            dst = tf_to_minutes(val)
+        except (KeyError, ValueError):
+            raise ValueError(_t(f"تایم‌فریم {name} ناشناخته است: {val!r}",
+                               f"Unknown {name} timeframe: {val!r}"))
+        if dst < trig:
+            raise ValueError(
+                _t(f"`--tf-{name}={val}` از تریگر `{tf_trigger}` ریزتر است. "
+                   f"لایهٔ فیلتر/بایاس فقط می‌تواند درشت‌تر یا مساوی تریگر باشد "
+                   f"(ریزدانه‌سازی = ساختن دادهٔ آینده).",
+                   f"`--tf-{name}={val}` is finer than the trigger `{tf_trigger}`. "
+                   f"Filter/bias layers can only be equal or coarser "
+                   f"(fine-graining would fabricate future data)."))
+        if dst % trig != 0:
+            raise ValueError(
+                _t(f"`--tf-{name}={val}` مضرب صحیح `{tf_trigger}` نیست "
+                   f"({dst} ÷ {trig}). ترکیب درست مثل 15m→1h→4h است.",
+                   f"`--tf-{name}={val}` is not an integer multiple of "
+                   f"`{tf_trigger}` ({dst} / {trig}). A valid stack: 15m→1h→4h."))
+
+
 def build_layers(trig: Sequence[Candle], tf_trigger: str, tf_filter: str,
                  tf_bias: str, bias_enabled: bool) -> Dict[str, List[Candle]]:
     layers = {"trigger": list(trig)}
@@ -471,8 +511,11 @@ def autoscan(cfg: MTFConfig, symbols: Sequence[str], days: int, tf: str,
              data_dir: str, refresh: bool = False,
              progress: bool = True, stop_on_network_error: bool = True,
              source: str = "bybit", csv_paths: Optional[Dict[str, str]] = None,
-             csv_native_tf: str = "1h", base_url: str = "") -> dict:
-    tf_filter, tf_bias = "1d", "1d"
+             csv_native_tf: str = "1h", base_url: str = "",
+             tf_filter: str = "1d", tf_bias: str = "1d") -> dict:
+    tf_filter = (tf_filter or "").strip()
+    tf_bias = (tf_bias or "").strip()
+    validate_tf_stack(tf, tf_filter, tf_bias)
     variants = variants_for(tf, tf_filter, tf_bias)
     vids = [v[0] for v in variants]
 
@@ -609,8 +652,9 @@ def render_report(res: dict) -> str:
         w(f"> ⚠️ **این یک آزمایش کوچک است، نه یک حکم.** {len(cov)} نماد تحلیل شد "
           f"ولی دروازهٔ پذیرش به {GATE['min_symbols']} نماد نیاز دارد. "
           f"پس ❌ زیر **اجباری** است و هیچ چیزی دربارهٔ استراتژی نمی‌گوید.\n")
-    w(f"- نمادها: **{len(cov)}** · تایم‌فریم تریگر: `{st['tf_trigger']}` / "
-      f"فیلتر: `{st['tf_filter']}` · بازه: {st['days']} روز")
+    w(f"- نمادها: **{len(cov)}** · تریگر: `{st['tf_trigger']}` / "
+      f"فیلتر: `{st.get('tf_filter', '1d')}` / بایاس: `{st.get('tf_bias', '1d')}` · "
+      f"بازه: {st['days']} روز")
     w(f"- هزینه: {st['fee_bps']} bps + {st['slippage_pct']}% اسلیپیج هر طرف · "
       f"ریسک {st['risk_per_trade_pct']}% · حداکثر {st['max_concurrent']} پوزیشن هم‌زمان\n")
 
@@ -727,8 +771,9 @@ def render_report_en(res: dict) -> str:
         w(f"> ⚠️ **SMALL SAMPLE — this is not a verdict.** {len(cov)} symbol(s) were "
           f"analysed but the gate requires {GATE['min_symbols']}. The FAIL below is "
           f"**guaranteed** and says nothing about the strategy.\n")
-    w(f"- symbols: **{len(cov)}** · trigger tf `{st['tf_trigger']}` / "
-      f"filter `{st['tf_filter']}` · window {st['days']} days")
+    w(f"- symbols: **{len(cov)}** · trigger `{st['tf_trigger']}` / "
+      f"filter `{st.get('tf_filter', '1d')}` / bias `{st.get('tf_bias', '1d')}` · "
+      f"window {st['days']} days")
     w(f"- costs: {st['fee_bps']} bps + {st['slippage_pct']}% slippage per side · "
       f"risk {st['risk_per_trade_pct']}% · max {st['max_concurrent']} concurrent\n")
 
@@ -830,6 +875,10 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--days", type=int, default=1460,
                    help="بازهٔ تاریخی به روز (پیش‌فرض ۱۴۶۰ ≈ ۴ سال)")
     p.add_argument("--tf", default="4h", help="تایم‌فریم تریگر (پیش‌فرض 4h)")
+    p.add_argument("--tf-filter", default="1d",
+                   help="تایم‌فریم لایهٔ فیلتر/رژیم (پیش‌فرض 1d؛ باید درشت‌تر از --tf باشد)")
+    p.add_argument("--tf-bias", default="1d",
+                   help="تایم‌فریم لایهٔ بایاس (پیش‌فرض 1d). برای بازتولید سناریوی اصلی: --tf 15m --tf-filter 1h --tf-bias 4h")
     p.add_argument("--data-dir", default="data", help="پوشهٔ داده")
     p.add_argument("--refresh", action="store_true", help="نادیده گرفتن کش")
     p.add_argument("--out-dir", default="results")
@@ -892,10 +941,12 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
 
     print("=" * 70)
     if _LANG == "en":
-        print(f"AUTOSCAN — {len(symbols)} symbols | tf {known.tf} | "
+        print(f"AUTOSCAN — {len(symbols)} symbols | trigger {known.tf} / "
+              f"filter {known.tf_filter} / bias {known.tf_bias} | "
               f"{known.days} days | source {known.source}")
     else:
-        print(f"🔎 اسکن خودکار — {len(symbols)} نماد · تایم‌فریم {known.tf} · "
+        print(f"🔎 اسکن خودکار — {len(symbols)} نماد · تریگر {known.tf} / "
+              f"فیلتر {known.tf_filter} / بایاس {known.tf_bias} · "
               f"{known.days} روز · منبع {known.source}")
     print("=" * 70)
 
@@ -903,7 +954,15 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
         res = autoscan(cfg, symbols, known.days, known.tf, known.data_dir,
                        refresh=known.refresh, source=known.source,
                        csv_paths=csv_paths, csv_native_tf=known.csv_native_tf,
-                       base_url=known.base_url)
+                       base_url=known.base_url,
+                       tf_filter=known.tf_filter, tf_bias=known.tf_bias)
+    except ValueError as e:
+        # ترکیب تایم‌فریم نامعتبر — پیش از دانلود گرفته می‌شود
+        print(_t(f"\n❌ ترکیب تایم‌فریم نامعتبر: {e}",
+                 f"\n❌ Invalid timeframe stack: {e}"))
+        print(_t("   راهنما: --tf 15m --tf-filter 1h --tf-bias 4h",
+                 "   Hint: --tf 15m --tf-filter 1h --tf-bias 4h"))
+        return 2
     except RuntimeError as e:
         print(_t(f"\n❌ قطع شد: {e}", f"\n❌ Aborted: {e}"))
         print(_t("   راه‌حل: اتصال را عوض کنید (Wi-Fi/داده) یا از VPN استفاده کنید.",

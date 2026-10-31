@@ -407,3 +407,111 @@ def test_full_sample_report_has_no_small_sample_warning():
         assert "SMALL SAMPLE" not in A.render_report_en(res)
     finally:
         A.set_lang("fa")
+
+
+# ── ۸) پشتهٔ تایم‌فریم: بازتولید سناریوی اصلی اسپک (15m/1h/4h) ───────────────
+def test_validate_tf_stack_accepts_the_original_spec_scenario():
+    """سناریوی اصلی اسپک: تریگر ۱۵m · فیلتر ۱h · بایاس ۴h باید مجاز باشد."""
+    from mtflab import autoscan as _A
+    _A.set_lang("fa")
+    from mtflab.autoscan import validate_tf_stack
+    validate_tf_stack("15m", "1h", "4h")
+    validate_tf_stack("4h", "1d", "1d")      # پیش‌فرض قدیمی، برای سازگاری
+    validate_tf_stack("15m", "15m", "15m")   # مساوی هم مجاز است
+
+
+def test_validate_tf_stack_rejects_a_filter_finer_than_trigger():
+    """فیلتر ریزتر از تریگر = ساختن دادهٔ آینده؛ باید همان اول رد شود."""
+    from mtflab import autoscan as _A
+    _A.set_lang("fa")
+    from mtflab.autoscan import validate_tf_stack
+    try:
+        validate_tf_stack("4h", "1h", "1d")
+    except ValueError as e:
+        assert "ریزتر" in str(e)
+    else:
+        raise AssertionError("باید ValueError می‌داد")
+
+
+def test_validate_tf_stack_rejects_a_non_multiple():
+    """۱۵m→۴۵m مضرب صحیح نیست (۳)؛ resample_up هم ردش می‌کند ولی دیر."""
+    from mtflab import autoscan as _A
+    _A.set_lang("fa")
+    from mtflab.autoscan import validate_tf_stack
+    try:
+        validate_tf_stack("30m", "45", "4h")
+    except ValueError as e:
+        assert "مضرب" in str(e)
+    else:
+        raise AssertionError("باید ValueError می‌داد")
+
+
+def test_validate_tf_stack_rejects_unknown_timeframe():
+    """تایم‌فریم ناشناخته باید پیام روشن بدهد، نه KeyError خشک."""
+    from mtflab import autoscan as _A
+    _A.set_lang("fa")
+    from mtflab.autoscan import validate_tf_stack
+    # نکته: "7m"/"3d" عمداً مجازند (tf_to_minutes عدد+واحد را می‌فهمد)
+    for args in (("zz", "1d", "1d"), ("15m", "abc", "4h"), ("15m", "1h", "q")):
+        try:
+            validate_tf_stack(*args)
+        except ValueError as e:
+            assert "ناشناخته" in str(e), str(e)
+        else:
+            raise AssertionError(f"باید ValueError می‌داد: {args}")
+
+
+def test_autoscan_validates_before_touching_the_network():
+    """ترکیب نامعتبر باید *قبل از* دانلود شکست بخورد، نه بعد از چند دقیقه.
+
+    این تست عمداً روی source=json اجرا می‌شود: اگر اعتبارسنجی جا افتاده باشد،
+    کد وارد دانلود/خواندن کش می‌شود و خطای دیگری می‌دهد.
+    """
+    import inspect
+    from mtflab.autoscan import autoscan
+    cfg = load_config(["--data", "synthetic", "--quiet"])
+    with tempfile.TemporaryDirectory() as td:
+        try:
+            autoscan(cfg, ["BTCUSDT"], 30, "4h", td, source="json",
+                     progress=False, tf_filter="1h")
+        except ValueError as e:
+            assert "ریزتر" in str(e)
+        else:
+            raise AssertionError("باید ValueError می‌داد")
+
+    sig = inspect.signature(autoscan)
+    assert sig.parameters["tf_filter"].default == "1d"
+    assert sig.parameters["tf_bias"].default == "1d"
+
+
+def test_report_headers_show_all_three_timeframes():
+    """گزارش باید هر سه لایه را نشان دهد؛ وگرنه معلوم نیست چه چیزی آزموده شد."""
+    from mtflab import autoscan as A
+    res = _tiny_res(10)
+    res["settings"]["tf_filter"] = "1h"
+    res["settings"]["tf_bias"] = "4h"
+    A.set_lang("en")
+    try:
+        en = A.render_report_en(res)
+    finally:
+        A.set_lang("fa")
+    fa = A.render_report(res)
+    assert "filter `1h`" in en and "bias `4h`" in en
+    assert "فیلتر: `1h`" in fa and "بایاس: `4h`" in fa
+
+
+def test_validation_error_is_english_when_lang_is_en():
+    """روی Termux متن خطا هم باید انگلیسی باشد، نه نیم‌فارسی."""
+    from mtflab import autoscan as A
+    A.set_lang("en")
+    try:
+        try:
+            A.validate_tf_stack("4h", "1h", "1d")
+        except ValueError as e:
+            msg = str(e)
+        else:
+            raise AssertionError("باید ValueError می‌داد")
+    finally:
+        A.set_lang("fa")
+    assert "finer than the trigger" in msg
+    assert "ریزتر" not in msg

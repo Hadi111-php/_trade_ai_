@@ -366,8 +366,13 @@ git clone -b arena/444f3300-trade-ai --single-branch --depth 1 \
 cd _trade_ai_/my_project/apps/futures-mtf-lab
 
 bash run-auto.sh          # ۲۰ نماد · ۵ سال · 4h
+bash run-auto.sh --tf 15m --tf-filter 1h --tf-bias 4h --days 730 --tag 15m
+                          # سناریوی اصلی اسپک (۱۵m · ۱h · ۴h) — بخش ۳.۵ راهنمای Termux
 bash run-auto.sh --base-url https://proxy.example.com   # اگر Bybit فیلتر بود
 ```
+
+- سه لایهٔ تایم‌فریم مستقل‌اند: `--tf` (تریگر) · `--tf-filter` (رژیم) · `--tf-bias` (بایاس).
+  ترکیب نامعتبر (فیلتر ریزتر از تریگر یا غیرمضرب) **قبل از دانلود** رد می‌شود.
 
 - داده را به **JSON** ذخیره می‌کند (قابل ادامه بعد از قطعی، قابل ارسال برای بازبینی)
 - ۵ نسخه را روی **همان** تایم‌فریم و همان نمادها مقایسه می‌کند
