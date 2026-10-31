@@ -298,3 +298,55 @@ def test_diagnosis_reports_which_layer_is_blocked():
         assert kinds == {"time": True, "kline": False}
     finally:
         srv.shutdown()
+
+
+# ── ۷) حالت انگلیسی (خوانایی روی ترمینال Termux) ────────────────────────────
+def test_lang_switch_changes_console_and_report():
+    """روی Termux خط فارسی برعکس نمایش داده می‌شود؛ --lang en باید اسکی‌محور باشد."""
+    from mtflab import autoscan as A
+    A.set_lang("fa")
+    assert A._t("فارسی", "English") == "فارسی"
+    A.set_lang("en")
+    assert A._t("فارسی", "English") == "English"
+    A.set_lang("EN-gb")
+    assert A._t("x", "y") == "y"
+    A.set_lang("fa")
+    assert A._t("x", "y") == "x"
+
+
+def test_english_report_is_ascii_readable():
+    """گزارش انگلیسی باید ساختار کامل داشته باشد و حرف فارسی نداشته باشد."""
+    import re
+    from mtflab import autoscan as A
+    res = {
+        "version": A.VERSION, "generated_at": "2026-01-01 00:00 UTC",
+        "elapsed_s": 1.0,
+        "settings": {"symbols": ["A"], "days": 10, "tf_trigger": "4h",
+                     "tf_filter": "1d", "tf_bias": "1d", "fee_bps": 5.5,
+                     "slippage_pct": 0.02, "risk_per_trade_pct": 1.0,
+                     "max_concurrent": 1, "initial_equity": 1000.0,
+                     "base_url": "", "source": "csv"},
+        "coverage": {"A": {"n_trigger": 100, "years": 1.0, "start": "2025-01-01",
+                           "end": "2025-12-31", "from_cache": True,
+                           "source": "csv", "fingerprint": "x"}},
+        "variants": [{"id": "base", "label": "base"}],
+        "per_symbol": {"A": {"base": {"n": 10, "profit_factor": 1.2,
+                                      "expectancy": 1.0, "pnl": 10.0,
+                                      "return_pct": 1.0, "max_drawdown_pct": -1.0,
+                                      "positive_years": 1, "years_n": 1,
+                                      "per_year": {"2025": {"pnl": 10.0}}}}},
+        "aggregate": {"base": {"ok": True, "n_symbols": 1, "total_trades": 10,
+                               "total_pnl": 10.0, "median_pf": 1.2,
+                               "median_expectancy": 1.0, "profitable_symbols": 1,
+                               "profitable_symbols_pct": 100.0, "positive_years": 1,
+                               "years_n": 1, "positive_years_pct": 100.0,
+                               "sign_vs_base": None, "checks": {},
+                               "survived": False}},
+        "rankings": ["base"], "winner": "base", "survived": [], "errors": [],
+    }
+    out = A.render_report_en(res)
+    assert "# Multi-symbol autoscan report" in out
+    assert "## 1) Verdict" in out and "## 5) Data coverage" in out
+    assert "PASS" in out or "FAIL" in out
+    # هیچ حرف فارسی‌ای نباید در گزارش انگلیسی باشد
+    assert not re.search(r"[\u0600-\u06FF]", out), "گزارش انگلیسی نباید فارسی داشته باشد"

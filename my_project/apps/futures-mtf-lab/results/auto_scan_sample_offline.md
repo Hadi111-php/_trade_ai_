@@ -1,63 +1,59 @@
-> **این فایل نمونه است، نه نتیجهٔ نهایی.** با ۲ نماد و دادهٔ محلی ساخته شده تا
-> درستیِ مسیر کد نشان داده شود. اجرای واقعی روی گوشی ۲۰ نماد را می‌آزماید و
-> خروجی‌اش `auto_scan_<تاریخ>.md` نام می‌گیرد.
+> **SAMPLE OUTPUT — not a result.** Generated with 2 symbols from bundled data to
+> prove the pipeline works on a phone. A real run covers 20 symbols and writes
+> `auto_scan_<date>.md` (Persian by default, `--lang en` for English).
 
-# گزارش اسکن خودکار چندنمادی
+# Multi-symbol autoscan report
 
-*ساخته‌شده: 2026-10-31 07:04 UTC · نسخهٔ اسکنر 1.0 · زمان اجرا 6.1 ثانیه*
+*generated: 2026-10-31 07:52 UTC · scanner 1.0 · runtime 6.7s*
 
-- نمادها: **2** · تایم‌فریم تریگر: `4h` / فیلتر: `1d` · بازه: 1460 روز
-- هزینه: 5.5 bps + 0.02% اسلیپیج هر طرف · ریسک 1.0% · حداکثر 1 پوزیشن هم‌زمان
+- symbols: **2** · trigger tf `4h` / filter `1d` · window 1460 days
+- costs: 5.5 bps + 0.02% slippage per side · risk 1.0% · max 1 concurrent
 
-## ۱) حکم
+## 1) Verdict
 
-❌ **هیچ نسخه‌ای از دروازهٔ پذیرش عبور نکرد.**
+**FAIL: no variant passed the acceptance gate.**
 
-بهترین نسخه بر اساس میانهٔ expectancy: **`trend`** با +7.97$ (میانهٔ PF 1.9456) روی 2 نماد و 211 معامله.
+Best by median expectancy: **`trend`** at +7.97$ (median PF 1.9456) across 2 symbols and 211 trades.
 
-قاعدهٔ پذیرش (از پیش تعیین‌شده): حداقل 8 نماد · PF>1 در ≥60.0٪ نمادها · سال مثبت در ≥60.0٪ · میانهٔ PF ≥ 1.05 · p ≤ 0.1 در برابر پایه.
+Pre-registered gate: >= 8 symbols · PF>1 in >=60.0% of symbols · positive years >=60.0% · median PF >= 1.05 · sign-test p <= 0.1 vs base.
 
-## ۲) مقایسهٔ نسخه‌ها (همه روی همان تایم‌فریم و همان نمادها)
+## 2) Variants (same timeframe, same symbols)
 
-| نسخه | نماد | معاملات | میانهٔ PF | میانهٔ expectancy | نماد PF>1 | سال مثبت | P در برابر پایه | حکم |
+| variant | symbols | trades | median PF | median exp | PF>1 | pos. years | p vs base | gate |
 |---|---:|---:|---:|---:|---:|---:|---:|:--:|
-| `base` | 2 | 464 | 1.0812 | +0.57$ | 2/100.0٪ | 6/11 (54.55٪) | — | ❌ |
-| `trend` | 2 | 211 | 1.9456 | +7.97$ | 2/100.0٪ | 8/11 (72.73٪) | 0.5 (2/2) | ❌ |
-| `trend_tp` | 2 | 269 | 1.6247 | +5.38$ | 2/100.0٪ | 10/11 (90.91٪) | 0.5 (2/2) | ❌ |
-| `pullback` | 2 | 288 | 1.0041 | +0.02$ | 1/50.0٪ | 5/11 (45.45٪) | 0.5 (0/2) | ❌ |
-| `climax` | 2 | 260 | 1.1627 | +0.95$ | 2/100.0٪ | 6/11 (54.55٪) | 1.0 (1/2) | ❌ |
+| `base` | 2 | 464 | 1.0812 | +0.57$ | 2/100.0% | 6/11 (54.55%) | — | FAIL |
+| `trend` | 2 | 211 | 1.9456 | +7.97$ | 2/100.0% | 8/11 (72.73%) | 0.5 (2/2) | FAIL |
+| `trend_tp` | 2 | 269 | 1.6247 | +5.38$ | 2/100.0% | 10/11 (90.91%) | 0.5 (2/2) | FAIL |
+| `pullback` | 2 | 288 | 1.0041 | +0.02$ | 1/50.0% | 5/11 (45.45%) | 0.5 (0/2) | FAIL |
+| `climax` | 2 | 260 | 1.1627 | +0.95$ | 2/100.0% | 6/11 (54.55%) | 1.0 (1/2) | FAIL |
 
-> «P در برابر پایه» = آزمون علامت: آیا این نسخه در اکثر نمادها از نسخهٔ پایه بهتر بود؟ عدد کوچک یعنی برتری سیستماتیک، نه شانسی.
+## 3) Per symbol — `trend`
 
-## ۳) جزئیات نماد‌به‌نماد — نسخهٔ `trend`
-
-| نماد | پوشش | معاملات | PF | expectancy | بازده٪ | افت٪ | سال‌های مثبت |
+| symbol | coverage | trades | PF | expectancy | return% | max DD% | pos. years |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| BTCUSDT | 5.7 سال | 108 | 1.9456 | +7.97$ | +86.04% | -10.23% | 6/6 |
-| ETHUSDT | 4.73 سال | 103 | 1.212 | +1.54$ | +15.85% | -16.19% | 2/5 |
+| BTCUSDT | 5.7y | 108 | 1.9456 | +7.97$ | +86.04% | -10.23% | 6/6 |
+| ETHUSDT | 4.73y | 103 | 1.212 | +1.54$ | +15.85% | -16.19% | 2/5 |
 
-## ۴) سال‌به‌سال — نسخهٔ `trend` (PnL دلاری)
+## 4) Year by year — `trend` (PnL in $)
 
-| نماد | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 |
+| symbol | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 |
 |---|---:|---:|---:|---:|---:|---:|
 | BTCUSDT | +165.39 | +39.28 | +144.39 | +92.05 | +298.58 | +120.68 |
 | ETHUSDT | — | -27.70 | +168.57 | -11.15 | -68.18 | +96.92 |
 
-> اگر یک نسخه فقط در سال‌های صعودی سود بدهد و در بقیه ضرر، این «استراتژی» نیست؛ «شرط‌گذاری روی رژیم» است.
+## 5) Data coverage
 
-## ۵) پوشش داده
-
-| نماد | کندل | سال | از | تا | منبع |
+| symbol | candles | years | from | to | source |
 |---|---:|---:|---|---|---|
 | BTCUSDT | 12488 | 5.7 | 2020-03-25 | 2025-12-05 | CSV محلی |
 | ETHUSDT | 10361 | 4.73 | 2021-03-15 | 2025-12-05 | CSV محلی |
 
-## ۶) محدودیت‌ها (که خودمان اعلام می‌کنیم)
+## 6) Limitations
 
-- **Survivorship bias**: فهرست نمادها از میان نمادهای *امروز زنده* انتخاب شده؛ نمادهایی که حذف شده‌اند (و بازنده بودند) در نمونه نیستند.
-- همهٔ نمادها تاریخ یکسان ندارند؛ پوشش در جدول ۵ آمده است. نمادهای جوان‌تر وزن کمتری دارند ولی در شمارش «سال مثبت» حضور دارند.
-- فهرست نمادها ثابت است و با نتایج تغییر داده نشده — تغییری هم داده نشود، وگرنه دقیقاً همان انتخابی می‌شود که می‌خواستیم از آن پرهیز کنیم.
-- این ابزار PAPER است: هیچ سفارشی به صرافی فرستاده نمی‌شود و اعداد سود واقعی نیستند.
+- **Survivorship bias**: the symbol list contains coins alive *today*; delisted (losing) coins are missing.
+- Symbols have different histories; younger ones carry less weight but still count in 'positive years'.
+- The symbol list is fixed in code and was not tuned after seeing results.
+- PAPER only: no orders are sent and none of these are realized profits.
 
 ---
-_آزمون دادهٔ تاریخی، توصیهٔ معاملاتی نیست._
+_Backtest on historical data, not trading advice._

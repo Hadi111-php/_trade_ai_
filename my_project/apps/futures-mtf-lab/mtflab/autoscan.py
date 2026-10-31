@@ -36,6 +36,19 @@ from .robust import sign_test_p
 
 VERSION = "1.0"
 
+#: زبان خروجی. روی Termux خط فارسی بی‌دی‌آر‌پی/شکل‌دهی ندارد و برعکس و جدا نمایش
+#: داده می‌شود؛ پس --lang en یک مسیر خوانا برای ترمینال گوشی است.
+_LANG = "fa"
+
+
+def set_lang(lang: str) -> None:
+    global _LANG
+    _LANG = "en" if str(lang).lower().startswith("en") else "fa"
+
+
+def _t(fa: str, en: str) -> str:
+    return en if _LANG == "en" else fa
+
 # ----------------------------------------------------------------------------
 # نمادهای پیش‌فرض
 # ----------------------------------------------------------------------------
@@ -688,6 +701,106 @@ def render_report(res: dict) -> str:
     return "\n".join(L) + "\n"
 
 
+def render_report_en(res: dict) -> str:
+    """همان گزارش، به انگلیسی. چرا: ترمینال Termux خط فارسی را برعکس و جدا
+    نمایش می‌دهد، پس گزارش فارسی روی گوشی عملاً ناخواناست."""
+    L: List[str] = []
+    w = L.append
+    st = res["settings"]
+    agg = res["aggregate"]
+    cov = res["coverage"]
+
+    w("# Multi-symbol autoscan report\n")
+    w(f"*generated: {res['generated_at']} · scanner {res['version']} · "
+      f"runtime {res['elapsed_s']}s*\n")
+    w(f"- symbols: **{len(cov)}** · trigger tf `{st['tf_trigger']}` / "
+      f"filter `{st['tf_filter']}` · window {st['days']} days")
+    w(f"- costs: {st['fee_bps']} bps + {st['slippage_pct']}% slippage per side · "
+      f"risk {st['risk_per_trade_pct']}% · max {st['max_concurrent']} concurrent\n")
+
+    w("## 1) Verdict\n")
+    if res["survived"]:
+        w(f"PASS: **{', '.join(res['survived'])}**\n")
+    else:
+        w("**FAIL: no variant passed the acceptance gate.**\n")
+    if res["winner"]:
+        a = agg[res["winner"]]
+        w(f"Best by median expectancy: **`{res['winner']}`** at "
+          f"{_f(a['median_expectancy'])}$ (median PF {a['median_pf']}) across "
+          f"{a['n_symbols']} symbols and {a['total_trades']} trades.\n")
+        w("Pre-registered gate: "
+          f">= {GATE['min_symbols']} symbols · PF>1 in >="
+          f"{GATE['min_profitable_symbols_pct']}% of symbols · positive years >="
+          f"{GATE['min_positive_years_pct']}% · median PF >= {GATE['min_median_pf']} · "
+          f"sign-test p <= {GATE['min_sign_test_p']} vs base.\n")
+
+    w("## 2) Variants (same timeframe, same symbols)\n")
+    w("| variant | symbols | trades | median PF | median exp | PF>1 | pos. years | "
+      "p vs base | gate |")
+    w("|---|---:|---:|---:|---:|---:|---:|---:|:--:|")
+    for v in res["variants"]:
+        vid = v["id"]
+        a = agg.get(vid) or {}
+        if not a.get("ok"):
+            continue
+        sgn = a.get("sign_vs_base")
+        p_txt = "—" if not sgn else f"{sgn['p_value']} ({sgn['wins']}/{sgn['of']})"
+        w(f"| `{vid}` | {a['n_symbols']} | {a['total_trades']} | {a['median_pf']} | "
+          f"{_f(a['median_expectancy'])}$ | {a['profitable_symbols']}/"
+          f"{a['profitable_symbols_pct']}% | {a['positive_years']}/{a['years_n']} "
+          f"({a['positive_years_pct']}%) | {p_txt} | "
+          f"{'PASS' if a['survived'] else 'FAIL'} |")
+    w("")
+
+    vid = res["winner"]
+    if vid:
+        w(f"## 3) Per symbol — `{vid}`\n")
+        w("| symbol | coverage | trades | PF | expectancy | return% | max DD% | pos. years |")
+        w("|---|---:|---:|---:|---:|---:|---:|---:|")
+        for sym, d in res["per_symbol"].items():
+            m = d.get(vid)
+            if not m:
+                continue
+            c = cov.get(sym, {})
+            pf = m["profit_factor"] if m["profit_factor"] is not None else "—"
+            w(f"| {sym} | {c.get('years', 0)}y | {m['n']} | {pf} | "
+              f"{_f(m['expectancy'])}$ | {_f(m['return_pct'])}% | "
+              f"{_f(m['max_drawdown_pct'])}% | {m['positive_years']}/{m['years_n']} |")
+        w("")
+
+        w(f"## 4) Year by year — `{vid}` (PnL in $)\n")
+        years = sorted({y for d in res["per_symbol"].values()
+                        for y in (d.get(vid, {}).get("per_year") or {})})
+        if years:
+            w("| symbol | " + " | ".join(years) + " |")
+            w("|---|" + "---:|" * len(years))
+            for sym, d in res["per_symbol"].items():
+                m = d.get(vid)
+                if not m:
+                    continue
+                cells = [f"{_f((m['per_year'].get(y) or {}).get('pnl'))}" for y in years]
+                w(f"| {sym} | " + " | ".join(cells) + " |")
+            w("")
+
+    w("## 5) Data coverage\n")
+    w("| symbol | candles | years | from | to | source |")
+    w("|---|---:|---:|---|---|---|")
+    for sym, c in cov.items():
+        w(f"| {sym} | {c['n_trigger']} | {c['years']} | {c['start']} | {c['end']} | "
+          f"{c.get('source', '—')} |")
+    w("")
+
+    w("## 6) Limitations\n")
+    w("- **Survivorship bias**: the symbol list contains coins alive *today*; "
+      "delisted (losing) coins are missing.")
+    w("- Symbols have different histories; younger ones carry less weight but "
+      "still count in 'positive years'.")
+    w("- The symbol list is fixed in code and was not tuned after seeing results.")
+    w("- PAPER only: no orders are sent and none of these are realized profits.\n")
+    w("---\n_Backtest on historical data, not trading advice._")
+    return "\n".join(L) + "\n"
+
+
 # ----------------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------------
@@ -707,6 +820,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--refresh", action="store_true", help="نادیده گرفتن کش")
     p.add_argument("--out-dir", default="results")
     p.add_argument("--tag", default="", help="پسوند نام فایل‌ها")
+    p.add_argument("--lang", choices=["fa", "en"], default="fa",
+                   help="زبان خروجی؛ روی Termux با en خوانا است")
     p.add_argument("--base-url", default="",
                    help="آدرس جایگزین Bybit (پروکسی/آینه)؛ پیش‌فرض: انتخاب خودکار")
     p.add_argument("--source", choices=["bybit", "json", "csv"], default="bybit",
@@ -718,14 +833,17 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--probe-only", action="store_true",
                    help="فقط بررسی دسترسی شبکه و خروج")
     known, rest = p.parse_known_args(argv if argv is not None else None)
+    set_lang(known.lang)
 
     if known.probe_only:
         targets = [known.base_url] if known.base_url else list(BASE_URLS)
-        print("🔍 تشخیص شبکه — هر آدرس با دو endpoint تست می‌شود:")
+        print(_t("🔍 تشخیص شبکه — هر آدرس با دو endpoint تست می‌شود:",
+                  "Network check — each host tested on two endpoints:"))
         rep = diagnose_network(targets)
         ok = print_diagnosis(rep)
         print("")
-        print("✅ آماده برای دانلود." if ok else "❌ دانلود ممکن نیست.")
+        print(_t("✅ آماده برای دانلود.", "READY to download.")
+              if ok else _t("❌ دانلود ممکن نیست.", "DOWNLOAD NOT POSSIBLE."))
         return 0 if ok else 1
 
     csv_paths: Dict[str, str] = {}
@@ -759,8 +877,12 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
         symbols = list(DEFAULT_SYMBOLS)
 
     print("=" * 70)
-    print(f"🔎 اسکن خودکار — {len(symbols)} نماد · تایم‌فریم {known.tf} · "
-          f"{known.days} روز · منبع {known.source}")
+    if _LANG == "en":
+        print(f"AUTOSCAN — {len(symbols)} symbols | tf {known.tf} | "
+              f"{known.days} days | source {known.source}")
+    else:
+        print(f"🔎 اسکن خودکار — {len(symbols)} نماد · تایم‌فریم {known.tf} · "
+              f"{known.days} روز · منبع {known.source}")
     print("=" * 70)
 
     try:
@@ -769,8 +891,9 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                        csv_paths=csv_paths, csv_native_tf=known.csv_native_tf,
                        base_url=known.base_url)
     except RuntimeError as e:
-        print(f"\n❌ قطع شد: {e}")
-        print("   راه‌حل: اتصال را عوض کنید (Wi-Fi/داده) یا از VPN استفاده کنید.")
+        print(_t(f"\n❌ قطع شد: {e}", f"\n❌ Aborted: {e}"))
+        print(_t("   راه‌حل: اتصال را عوض کنید (Wi-Fi/داده) یا از VPN استفاده کنید.",
+                 "   Fix: switch network (Wi-Fi/mobile) or use a VPN."))
         return 2
 
     os.makedirs(known.out_dir, exist_ok=True)
@@ -778,36 +901,48 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     md_path = os.path.join(known.out_dir, f"auto_scan{tag}.md")
     json_path = os.path.join(known.out_dir, f"auto_scan{tag}.json")
     with open(md_path, "w", encoding="utf-8") as f:
-        f.write(render_report(res))
+        f.write(render_report_en(res) if _LANG == "en" else render_report(res))
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(res, f, ensure_ascii=False, indent=1, default=str)
 
     # ── خلاصهٔ روی صفحه ───────────────────────────────────────────────────
     print("\n" + "=" * 70)
-    print("📊 خلاصه")
+    print(_t("📊 خلاصه", "📊 SUMMARY"))
     for v in res["variants"]:
         a = res["aggregate"].get(v["id"]) or {}
         if not a.get("ok"):
             continue
         mark = "✅" if a["survived"] else "❌"
-        print(f"  {mark} {v['id']:9s} نماد={a['n_symbols']:2d} "
-              f"معامله={a['total_trades']:4d} میانهٔPF={a['median_pf']:<6} "
-              f"میانهٔexp={a['median_expectancy']:+7.2f}$ "
-              f"PF>1={a['profitable_symbols_pct']:5.1f}% "
-              f"سال+={a['positive_years_pct']:5.1f}%")
+        if _LANG == "en":
+            print(f"  {mark} {v['id']:9s} sym={a['n_symbols']:2d} "
+                  f"trades={a['total_trades']:4d} medPF={a['median_pf']:<7} "
+                  f"medExp={a['median_expectancy']:+8.2f}$ "
+                  f"PF>1={a['profitable_symbols_pct']:5.1f}% "
+                  f"posYears={a['positive_years_pct']:5.1f}%")
+        else:
+            print(f"  {mark} {v['id']:9s} نماد={a['n_symbols']:2d} "
+                  f"معامله={a['total_trades']:4d} میانهٔPF={a['median_pf']:<6} "
+                  f"میانهٔexp={a['median_expectancy']:+7.2f}$ "
+                  f"PF>1={a['profitable_symbols_pct']:5.1f}% "
+                  f"سال+={a['positive_years_pct']:5.1f}%")
     if res["errors"]:
         n_err, n_ok = len(res["errors"]), len(res.get("per_symbol") or {})
-        print(f"\n  ⚠️ {n_err} خطا" + ("" if n_ok else "  ← هیچ نمادی داده نگرفت"))
+        print(_t(f"\n  ⚠️ {n_err} خطا" + ("" if n_ok else "  ← هیچ نمادی داده نگرفت"),
+                 f"\n  ⚠️ {n_err} errors" + ("" if n_ok else "  <- no symbol got data")))
         for e in res["errors"][:3]:
             print(f"     • {e}")
         if n_err > 3:
-            print(f"     … و {n_err - 3} خطای دیگر (همه در گزارش)")
+            print(_t(f"     … و {n_err - 3} خطای دیگر (همه در گزارش)",
+                     f"     ... and {n_err - 3} more (all in the report)"))
         if not n_ok:
             print("")
-            print("  📌 برای دیدن علت دقیق:  python3 -m mtflab autoscan --probe-only")
-            print("  📌 اجرای آفلاین روی دادهٔ همراه پروژه:  bash run-auto.sh --offline")
-    print(f"\n📄 گزارش : {md_path}")
-    print(f"🗂 بستهٔ داده: {json_path}")
+            print(_t("  📌 برای دیدن علت دقیق:  bash run-auto.sh --probe-only",
+                     "  📌 Exact cause: run  bash run-auto.sh --probe-only"))
+            print(_t("  📌 اجرای آفلاین روی دادهٔ همراه پروژه:  bash run-auto.sh --offline",
+                     "  📌 Offline run on bundled data:  bash run-auto.sh --offline"))
+    print(_t(f"\n📄 گزارش : {md_path}", f"\n📄 Report   : {md_path}"))
+    print(_t(f"🗂 بستهٔ داده: {json_path}", f"🗂 Data pack: {json_path}"))
     print("=" * 70)
-    print("👉 همین دو فایل را برای بازبینی بفرستید.")
+    print(_t("👉 همین دو فایل را برای بازبینی بفرستید.",
+             "👉 Send these two files back for review."))
     return 0

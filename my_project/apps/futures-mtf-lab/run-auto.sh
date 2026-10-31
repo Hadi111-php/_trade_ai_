@@ -26,6 +26,27 @@ else
   G=''; R=''; Y=''; B=''; N=''
 fi
 say()  { printf "%b%s%b\n" "${1:-}" "${2:-}" "$N"; }
+
+# ── زبان: روی Termux خط فارسی در ترمینال برعکس و جدا نمایش داده می‌شود ───────
+LANG_EN=0
+[ "${TERMUX_VERSION:-}" != "" ] && LANG_EN=1
+_prev=""
+for a in "$@"; do
+  case "$a" in
+    --lang=en*|--lang=EN*) LANG_EN=1 ;;
+    --lang=fa*) LANG_EN=0 ;;
+  esac
+  # حالت «--lang fa» (دو آرگومان جدا)
+  if [ "$_prev" = "--lang" ]; then
+    case "$a" in en*) LANG_EN=1 ;; fa*) LANG_EN=0 ;; esac
+  fi
+  _prev="$a"
+done
+# fa→en پیام دوزبانه: msg "فارسی" "English"
+msg() { if [ "$LANG_EN" = "1" ]; then printf '%s' "${2:-}"; else printf '%s' "${1:-}"; fi; }
+has_lang_flag=0
+for a in "$@"; do case "$a" in --lang|--lang=*) has_lang_flag=1;; esac; done
+if [ "$LANG_EN" = "1" ] && [ "$has_lang_flag" = "0" ]; then set -- "$@" --lang en; fi
 ok()   { say "$G" "✅ $*"; }
 warn() { say "$Y" "⚠️  $*"; }
 err()  { say "$R" "❌ $*"; }
@@ -52,22 +73,22 @@ if [ "$OFFLINE" = "1" ]; then
 fi
 
 say "$B" "════════════════════════════════════════════════════════════"
-say "$B" "  Futures MTF Lab — اسکن خودکار چندنمادی"
+say "$B" "  $(msg "Futures MTF Lab — اسکن خودکار چندنمادی" "Futures MTF Lab — multi-symbol autoscan")"
 say "$B" "════════════════════════════════════════════════════════════"
 
 # ── ۰) پیش‌نیازها ────────────────────────────────────────────────────────────
 if ! command -v python3 >/dev/null 2>&1; then
-  err "python3 نصب نیست."
-  say "" "روی Termux اجرا کنید:"
+  err "$(msg "python3 نصب نیست." "python3 is not installed.")"
+  say "" "$(msg "روی Termux اجرا کنید:" "On Termux run:")"
   say "" "    pkg update && pkg install python -y"
   exit 1
 fi
 PYV=$(python3 -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null || echo "?")
-ok "python3 پیدا شد (نسخه $PYV) — هیچ بستهٔ بیرونی لازم نیست"
+ok "$(msg "python3 پیدا شد (نسخه $PYV) — هیچ بستهٔ بیرونی لازم نیست" "python3 $PYV found — no external packages needed")"
 
 # جلوگیری از خواب گوشی در طول دانلود (اگر Termux:API نصب باشد)
 if command -v termux-wake-lock >/dev/null 2>&1; then
-  termux-wake-lock 2>/dev/null && ok "قفل بیداری فعال شد (گوشی نمی‌خوابد)"
+  termux-wake-lock 2>/dev/null && ok "$(msg "قفل بیداری فعال شد (گوشی نمی‌خوابد)" "wake-lock on (phone will not sleep)")"
 fi
 
 mkdir -p data/json results
@@ -90,17 +111,17 @@ for a in "$@"; do
   case "$a" in --source=*) SRC="${a#--source=}";; esac
   prev="$a"
 done
-say "" "📦 منبع داده: $SRC"
+say "" "$(msg "📦 منبع داده: $SRC" "📦 data source: $SRC")"
 
 if [ "$SRC" = "bybit" ]; then
-  say "" "🌐 بررسی دسترسی به Bybit …"
+  say "" "$(msg "🌐 بررسی دسترسی به Bybit …" "🌐 checking Bybit access ...")"
   if ! python3 -m mtflab autoscan --probe-only; then
-    err "به Bybit دسترسی نیست (فیلتر شبکه یا قطعی اینترنت)."
-    say "" "  گزینه‌ها:"
-    say "" "   ۰) اجرای آفلاین روی دادهٔ همراه پروژه (۲ نماد، ۵ سال):"
+    err "$(msg "به Bybit دسترسی نیست (فیلتر شبکه یا قطعی اینترنت)." "Bybit is not reachable (network filter or offline).")"
+    say "" "$(msg "  گزینه‌ها:" "  options:")"
+    say "" "$(msg "   ۰) اجرای آفلاین روی دادهٔ همراه پروژه (۲ نماد، ۵ سال):" "   0) run offline on bundled data (2 symbols, 5 years):")"
     say "" "        bash run-auto.sh --offline"
-    say "" "   ۱) VPN/پروکسی را روشن کنید و دوباره اجرا کنید"
-    say "" "   ۲) اگر قبلاً داده گرفته‌اید:  bash run-auto.sh --source json"
+    say "" "$(msg "   ۱) VPN/پروکسی را روشن کنید و دوباره اجرا کنید" "   1) turn on VPN/proxy and retry")"
+    say "" "$(msg "   ۲) اگر قبلاً داده گرفته‌اید:  bash run-auto.sh --source json" "   2) if you already have cached data:  bash run-auto.sh --source json")"
     exit 2
   fi
 fi
@@ -117,7 +138,7 @@ for a in "$@"; do
 done
 TAG="${USER_TAG:-$STAMP}"
 LOG="results/auto_scan_${TAG}.log"
-say "" "▶️  شروع اسکن — گزارش زنده در: $LOG"
+say "" "$(msg "▶️  شروع اسکن — گزارش زنده در: $LOG" "▶️  scanning — live log: $LOG")"
 say "" ""
 
 set -o pipefail 2>/dev/null || true
@@ -126,9 +147,9 @@ STATUS=${PIPESTATUS[0]:-0}
 
 say ""
 if [ "$STATUS" -ne 0 ]; then
-  err "اجرا با خطا تمام شد (کد $STATUS). لاگ: $LOG"
-  say "" "  اگر وسط کار قطع شد، دوباره همین دستور را بزنید:"
-  say "" "  داده‌های دانلودشده ذخیره شده‌اند و ادامه می‌دهد."
+  err "$(msg "اجرا با خطا تمام شد (کد $STATUS). لاگ: $LOG" "run failed (code $STATUS). log: $LOG")"
+  say "" "$(msg "  اگر وسط کار قطع شد، دوباره همین دستور را بزنید:" "  if it was interrupted, just run the same command again:")"
+  say "" "$(msg "  داده‌های دانلودشده ذخیره شده‌اند و ادامه می‌دهد." "  downloaded data is cached and it will resume.")"
   exit "$STATUS"
 fi
 
@@ -137,37 +158,37 @@ MD="results/auto_scan_${TAG}.md"
 JS="results/auto_scan_${TAG}.json"
 
 say "$G" "════════════════════════════════════════════════════════════"
-ok "تمام شد"
+ok "$(msg "تمام شد" "DONE")"
 say "$G" "════════════════════════════════════════════════════════════"
 echo
-say "" "📄 گزارش خوانا : $MD"
-say "" "🗂 بستهٔ داده  : $JS"
-say "" "📜 لاگ اجرا    : $LOG"
+say "" "$(msg "📄 گزارش خوانا : $MD" "📄 report   : $MD")"
+say "" "$(msg "🗂 بستهٔ داده  : $JS" "🗂 data pack: $JS")"
+say "" "$(msg "📜 لاگ اجرا    : $LOG" "📜 log      : $LOG")"
 echo
 if [ "$SRC" != "csv" ]; then
   NJ=$(ls -1 data/json/*.json 2>/dev/null | wc -l | tr -d ' ')
-  say "" "💾 فایل‌های دادهٔ ذخیره‌شده: $NJ فایل در data/json/"
+  say "" "$(msg "💾 فایل‌های دادهٔ ذخیره‌شده: $NJ فایل در data/json/" "💾 cached data files: $NJ in data/json/")"
   DU=$(du -sh data/json 2>/dev/null | cut -f1)
-  [ -n "${DU:-}" ] && say "" "   حجم: $DU"
+  [ -n "${DU:-}" ] && say "" "$(msg "   حجم: $DU" "   size: $DU")"
 fi
 
 # ── ۴) بسته‌بندی برای ارسال ─────────────────────────────────────────────────
 ZIP="results/auto_scan_${TAG}.zip"
 if [ -f "$MD" ] && [ -f "$JS" ]; then
   if command -v zip >/dev/null 2>&1; then
-    zip -q -j "$ZIP" "$MD" "$JS" && ok "بستهٔ فشرده ساخته شد: $ZIP"
+    zip -q -j "$ZIP" "$MD" "$JS" && ok "$(msg "بستهٔ فشرده ساخته شد: $ZIP" "zip created: $ZIP")"
   else
-    warn "zip نصب نیست (اختیاری): pkg install zip"
+    warn "$(msg "zip نصب نیست (اختیاری): pkg install zip" "zip not installed (optional): pkg install zip")"
   fi
 else
-  err "فایل خروجی پیدا نشد — لاگ را ببینید: $LOG"
+  err "$(msg "فایل خروجی پیدا نشد — لاگ را ببینید: $LOG" "output file missing — see log: $LOG")"
 fi
 
 echo
-say "$Y" "👉 مرحلهٔ بعد: فایل گزارش (md) و بستهٔ داده (json) را بفرستید."
-say "$Y" "   همین دو فایل برای بازبینی کامل کافی است."
+say "$Y" "$(msg "👉 مرحلهٔ بعد: فایل گزارش (md) و بستهٔ داده (json) را بفرستید." "👉 NEXT: send back the report (md) and the data pack (json).")"
+say "$Y" "$(msg "   همین دو فایل برای بازبینی کامل کافی است." "   these two files are all that is needed.")"
 echo
-say "" "برای تحلیل مجدد بدون دانلود دوباره:"
+say "" "$(msg "برای تحلیل مجدد بدون دانلود دوباره:" "re-analyse without downloading again:")"
 say "" "    bash run-auto.sh --source json --tag rerun"
 
 if command -v termux-wake-unlock >/dev/null 2>&1; then

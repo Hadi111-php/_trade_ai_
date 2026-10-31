@@ -46,6 +46,14 @@ for a in "$@"; do
   fi
 done
 
+# روی Termux خط فارسی در ترمینال برعکس و جدا نمایش داده می‌شود،
+# پس خروجی به‌صورت پیش‌فرض انگلیسی می‌شود (با --lang fa قابل تغییر است).
+HAS_LANG=0
+for a in "$@"; do case "$a" in --lang|--lang=*) HAS_LANG=1;; esac; done
+if [ "${TERMUX_VERSION:-}" != "" ] && [ "$HAS_LANG" = "0" ]; then
+  set -- "$@" --lang en
+fi
+
 # اگر --probe-only خواسته شد، مستقیم به CLI پایتون بده (اسکریپت اصلی این را ندارد)
 for a in "$@"; do
   if [ "$a" = "--probe-only" ]; then
