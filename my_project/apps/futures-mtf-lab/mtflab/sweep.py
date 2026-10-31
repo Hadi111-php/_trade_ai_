@@ -163,6 +163,29 @@ def exit_structure(rows: Sequence[dict]) -> Dict[str, float]:
             sorted(tot.items(), key=lambda kv: -kv[1])}
 
 
+def breakeven_status(points: Sequence[Tuple[float, float]]) -> Tuple[str, Optional[float]]:
+    """وضعیت سربه‌سر یک نماد: (`never` | `above` | `cross`, مقدار bps).
+
+    - `never` : حتی با هزینهٔ صفر هم منفی است ⇒ هیچ اجراگذاری نجاتش نمی‌دهد
+    - `above` : با **گران‌ترین** هزینهٔ آزمون‌شده هم مثبت است ⇒ سربه‌سرش بالاتر
+                از بازهٔ آزمون است، یعنی لبه حاشیهٔ امن دارد
+    - `cross` : جایی داخل بازه از صفر می‌گذرد ⇒ عدد دقیق درون‌یابی می‌شود
+
+    تفکیک `above` از `never` حیاتی است: هر دو در نسخهٔ اول `None` می‌شدند و
+    گزارش «سربه‌سر روی ۱ از ۲۰ نماد» می‌نوشت، در حالی که ۱۹ نماد **در گران‌ترین
+    حالت هم سودده** بودند — پیام دقیقاً برعکسِ واقعیت.
+    """
+    pts = sorted(points)
+    if not pts:
+        return "never", None
+    be = breakeven_cost(pts)
+    if be is not None:
+        return "cross", be
+    if all(e > 0 for _f, e in pts):
+        return "above", None
+    return "never", None
+
+
 # ---------------------------------------------------------------------------
 # اجرای کامل
 # ---------------------------------------------------------------------------
@@ -213,22 +236,30 @@ def sweep(cfg, data: Dict[str, list], tf_trigger: str, tf_filter: str,
                 "limit_fill_share": limit_fill_share(rows),
             }
 
-        be: Dict[str, float] = {}
+        status: Dict[str, str] = {}
+        crossing: Dict[str, float] = {}
         for sym in data:
             pts = []
             for pol in policies:
                 m = results[vid][pol[0]].get(sym) or {}
                 if "error" not in m and "expectancy" in m:
                     pts.append((effective_round_trip_bps(pol), m["expectancy"]))
-            b = breakeven_cost(pts)
-            if b is not None:
-                be[sym] = b
+            st_, val = breakeven_status(pts)
+            status[sym] = st_
+            if val is not None:
+                crossing[sym] = val
         ref_rows = [m for m in results[vid]["taker"].values() if "error" not in m]
         summary[vid]["exit_structure"] = exit_structure(ref_rows)
         summary[vid]["breakeven"] = {
-            "n": len(be),
-            "median_round_trip_bps": round(st.median(be.values()), 3) if be else None,
-            "per_symbol": dict(sorted(be.items())),
+            "n": len(crossing),                       # سازگاری با نسخهٔ قبل
+            "median_round_trip_bps": (round(st.median(crossing.values()), 3)
+                                      if crossing else None),
+            "cross": len(crossing),
+            "above_max": sum(1 for v in status.values() if v == "above"),
+            "never": sum(1 for v in status.values() if v == "never"),
+            "max_tested_bps": max((effective_round_trip_bps(pp) for pp in policies),
+                                  default=0.0),
+            "per_symbol": dict(sorted(status.items())),
             "of_symbols": len(data),
         }
 
@@ -252,47 +283,108 @@ def sweep(cfg, data: Dict[str, list], tf_trigger: str, tf_filter: str,
 
 
 def verdict(d: dict, lang: str = "fa") -> str:
-    """حکم یک نسخه: آیا اصلاً لبه‌ای هست و اجرا می‌تواند نجاتش دهد؟
+    """حکم یک نسخه — به ترتیب، سه پرسشِ هزینه:
 
-    سه پرسش، به ترتیب هزینه:
-      ۱) با هزینهٔ صفر سودده است؟ (اگر نه، هیچ اجرایی نجاتش نمی‌دهد)
-      ۲) با «TP محدود» (واقع‌بینانه) سودده است؟ (اگر بله، طرح میکر ارزش ساخت دارد)
-      ۳) فقط با فرضِ غیرواقعیِ «همه میکر» سودده می‌شود؟ (اگر بله، نسازید)
+      ۱) با هزینهٔ صفر سودده است؟ (اگر نه، هیچ اجراگذاری نجاتش نمی‌دهد)
+      ۲) با هزینهٔ **فعلی (تیکر)** سودده است؟ (اگر بله، مشکل اجرا نیست)
+      ۳) با «TP محدود» سودده می‌شود، در حالی که با تیکر نمی‌شد؟
+         (تنها حالتی که ساختنِ اجراگذاری میکر توجیه دارد)
+
+    نسخهٔ اول این تابع فقط PF>1 را می‌دید و در نتیجه وقتی لبه **با هزینهٔ فعلی
+    هم زنده** بود، بی‌دلیل می‌نوشت «طرح میکر ارزش ساخت دارد». هزینه بهینه‌سازی
+    فقط وقتی ارزش دارد که هزینه **مانع** باشد، نه وقتی فقط سود را کم کند.
     """
     def pf(name):
         m = d.get(name) or {}
         return m.get("median_pf") if m.get("ok") else None
 
-    z, mt, am, tk = pf("zero"), pf("maker_tp"), pf("all_maker"), pf("taker")
-    be = (d.get("breakeven") or {}).get("median_round_trip_bps")
-    if z is None:
+    def ex(name):
+        m = d.get(name) or {}
+        return m.get("median_expectancy") if m.get("ok") else None
+
+    z, tk, mt, am = pf("zero"), pf("taker"), pf("maker_tp"), pf("all_maker")
+    ez, etk, emt = ex("zero"), ex("taker"), ex("maker_tp")
+    be = d.get("breakeven") or {}
+    if z is None or tk is None:
         return "نامشخص" if lang == "fa" else "unknown"
 
+    # ۱) هیچ لبهٔ ناخالصی نیست
     if z <= 1.0:
-        return ("❌ **رها کنید** — حتی با هزینهٔ صفر هم PF ≤ ۱ است؛ "
-                "مشکل سیگنال است نه اجرا" if lang == "fa" else
-                "❌ **Abandon** — PF ≤ 1 even at zero cost; the signal, not "
-                "execution, is the problem")
+        msg = ("❌ **رها کنید** — حتی با هزینهٔ صفر هم PF ≤ ۱ است؛ "
+               "مشکل سیگنال است نه اجرا")
+        return msg if lang == "fa" else (
+            "❌ **Abandon** — PF ≤ 1 even at zero cost; the signal, not "
+            "execution, is the problem")
 
+    # ۲) لبه با هزینهٔ فعلی هم زنده است ⇒ هزینه مانع نیست
+    if tk > 1.0:
+        gain = (emt - etk) / abs(etk) if (etk and emt is not None and etk != 0) else 0.0
+        if lang == "fa":
+            return (f"✅ **لبه با هزینهٔ فعلی زنده است** (PF {tk} > ۱) — "
+                    f"مشکل اجرا **نیست**. سودِ اضافه از میکر: {gain * 100:+.0f}٪ "
+                    f"(‏{etk:+.2f}$ → {emt:+.2f}$). پس اجراگذاری را نسازید؛ "
+                    f"مسئله «بُرد» نیست، «تکرارپذیری» است")
+        return (f"✅ **Edge survives current cost** (PF {tk} > 1) — execution is "
+                f"**not** the problem. Maker would add {gain * 100:+.0f}% "
+                f"({etk:+.2f}$ → {emt:+.2f}$). Do not build execution; the issue "
+                f"is repeatability, not cost")
+
+    # ۳) هزینه مانع است: آیا اجرای محدود نجاتش می‌دهد؟
     if mt is not None and mt > 1.0:
-        return ("✅ **طرح میکر ارزش ساخت دارد** — با TP محدود (واقع‌بینانه) هم "
-                "PF > ۱ می‌ماند" if lang == "fa" else
-                "✅ **Maker scheme worth building** — PF stays >1 with realistic "
-                "limit-TP exits")
+        if lang == "fa":
+            return ("✅ **طرح میکر ارزش ساخت دارد** — با هزینهٔ فعلی منفی است ولی "
+                    "با TP محدود (واقع‌بینانه) بالای ۱ می‌رود")
+        return ("✅ **Maker scheme worth building** — negative at current cost, "
+                "but clears 1 with realistic limit-TP exits")
+
+    if be.get("cross"):
+        n = be["cross"]
+        if lang == "fa":
+            return (f"⚠️ **مرزی** — فقط اگر هزینهٔ رفت‌وبرگشت زیر "
+                    f"{be['median_round_trip_bps']} bps بیاید سودده می‌شود "
+                    f"({n} نماد از {be['of_symbols']})")
+        return (f"⚠️ **Borderline** — only profitable with round-trip cost below "
+                f"{be['median_round_trip_bps']} bps ({n}/{be['of_symbols']} symbols)")
 
     if am is not None and am > 1.0:
-        return ("⚠️ **مرزی** — فقط با فرضِ غیرواقعیِ «همه سفارش‌ها میکر» بالای ۱ "
-                "می‌رود (حد ضرر را نمی‌شود محدود گذاشت)" if lang == "fa" else
-                "⚠️ **Borderline** — only clears 1 under the unrealistic "
+        if lang == "fa":
+            return ("⚠️ **سراب** — فقط با فرضِ غیرواقعیِ «همه سفارش‌ها میکر» بالای ۱ "
+                    "می‌رود؛ حد ضرر را نمی‌شود محدود گذاشت")
+        return ("⚠️ **Mirage** — only clears 1 under the unrealistic "
                 "'everything maker' assumption; stops cannot be limit orders")
 
-    if be is not None:
-        return ("❌ **رها کنید** — سربه‌سر در "
-                f"{be} bps است، کمتر از کارمزد میکرِ قابل‌دستیابی" if lang == "fa"
-                else f"❌ **Abandon** — break-even at {be} bps, below achievable maker cost")
+    if lang == "fa":
+        return "❌ **رها کنید** — با هیچ سطح هزینه‌ای PF بالای ۱ نمی‌رود"
+    return "❌ **Abandon** — PF never clears 1 at any cost level"
 
-    return ("❌ **رها کنید** — با هیچ سطح هزینه‌ای PF بالای ۱ نمی‌رود" if lang == "fa"
-            else "❌ **Abandon** — PF never clears 1 at any cost level")
+
+def _breakeven_block(be: dict, lang: str = "fa") -> str:
+    """سه وضعیت سربه‌سر را جدا نشان می‌دهد — نه یک عدد گمراه‌کننده.
+
+    عدد میانه فقط روی نمادهایی معنا دارد که **واقعاً** عبور کرده‌اند. دو دستهٔ
+    دیگر باید جدا شمرده شوند، وگرنه «۱ از ۲۰» خوانده می‌شود در حالی که ۱۹ نماد
+    در گران‌ترین حالت هم سودده‌اند.
+    """
+    n, tot = be.get("cross", 0), be.get("of_symbols", 0)
+    above, never = be.get("above_max", 0), be.get("never", 0)
+    mx = be.get("max_tested_bps", 0.0)
+    if not tot:
+        return ""
+    if lang == "en":
+        out = [f"**Break-even:** {above}/{tot} symbols stay profitable even at the "
+               f"highest tested cost ({mx} bps) — their break-even is *above* that; "
+               f"{never}/{tot} are negative even at **zero** cost."]
+        if n:
+            out.append(f"{n}/{tot} cross zero inside the range: median "
+                       f"**{be['median_round_trip_bps']} bps** round-trip.")
+        return "\n\n".join(out) + "\n"
+    out = [f"**سربه‌سر:** {above} از {tot} نماد حتی با گران‌ترین هزینهٔ آزمون‌شده "
+           f"({mx} bps) هم سودده می‌مانند — سربه‌سرشان *بالاتر* از این بازه است. "
+           f"{never} از {tot} حتی با **هزینهٔ صفر** هم منفی‌اند."]
+    if n:
+        out.append(f"{n} از {tot} داخل بازه از صفر می‌گذرند: میانه "
+                   f"**{be['median_round_trip_bps']} bps** رفت‌وبرگشت.")
+    return "\n\n".join(out) + "\n"
 
 
 def _structure_block(d: dict, lang: str = "fa") -> str:
@@ -369,17 +461,8 @@ def render_report(res: dict, lang: str = "fa") -> str:
                   f"{m['symbols_pf_above_1']}/{m['n_symbols']} | {m['total_pnl']:+}$ |")
             be = d.get("breakeven") or {}
             w("")
-            if be.get("median_round_trip_bps") is not None:
-                if be["n"] * 2 < be["of_symbols"]:
-                    w(f"**Break-even exists on only {be['n']}/{be['of_symbols']} "
-                      f"symbols** (median {be['median_round_trip_bps']} bps) — most "
-                      f"symbols never turn positive at any cost.\n")
-                else:
-                    w(f"**Break-even cost (median): {be['median_round_trip_bps']} bps "
-                      f"round-trip** on {be['n']}/{be['of_symbols']} symbols.\n")
-            else:
-                w("**Break-even: unreachable** — expectancy stays negative even at "
-                  "zero cost, i.e. the signal has no gross edge.\n")
+            w(_breakeven_block(be, lang="en"))
+
             zero = d.get("zero") or {}
             mk = d.get("maker_tp") or {}
             base = d.get("taker") or {}
@@ -424,17 +507,7 @@ def render_report(res: dict, lang: str = "fa") -> str:
               f"{m['symbols_pf_above_1']}/{m['n_symbols']} | {m['total_pnl']:+}$ |")
         be = d.get("breakeven") or {}
         w("")
-        if be.get("median_round_trip_bps") is not None:
-            if be["n"] * 2 < be["of_symbols"]:
-                w(f"**سربه‌سر فقط روی {be['n']} از {be['of_symbols']} نماد وجود دارد** "
-                  f"(میانهٔ همان‌ها {be['median_round_trip_bps']} bps). یعنی بیشترِ "
-                  f"نمادها با هیچ هزینه‌ای سودده نمی‌شوند.\n")
-            else:
-                w(f"**هزینهٔ سربه‌سر (میانهٔ نمادها): {be['median_round_trip_bps']} bps "
-                  f"رفت‌وبرگشت** — روی {be['n']} از {be['of_symbols']} نماد.\n")
-        else:
-            w("**سربه‌سر: دست‌نیافتنی** — expectancy حتی با هزینهٔ صفر هم منفی "
-              "می‌ماند، یعنی خودِ سیگنال سود ناخالص ندارد.\n")
+        w(_breakeven_block(be, lang="fa"))
 
         zero = d.get("zero") or {}
         mk = d.get("maker_tp") or {}
@@ -532,14 +605,13 @@ def sweep_command(argv: Optional[List[str]] = None) -> int:
                   f"trades={m['trades']:5d} medPF={m['median_pf']} "
                   f"exp={m['median_expectancy']:+7.2f}$")
         be = d.get("breakeven") or {}
-        if be.get("median_round_trip_bps") is not None:
-            print(_t(f"  ↳ سربه‌سر: {be['median_round_trip_bps']} bps رفت‌وبرگشت "
-                     f"({be['n']}/{be['of_symbols']} نماد)",
-                     f"  -> break-even: {be['median_round_trip_bps']} bps round-trip "
-                     f"({be['n']}/{be['of_symbols']} symbols)"))
-        else:
-            print(_t("  ↳ سربه‌سر: دست‌نیافتنی (حتی با هزینهٔ صفر منفی)",
-                     "  -> break-even: unreachable (negative even at zero cost)"))
+        if be.get("of_symbols"):
+            print(_t(f"  ↳ سربه‌سر: {be.get('above_max', 0)}/{be['of_symbols']} نماد "
+                     f"حتی با {be.get('max_tested_bps')}bps هم سودده · "
+                     f"{be.get('never', 0)} حتی با صفر منفی",
+                     f"  -> break-even: {be.get('above_max', 0)}/{be['of_symbols']} "
+                     f"profitable even at {be.get('max_tested_bps')}bps · "
+                     f"{be.get('never', 0)} negative even at zero"))
         print("  " + verdict(d, lang=a.lang))
 
     print(f"\n📄 {md}\n🗂 {js}")

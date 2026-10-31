@@ -179,7 +179,7 @@ def test_sweep_report_has_both_languages():
     res = sweep(CFG, data, "4h", "1d", "1d", variants, progress=False)
     fa = render_report(res, lang="fa")
     en = render_report(res, lang="en")
-    assert "هزینهٔ سربه‌سر" in fa or "دست‌نیافتنی" in fa
+    assert "سربه‌سر" in fa
     assert "Break-even" in en
     assert "taker" in fa and "taker" in en
 
@@ -194,3 +194,75 @@ def test_sweep_settings_record_every_policy():
     assert names == [p[0] for p in POLICIES]
     for p in res["settings"]["policies"]:
         assert "round_trip_bps" in p
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۵) سربه‌سر: سه وضعیت، نه یک عدد گمراه‌کننده
+# ═══════════════════════════════════════════════════════════════════════════
+def test_status_above_when_profitable_even_at_the_highest_cost():
+    """این همان حالتِ دادهٔ واقعی است: لبه با تیکر ۱۵bps هم زنده است.
+
+    نسخهٔ اول این را با «سربه‌سر دست‌نیافتنی» قاطی می‌کرد و گزارش می‌نوشت
+    «۱ از ۲۰ نماد» — یعنی دقیقاً برعکسِ واقعیت.
+    """
+    from mtflab.sweep import breakeven_status
+    st, val = breakeven_status([(0.0, 1.10), (9.5, 0.95), (15.0, 0.76)])
+    assert st == "above" and val is None
+
+
+def test_status_never_when_negative_even_free():
+    from mtflab.sweep import breakeven_status
+    st, val = breakeven_status([(0.0, -0.5), (9.5, -1.2), (15.0, -2.0)])
+    assert st == "never" and val is None
+
+
+def test_status_cross_inside_the_range():
+    from mtflab.sweep import breakeven_status
+    st, val = breakeven_status([(0.0, 0.5), (9.5, -0.4), (15.0, -1.2)])
+    assert st == "cross" and 0 < val < 9.5
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۶) حکم: «هزینه مانع است» با «هزینه فقط سود را کم می‌کند» فرق دارد
+# ═══════════════════════════════════════════════════════════════════════════
+def _summary(**pfs):
+    out = {}
+    for name, pf in pfs.items():
+        out[name] = {"ok": True, "median_pf": pf, "median_expectancy": 0.76}
+    out.setdefault("breakeven", {"cross": 0, "above_max": 19, "never": 1,
+                                 "of_symbols": 20, "max_tested_bps": 15.0,
+                                 "median_round_trip_bps": None})
+    return out
+
+
+def test_verdict_does_not_sell_a_maker_scheme_when_cost_is_not_the_barrier():
+    """دادهٔ واقعی کاربر: PF در تیکر ۱.۱۲ و در میکر هم ۱.۱۲.
+
+    حکم درست «مشکل اجرا نیست» است، نه «طرح میکر ارزش ساخت دارد».
+    """
+    from mtflab.sweep import verdict
+    v = verdict(_summary(taker=1.1201, maker_tp=1.1201, all_maker=1.1541,
+                         zero=1.1749), lang="fa")
+    assert "زنده است" in v
+    assert "ارزش ساخت" not in v
+
+
+def test_verdict_still_promotes_maker_when_taker_is_negative():
+    from mtflab.sweep import verdict
+    v = verdict(_summary(taker=0.95, maker_tp=1.06, all_maker=1.09,
+                         zero=1.15), lang="fa")
+    assert "ارزش ساخت" in v
+
+
+def test_verdict_abandons_when_even_free_cost_loses():
+    from mtflab.sweep import verdict
+    v = verdict(_summary(taker=0.80, maker_tp=0.85, all_maker=0.95,
+                         zero=0.98), lang="fa")
+    assert "رها" in v
+
+
+def test_verdict_flags_mirage_when_only_all_maker_works():
+    from mtflab.sweep import verdict
+    v = verdict(_summary(taker=0.98, maker_tp=0.99, all_maker=1.04,
+                         zero=1.05), lang="fa")
+    assert "سراب" in v or "مرزی" in v
