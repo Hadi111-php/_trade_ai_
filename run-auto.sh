@@ -44,6 +44,22 @@ for a in "$@"; do
       echo "           git fetch origin arena/444f3300-trade-ai --depth 1"
       echo "           git checkout -B arena/444f3300-trade-ai FETCH_HEAD"
     fi
+    # آیا کلون عقب است؟ (مهم‌ترین علت «دستور کار نکرد»)
+    echo -n "🔄 به‌روز؟  : "
+    if git -C "$HERE" fetch -q --depth 1 origin arena/444f3300-trade-ai 2>/dev/null; then
+      _HEAD="$(git -C "$HERE" rev-parse HEAD 2>/dev/null)"
+      _NEW="$(git -C "$HERE" rev-parse FETCH_HEAD 2>/dev/null)"
+      if [ "$_HEAD" = "$_NEW" ]; then
+        echo "بله ✅  (همان آخرین نسخه)"
+      else
+        echo "خیر ❌  کد جدیدتر موجود است:"
+        git -C "$HERE" log --oneline HEAD..FETCH_HEAD 2>/dev/null | head -6 | sed 's/^/             /'
+        echo "           برای به‌روزرسانی:"
+        echo "             git checkout -B arena/444f3300-trade-ai FETCH_HEAD"
+      fi
+    else
+      echo "(بدون شبکه — چک نشد)"
+    fi
     exit 0
   fi
 done
