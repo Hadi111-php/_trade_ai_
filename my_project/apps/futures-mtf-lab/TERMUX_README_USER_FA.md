@@ -17,8 +17,8 @@ pkg update -y && pkg install python git -y
 
 ```bash
 git clone -b arena/444f3300-trade-ai --single-branch --depth 1 \
-  https://github.com/Hadi111-php/_trade_ai_.git
-cd _trade_ai_/my_project/apps/futures-mtf-lab
+  https://github.com/Hadi111-php/_trade_ai_.git lab
+cd lab
 ```
 
 > اگر `git clone` بدون `-b` بزنید، پوشهٔ `futures-mtf-lab` اصلاً وجود ندارد.
@@ -29,11 +29,30 @@ cd _trade_ai_/my_project/apps/futures-mtf-lab
 
 ---
 
-## ۱) اجرا (یک دستور)
+## ۱) اجرا (یک دستور — از ریشهٔ پروژه)
 
 ```bash
 bash run-auto.sh
 ```
+
+> ✅ لازم نیست وارد پوشهٔ اپ شوید. یک لانچر در ریشهٔ مخزن هست که خودش مسیر درست را
+> انتخاب می‌کند. اگر از پوشهٔ اپ اجرا کنید هم کار می‌کند — هر دو مسیر پشتیبانی می‌شوند.
+
+### اگر شک کردید کد به‌روز است یا نه
+
+```bash
+bash run-auto.sh --status
+```
+
+خروجی نمونه:
+```
+🔖 کامیت : b5a4473 fix(autoscan): پروب آدرس اشتباهی را تست می‌کرد
+🌿 شاخه  : arena/444f3300-trade-ai
+🧪 mtflab: ok · scanner v1.0
+🩺 پروب  : نسخهٔ جدید (kline را هم تست می‌کند) ✅
+```
+
+اگر نوشت «نسخهٔ قدیمی ❌»، دستورهای جلوی همان خط را اجرا کنید.
 
 همین. پیش‌فرض: **۲۰ نماد، ۵ سال، تایم‌فریم 4h**.
 
@@ -156,6 +175,7 @@ bash run-auto.sh
 | `destination path ... already exists` | قبلاً یک‌بار کلون کرده‌اید. یا به پوشهٔ جدید کلون کنید (`... .git lab`) یا همان قبلی را تعمیر کنید (پایین) |
 | `cd: .../futures-mtf-lab: No such file` | کلونِ قدیمی از شاخهٔ `main` است و این پوشه در آن وجود ندارد → با `-b` کلون کنید |
 | نام پوشه با `*` نشان داده می‌شود | `_trade_ai_` در متن‌های فرمت‌دار به‌صورت ایتالیک رندر می‌شود و زیرخط‌ها گم می‌شوند. کلون را با نام ساده بگیرید: `... .git lab` |
+| `No module named mtflab` | از پوشهٔ اشتباه اجرا کرده‌اید. از ریشهٔ پروژه: `bash run-auto.sh` |
 | `python3 نصب نیست` | `pkg install python -y` |
 | `به Bybit دسترسی نیست` | `bash run-auto.sh --offline` یا VPN |
 | `سرور پاسخ می‌دهد ولی دادهٔ کندل بسته است` | IP شما برای داده بلاک شده → VPN یا `--base-url` |
