@@ -9,6 +9,7 @@
   robust     آزمون بقا: همان یافته روی چند نماد و چند پنجرهٔ زمانی
   evolve     حلقهٔ تطبیق زنده: قهرمان/چالش‌گر با دروازهٔ ارتقای آماری + پلاسیبو
   autoscan   اسکن خودکار چندنمادی: دانلود → تحلیل → گزارش (مناسب Termux)
+  comove     تحلیل هم‌حرکتی ارزها: آیا رابطهٔ پنهان و پایدار وجود دارد؟
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -81,6 +82,10 @@ def main(argv=None) -> int:
         print(f"   بهترین فرضیهٔ پایدار: {su['best_robust']} "
               f"(از {su['n_experiments']} فرضیه، {su['robust_count']} پایدار)")
         return 0
+
+    if cmd == "comove":
+        from .comove import comove_command
+        return comove_command(rest)
 
     if cmd == "autoscan":
         from .autoscan import autoscan_command

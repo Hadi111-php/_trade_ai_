@@ -37,6 +37,7 @@ python3 -m mtflab robust --source csv --csv ../futures-scalp-lab/data/btcusdt_1h
 python3 -m mtflab serve --dir results --port 8080
 ```
 
+| `comove_method.md` | روش تحلیل هم‌حرکتی + دو دام آماری که خوردیم | ✅ |
 | `autoscan_20symbols_verdict.md` | 🎯 **حکم نهایی**: `trend_4h` روی ۲۰ نماد رد شد (۵ سکه ۱۱۸٪ سود را می‌سازند) | ✅ |
 | `phone_verification.md` | تأیید اجرای واقعی روی گوشی: اثر انگشت و ۱۰/۱۰ عدد یکسان با سندباکس | ✅ |
 | `reaudit_4h.md` | بازاجرای همهٔ تست‌های 4h/1d بعد از باگ تایم‌فریم — قدیم در برابر جدید | ✅ |
