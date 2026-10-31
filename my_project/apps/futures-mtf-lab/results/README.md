@@ -14,6 +14,7 @@
 | `evolve_report_5y.md` | تطبیق روی **۵.۷ سال BTC + ۴.۷ سال ETH** (حالت سخت‌گیرانه) | ✅ |
 | `evolve_report_5y_rolling.md` | همان، حالت چرخشی + **توزیع ۵ پلاسیبو** (نتیجه: از نویز جدا نیست) | ✅ |
 | `robust_report_5y.md` | آزمون بقا روی دادهٔ بلندمدت: `entry_quality` رد شد (۱۶.۷٪ پنجره‌ها) | ✅ |
+| `robust_report_trend4h.md` | آزمون بقا برای `trend_4h`: BTC مثبت، ETH منفی (۴۱.۷٪ پنجره‌ها) | ✅ |
 | `dash_evolve_5y*.html` | داشبورد همان اجراهای بلندمدت | ✅ |
 | `scenario_compare_<ts>.json` | payload کامل داشبورد (برای بازسازی: `mtflab dashboard --payload …`) | ❌ |
 | `mtf_report_<run_id>.json/.md` | گزارش سناریوی جدید (شامل اعتبارسنجی) | ❌ |

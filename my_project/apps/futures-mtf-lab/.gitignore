@@ -15,6 +15,7 @@ results/*.tmp
 !results/evolve_report.md
 !results/evolve_report_rolling.md
 !results/robust_report_5y.md
+!results/robust_report_trend4h.md
 !results/evolve_report_5y_rolling.md
 !results/evolve_report_5y.md
 

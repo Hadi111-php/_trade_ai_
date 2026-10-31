@@ -57,6 +57,16 @@ def test_default_preset_is_neutral():
     assert PRESETS["base"] == {}, "پریست base باید خالی باشد تا مقایسه بی‌طرف بماند"
 
 
+def test_trend_4h_preset_is_self_contained():
+    """پریست روند باید خودش تایم‌فریم، حذف TP و تریل باز را ست کند."""
+    c = load_config(BASE_ARGV + ["--preset", "trend_4h"])
+    assert c.tf_trigger == "4h" and c.tf_filter == "1d"
+    assert c.trigger_entry_modes == ["breakout"]
+    assert c.take_profit_atr_mult >= 20.0, "بدون TP یعنی هدف سود عملاً حذف شود"
+    assert c.trail_atr_mult >= 2.5, "تریل باز لازم است، وگرنه روند زود بسته می‌شود"
+    assert c.bias_enabled is False
+
+
 def test_preset_lists_are_not_shared_between_configs():
     """اگر لیست‌ها بین دو کانفیگ مشترک باشند، یک تغییر در یکی دیگری را خراب می‌کند."""
     a = load_config(BASE_ARGV + ["--preset", "entry_quality"])
