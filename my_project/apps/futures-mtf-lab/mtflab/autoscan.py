@@ -599,6 +599,10 @@ def render_report(res: dict) -> str:
     w("# گزارش اسکن خودکار چندنمادی\n")
     w(f"*ساخته‌شده: {res['generated_at']} · نسخهٔ اسکنر {res['version']} · "
       f"زمان اجرا {res['elapsed_s']} ثانیه*\n")
+    if len(cov) < GATE["min_symbols"]:
+        w(f"> ⚠️ **این یک آزمایش کوچک است، نه یک حکم.** {len(cov)} نماد تحلیل شد "
+          f"ولی دروازهٔ پذیرش به {GATE['min_symbols']} نماد نیاز دارد. "
+          f"پس ❌ زیر **اجباری** است و هیچ چیزی دربارهٔ استراتژی نمی‌گوید.\n")
     w(f"- نمادها: **{len(cov)}** · تایم‌فریم تریگر: `{st['tf_trigger']}` / "
       f"فیلتر: `{st['tf_filter']}` · بازه: {st['days']} روز")
     w(f"- هزینه: {st['fee_bps']} bps + {st['slippage_pct']}% اسلیپیج هر طرف · "
@@ -713,6 +717,10 @@ def render_report_en(res: dict) -> str:
     w("# Multi-symbol autoscan report\n")
     w(f"*generated: {res['generated_at']} · scanner {res['version']} · "
       f"runtime {res['elapsed_s']}s*\n")
+    if len(cov) < GATE["min_symbols"]:
+        w(f"> ⚠️ **SMALL SAMPLE — this is not a verdict.** {len(cov)} symbol(s) were "
+          f"analysed but the gate requires {GATE['min_symbols']}. The FAIL below is "
+          f"**guaranteed** and says nothing about the strategy.\n")
     w(f"- symbols: **{len(cov)}** · trigger tf `{st['tf_trigger']}` / "
       f"filter `{st['tf_filter']}` · window {st['days']} days")
     w(f"- costs: {st['fee_bps']} bps + {st['slippage_pct']}% slippage per side · "
@@ -925,6 +933,14 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                   f"میانهٔexp={a['median_expectancy']:+7.2f}$ "
                   f"PF>1={a['profitable_symbols_pct']:5.1f}% "
                   f"سال+={a['positive_years_pct']:5.1f}%")
+    n_sym = len(res.get("per_symbol") or {})
+    if 0 < n_sym < GATE["min_symbols"]:
+        print("")
+        print(_t(f"  ⚠️ فقط {n_sym} نماد تحلیل شد (حد لازم: {GATE['min_symbols']}). "
+                 f"پس FAIL حتمی است و دربارهٔ استراتژی چیزی نمی‌گوید.",
+                 f"  ⚠️ only {n_sym} symbol(s) analysed (gate needs "
+                 f"{GATE['min_symbols']}). FAIL is guaranteed and says nothing "
+                 f"about the strategy."))
     if res["errors"]:
         n_err, n_ok = len(res["errors"]), len(res.get("per_symbol") or {})
         print(_t(f"\n  ⚠️ {n_err} خطا" + ("" if n_ok else "  ← هیچ نمادی داده نگرفت"),

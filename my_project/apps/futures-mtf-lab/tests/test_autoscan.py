@@ -350,3 +350,60 @@ def test_english_report_is_ascii_readable():
     assert "PASS" in out or "FAIL" in out
     # هیچ حرف فارسی‌ای نباید در گزارش انگلیسی باشد
     assert not re.search(r"[\u0600-\u06FF]", out), "گزارش انگلیسی نباید فارسی داشته باشد"
+
+
+# ── ۸) گزارش کوچک باید خودش بگوید «حکم نیست» ────────────────────────────────
+def _tiny_res(n_sym=2):
+    from mtflab import autoscan as A
+    cov = {f"S{i}": {"n_trigger": 100, "years": 1.0, "start": "2025-01-01",
+                     "end": "2025-12-31", "from_cache": True, "source": "csv",
+                     "fingerprint": "x"} for i in range(n_sym)}
+    per = {f"S{i}": {"base": {"n": 10, "profit_factor": 1.2, "expectancy": 1.0,
+                              "pnl": 10.0, "return_pct": 1.0,
+                              "max_drawdown_pct": -1.0, "positive_years": 1,
+                              "years_n": 1, "per_year": {"2025": {"pnl": 10.0}}}}
+           for i in range(n_sym)}
+    agg = {"base": {"ok": True, "n_symbols": n_sym, "total_trades": 10 * n_sym,
+                    "total_pnl": 10.0 * n_sym, "median_pf": 1.2,
+                    "median_expectancy": 1.0, "profitable_symbols": n_sym,
+                    "profitable_symbols_pct": 100.0, "positive_years": n_sym,
+                    "years_n": n_sym, "positive_years_pct": 100.0,
+                    "sign_vs_base": None, "checks": {}, "survived": False}}
+    return {"version": A.VERSION, "generated_at": "2026-01-01 00:00 UTC",
+            "elapsed_s": 1.0,
+            "settings": {"symbols": list(cov), "days": 10, "tf_trigger": "4h",
+                         "tf_filter": "1d", "tf_bias": "1d", "fee_bps": 5.5,
+                         "slippage_pct": 0.02, "risk_per_trade_pct": 1.0,
+                         "max_concurrent": 1, "initial_equity": 1000.0,
+                         "base_url": "", "source": "csv"},
+            "coverage": cov,
+            "variants": [{"id": "base", "label": "base"}],
+            "per_symbol": per, "aggregate": agg, "rankings": ["base"],
+            "winner": "base", "survived": [], "errors": []}
+
+
+def test_small_sample_report_warns_it_is_not_a_verdict():
+    """اگر نمادها کمتر از دروازه باشند، گزارش باید صریح بگوید FAIL حتمی است.
+
+    چرا: کاربر اجرای ۲ نمادی (آفلاین) را با اجرای ۲۰ نمادی اشتباه می‌گیرد و
+    FAIL را «رد استراتژی» می‌خواند. این هشدار جلوی آن برداشت را می‌گیرد.
+    """
+    from mtflab import autoscan as A
+    res = _tiny_res(2)
+    fa = A.render_report(res)
+    A.set_lang("en")
+    en = A.render_report_en(res)
+    A.set_lang("fa")
+    assert "آزمایش کوچک است" in fa and "2 نماد" in fa
+    assert "SMALL SAMPLE" in en and "guaranteed" in en
+
+
+def test_full_sample_report_has_no_small_sample_warning():
+    """با ۸+ نماد، هشدار نباید باشد (وگرنه بی‌اثر می‌شود)."""
+    from mtflab import autoscan as A
+    res = _tiny_res(10)
+    A.set_lang("en")
+    try:
+        assert "SMALL SAMPLE" not in A.render_report_en(res)
+    finally:
+        A.set_lang("fa")
