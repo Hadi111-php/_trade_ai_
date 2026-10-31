@@ -124,10 +124,25 @@ bash run-auto.sh --source json
 
 ---
 
+## ۴.۵) تعمیر کلونِ قبلی (بدون دانلود مجدد)
+
+اگر قبلاً بدون `-b` کلون کرده‌اید و می‌خواهید همان را استفاده کنید:
+
+```bash
+cd ~/(نام پوشه‌ای که با ls می‌بینید)
+git fetch origin arena/444f3300-trade-ai --depth 1
+git checkout -b arena/444f3300-trade-ai FETCH_HEAD
+cd my_project/apps/futures-mtf-lab
+bash run-auto.sh
+```
+
 ## ۵) اگر خطا داد
 
 | پیام | راه‌حل |
 |---|---|
+| `destination path ... already exists` | قبلاً یک‌بار کلون کرده‌اید. یا به پوشهٔ جدید کلون کنید (`... .git lab`) یا همان قبلی را تعمیر کنید (پایین) |
+| `cd: .../futures-mtf-lab: No such file` | کلونِ قدیمی از شاخهٔ `main` است و این پوشه در آن وجود ندارد → با `-b` کلون کنید |
+| نام پوشه با `*` نشان داده می‌شود | `_trade_ai_` در متن‌های فرمت‌دار به‌صورت ایتالیک رندر می‌شود و زیرخط‌ها گم می‌شوند. کلون را با نام ساده بگیرید: `... .git lab` |
 | `python3 نصب نیست` | `pkg install python -y` |
 | `به Bybit دسترسی نیست` | VPN روشن کنید یا `--source json` |
 | `MemoryError` / کند شدن | `--days 730 --tf 1d` |
