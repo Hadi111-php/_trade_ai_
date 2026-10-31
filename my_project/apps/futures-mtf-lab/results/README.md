@@ -37,6 +37,7 @@ python3 -m mtflab robust --source csv --csv ../futures-scalp-lab/data/btcusdt_1h
 python3 -m mtflab serve --dir results --port 8080
 ```
 
+| `reaudit_4h.md` | بازاجرای همهٔ تست‌های 4h/1d بعد از باگ تایم‌فریم — قدیم در برابر جدید | ✅ |
 | `auto_scan_<tag>.md` | گزارش اسکن خودکار ۲۰نمادی (خروجی `run-auto.sh`) | ✅ |
 | `auto_scan_<tag>.json` | بستهٔ دادهٔ همان اسکن (برای بازبینی/بازتولید) | ✅ |
 

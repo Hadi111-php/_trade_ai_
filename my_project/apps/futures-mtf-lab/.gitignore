@@ -19,6 +19,7 @@ results/*.tmp
 !results/evolve_report_5y_rolling.md
 !results/evolve_report_5y.md
 !results/auto_scan_sample_offline.md
+!results/reaudit_4h.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
 data/*.csv

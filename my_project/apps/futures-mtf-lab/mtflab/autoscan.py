@@ -384,14 +384,19 @@ def autoscan(cfg: MTFConfig, symbols: Sequence[str], days: int, tf: str,
              data_dir: str, refresh: bool = False,
              progress: bool = True, stop_on_network_error: bool = True,
              source: str = "bybit", csv_paths: Optional[Dict[str, str]] = None,
-             csv_native_tf: str = "1h") -> dict:
+             csv_native_tf: str = "1h", base_url: str = "") -> dict:
     tf_filter, tf_bias = "1d", "1d"
     variants = variants_for(tf, tf_filter, tf_bias)
     vids = [v[0] for v in variants]
 
-    base_url = ""
     if source == "bybit":
-        base_url = pick_base_url(progress=progress)
+        if base_url:
+            if progress:
+                print(f"🌐 آدرس دستی: {base_url}")
+            if not _probe(base_url):
+                raise RuntimeError(f"آدرس داده‌شده پاسخ نداد: {base_url}")
+        else:
+            base_url = pick_base_url(progress=progress)
         os.makedirs(os.path.join(data_dir, "json"), exist_ok=True)
 
     per_symbol: Dict[str, Dict[str, dict]] = {}
@@ -634,6 +639,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--refresh", action="store_true", help="نادیده گرفتن کش")
     p.add_argument("--out-dir", default="results")
     p.add_argument("--tag", default="", help="پسوند نام فایل‌ها")
+    p.add_argument("--base-url", default="",
+                   help="آدرس جایگزین Bybit (پروکسی/آینه)؛ پیش‌فرض: انتخاب خودکار")
     p.add_argument("--source", choices=["bybit", "json", "csv"], default="bybit",
                    help="bybit=دانلود | json=فقط کش JSON | csv=فایل‌های محلی")
     p.add_argument("--csv", action="append", default=[],
@@ -646,6 +653,11 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
 
     if known.probe_only:
         try:
+            if known.base_url:
+                if not _probe(known.base_url):
+                    raise RuntimeError(f"آدرس دستی پاسخ نداد: {known.base_url}")
+                print(f"✅ آدرس دستی سالم است: {known.base_url}")
+                return 0
             url = pick_base_url()
             print(f"✅ شبکه سالم است: {url}")
             return 0
@@ -691,7 +703,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     try:
         res = autoscan(cfg, symbols, known.days, known.tf, known.data_dir,
                        refresh=known.refresh, source=known.source,
-                       csv_paths=csv_paths, csv_native_tf=known.csv_native_tf)
+                       csv_paths=csv_paths, csv_native_tf=known.csv_native_tf,
+                       base_url=known.base_url)
     except RuntimeError as e:
         print(f"\n❌ قطع شد: {e}")
         print("   راه‌حل: اتصال را عوض کنید (Wi-Fi/داده) یا از VPN استفاده کنید.")

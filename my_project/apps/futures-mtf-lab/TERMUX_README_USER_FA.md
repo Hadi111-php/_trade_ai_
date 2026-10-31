@@ -13,13 +13,17 @@ Termux را از **F-Droid** نصب کنید (نسخهٔ Play Store قدیمی �
 pkg update -y && pkg install python git -y
 ```
 
-بعد پروژه را بگیرید:
+بعد پروژه را بگیرید. ⚠️ **حتماً با نام برنچ** — کد روی شاخهٔ `main` نیست:
 
 ```bash
-pkg install git -y
-git clone https://github.com/Hadi111-php/_trade_ai_.git
+git clone -b arena/444f3300-trade-ai --single-branch --depth 1 \
+  https://github.com/Hadi111-php/_trade_ai_.git
 cd _trade_ai_/my_project/apps/futures-mtf-lab
 ```
+
+> اگر `git clone` بدون `-b` بزنید، پوشهٔ `futures-mtf-lab` اصلاً وجود ندارد.
+> مخزن عمومی است، پس نام کاربری/توکن لازم نیست.
+> `--depth 1` حجم دانلود را کم می‌کند (مناسب گوشی).
 
 > هیچ `pip install` لازم نیست. تمام کد با کتابخانهٔ استاندارد پایتون نوشته شده.
 
@@ -50,7 +54,11 @@ bash run-auto.sh
 اسکریپت اول شبکه را چک می‌کند و اگر در دسترس نبود، صریح می‌گوید. در آن صورت:
 
 1. VPN/پروکسی را روشن کنید و دوباره اجرا کنید
-2. یا اگر قبلاً داده گرفته‌اید، فقط تحلیل را دوباره اجرا کنید:
+2. یا اگر آدرس آینه/پروکسی دارید، مستقیم بدهید:
+   ```bash
+   bash run-auto.sh --base-url https://your-proxy.example.com
+   ```
+3. یا اگر قبلاً داده گرفته‌اید، فقط تحلیل را دوباره اجرا کنید (آفلاین):
    ```bash
    bash run-auto.sh --source json
    ```
