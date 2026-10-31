@@ -25,6 +25,8 @@ from .data import BYBIT_INTERVAL, Candle, tf_to_minutes, tf_to_ms, write_csv, cs
 DEFAULT_BASE_URL = "https://api.bybit.com"
 KLINE_ENDPOINT = "/v5/market/kline"
 MAX_LIMIT = 1000
+#: تعداد تلاش اضافی مخصوص «سقف نرخ» (به‌جز retries شبکهٔ معمولی)
+RATE_LIMIT_RETRIES = 6
 
 
 def _interval_code(tf: str) -> str:
@@ -80,21 +82,32 @@ def fetch_klines(symbol: str, timeframe: str,
 
     url = f"{base_url}{KLINE_ENDPOINT}?{urllib.parse.urlencode(params)}"
     last_err: Optional[Exception] = None
-    for attempt in range(retries):
+    payload = None
+    # ۱۰۰۰۶ = سقف نرخ درخواست. روی ۱۵ دقیقه هر نماد ~۷۰ درخواست دارد و این
+    # سقف واقعاً می‌خورد؛ قبلاً نماد کامل حذف می‌شد (۴ نماد از ۲۰ در یک اجرا).
+    # حالا با عقب‌نشینی نمایی دوباره تلاش می‌شود.
+    for attempt in range(retries + RATE_LIMIT_RETRIES):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "mtf-lab/1.0"})
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 payload = json.loads(resp.read().decode("utf-8"))
-            break
         except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
             last_err = e
             time.sleep(1.5 * (attempt + 1))
-    else:
-        raise RuntimeError(f"خطای شبکه در دریافت {url}: {last_err}")
+            continue
 
-    if payload.get("retCode") != 0:
-        raise RuntimeError(f"خطای Bybit API: retCode={payload.get('retCode')} "
+        code = payload.get("retCode")
+        if code == 0:
+            break
+        if code == 10006 or "rate limit" in str(payload.get("retMsg", "")).lower():
+            wait = min(2.0 * (2 ** min(attempt, 5)), 60.0)
+            time.sleep(wait)
+            last_err = RuntimeError(f"rate limit (waited {wait:.0f}s)")
+            continue
+        raise RuntimeError(f"خطای Bybit API: retCode={code} "
                            f"msg={payload.get('retMsg')}")
+    else:
+        raise RuntimeError(f"خطای شبکه/سقف نرخ در دریافت {url}: {last_err}")
 
     raw_list = (payload.get("result") or {}).get("list") or []
     candles: List[Candle] = []

@@ -44,3 +44,8 @@ __pycache__/
 venv/
 *.log
 .DS_Store
+!results/phone_run_15m_20261031.json
+!results/phone_run_15m_20261031.md
+!results/autoscan_15m_verdict.md
+!results/data_digest_*.json
+!results/data_digest_*.md

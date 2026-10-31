@@ -303,3 +303,72 @@ def test_app_level_script_handles_archive_and_index():
     text = open(os.path.join(here, "run-auto.sh"), encoding="utf-8").read()
     assert "--archive" in text and "mtflab archive" in text
     assert "--data-index" in text and "mtflab data-index" in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۶) سقف نرخ Bybit: نماد نباید کامل حذف شود
+# ═══════════════════════════════════════════════════════════════════════════
+def _fake_http(responses):
+    """urllib.request.urlopen جعلی که پاسخ‌های آماده برمی‌گرداند."""
+    seq = list(responses)
+    calls = {"n": 0}
+
+    class R:
+        status = 200
+
+        def __init__(self, data):
+            self._d = data
+
+        def read(self):
+            return self._d
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def _open(req, timeout=0):
+        calls["n"] += 1
+        return R(json.dumps(seq.pop(0)).encode("utf-8"))
+
+    return _open, calls
+
+
+def test_rate_limit_is_retried_instead_of_dropping_the_symbol():
+    """retCode 10006 (سقف نرخ) نباید نماد را حذف کند — در اجرای واقعی ۴ نماد رفت."""
+    import mtflab.bybit_public as bp
+    rl = {"retCode": 10006, "retMsg": "Too many visits.", "result": {}}
+    good = {"retCode": 0, "result": {"list": [["1700000000000", "1", "2", "0.5", "1.5",
+                                               "10", ""]]}}
+    open_, calls = _fake_http([rl, rl, good])
+    real_open, real_sleep = bp.urllib.request.urlopen, bp.time.sleep
+    bp.urllib.request.urlopen = open_
+    bp.time.sleep = lambda x: None
+    try:
+        cs = bp.fetch_klines("BTCUSDT", "15m", limit=1, drop_forming=False)
+    finally:
+        bp.urllib.request.urlopen = real_open
+        bp.time.sleep = real_sleep
+    assert len(cs) == 1 and calls["n"] == 3
+
+
+def test_other_api_errors_still_fail_fast():
+    """خطای غیر از سقف نرخ باید صریح بالا بیاید، نه با ۶ بار تلاش پنهان."""
+    import mtflab.bybit_public as bp
+    bad = {"retCode": 10001, "retMsg": "params error", "result": {}}
+    open_, calls = _fake_http([bad] * 10)
+    real_open, real_sleep = bp.urllib.request.urlopen, bp.time.sleep
+    bp.urllib.request.urlopen = open_
+    bp.time.sleep = lambda x: None
+    try:
+        try:
+            bp.fetch_klines("BTCUSDT", "15m", limit=1, drop_forming=False)
+        except RuntimeError as e:
+            assert "retCode=10001" in str(e)
+        else:
+            raise AssertionError("باید RuntimeError می‌داد")
+    finally:
+        bp.urllib.request.urlopen = real_open
+        bp.time.sleep = real_sleep
+    assert calls["n"] == 1
