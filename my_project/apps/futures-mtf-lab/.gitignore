@@ -20,6 +20,8 @@ results/*.tmp
 !results/evolve_report_5y.md
 !results/auto_scan_sample_offline.md
 !results/reaudit_4h.md
+!results/phone_run_20261031.json
+!results/phone_verification.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
 data/*.csv
