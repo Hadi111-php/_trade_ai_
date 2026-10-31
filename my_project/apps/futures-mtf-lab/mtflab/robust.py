@@ -64,10 +64,13 @@ def layers_for_symbol(cfg: MTFConfig, symbol: str, source: str,
         return {"trigger": trig, "filter": filt, "bias": bias}, meta
 
     if source == "csv":
+        from .data import align_timeframe
         csv_path = path or cfg.csv_path
         if not csv_path or not os.path.exists(csv_path):
             raise RuntimeError(f"CSV پیدا نشد: {csv_path}")
         trig = csv_candles(csv_path)
+        # اگر فایل در تایم‌فریم دیگری باشد، به‌جای محاسبهٔ بی‌صدا غلط، اصلاح می‌شود
+        trig = align_timeframe(trig, cfg.tf_trigger, "trigger", meta)
         filt, _ = resample_up(trig, cfg.tf_trigger, cfg.tf_filter)
         bias, _ = resample_up(trig, cfg.tf_trigger, cfg.tf_bias)
         meta["path"] = csv_path

@@ -313,6 +313,58 @@ def synthetic_candles(tf: str, n: int, seed: int = 42, start_price: float = 3000
 # ----------------------------------------------------------------------------
 # بارگذاری سه‌لایه (تریگر / فیلتر / بایاس)
 # ----------------------------------------------------------------------------
+def detect_timeframe(candles: Sequence[Candle]) -> str:
+    """تایم‌فریم واقعی فایل را از فاصلهٔ زمانی کندل‌ها حدس می‌زند.
+
+    چرا لازم است: اگر فایل ۱ ساعته باشد ولی کانفیگ بگوید ۴ ساعته، موتور هر کندل
+    ۱ ساعته را ۴ ساعته می‌پندارد و ATR/زمان/رژیم **بی‌صدا** غلط می‌شوند. این نوع
+    خطا در بک‌تست فاجعه است (عددی درست به‌نظر می‌رسد، ولی معنایی ندارد)، پس اینجا
+    صریح تشخیص داده و اصلاح/رد می‌شود.
+    """
+    if len(candles) < 3:
+        return ""
+    diffs = [candles[i + 1].open_time_ms - candles[i].open_time_ms
+             for i in range(min(len(candles) - 1, 200))]
+    diffs = sorted(d for d in diffs if d > 0)
+    if not diffs:
+        return ""
+    median_min = (diffs[len(diffs) // 2] / 60_000)
+    for name, m in TF_MINUTES.items():
+        if abs(m - median_min) < 0.5:
+            return name
+    # تایم‌فریم‌های غیراستاندارد (مثلاً ۲۵ دقیقه‌ای) → رشتهٔ دقیقه
+    return f"{int(round(median_min))}m"
+
+
+def align_timeframe(candles: Sequence[Candle], declared_tf: str, kind: str,
+                    meta: dict) -> List[Candle]:
+    """اطمینان از اینکه دادهٔ بارگذاری‌شده واقعاً همان تایم‌فریمِ اعلام‌شده است.
+
+    - اگر فایل درشت‌تر از اعلام باشد → خطای صریح (ساخت دادهٔ ریزتر ممنوع).
+    - اگر فایل ریزتر باشد → **خودکار** به بالا resample می‌شود و در meta ثبت می‌گردد.
+    """
+    if not candles:
+        return candles
+    native = detect_timeframe(candles)
+    if not native:
+        return candles
+    try:
+        native_m, declared_m = tf_to_minutes(native), tf_to_minutes(declared_tf)
+    except ValueError:
+        return candles
+    if native_m == declared_m:
+        return candles
+    if native_m > declared_m:
+        raise ValueError(
+            f"دادهٔ «{kind}» در تایم‌فریم {native} است ولی کانفیگ {declared_tf} می‌خواهد. "
+            f"ساخت تایم‌فریم ریزتر از دادهٔ درشت مجاز نیست (نشت آینده). "
+            f"یا --tf-{kind} را {native} بگذارید یا دادهٔ ریزتر بدهید.")
+    out, rep = resample_up(candles, native, declared_tf)
+    meta.setdefault("timeframe_fix", []).append(
+        {"layer": kind, "declared": declared_tf, "detected": native, "resampled": rep})
+    return out
+
+
 def load_layers(cfg) -> Tuple[Dict[str, List[Candle]], dict]:
     """بر اساس `data_mode` سه لایهٔ زمانی را آماده می‌کند.
 
@@ -327,6 +379,7 @@ def load_layers(cfg) -> Tuple[Dict[str, List[Candle]], dict]:
 
     if cfg.data_mode == "csv":
         trig = csv_candles(cfg.csv_path)
+        trig = align_timeframe(trig, cfg.tf_trigger, "trigger", meta)
         meta["sources"]["trigger"] = cfg.csv_path
         filt = _load_or_resample(cfg.csv_filter_path, trig, cfg.tf_trigger, cfg.tf_filter, meta)
         bias = _load_or_resample(cfg.csv_bias_path, trig, cfg.tf_trigger, cfg.tf_bias, meta)
@@ -373,8 +426,12 @@ def _load_or_resample(path: str, trig: Sequence[Candle], src_tf: str, dst_tf: st
                       meta: dict) -> List[Candle]:
     if path:
         cs = csv_candles(path)
+        cs = align_timeframe(cs, dst_tf, dst_tf, meta)
         meta["sources"][dst_tf] = path
         return cs
+    if tf_to_minutes(src_tf) == tf_to_minutes(dst_tf):
+        meta["sources"][dst_tf] = f"same-as-{src_tf}"
+        return list(trig)
     cs, rep = resample_up(trig, src_tf, dst_tf)
     meta["resample"].append(rep)
     meta["sources"][dst_tf] = f"resample({src_tf}→{dst_tf})"

@@ -18,9 +18,11 @@ results/*.tmp
 !results/robust_report_trend4h.md
 !results/evolve_report_5y_rolling.md
 !results/evolve_report_5y.md
+!results/auto_scan_sample_offline.md
 
 # ── دادهٔ دانلودشده (حجیم؛ سرور خودش کش می‌کند) ────────────────────────────
 data/*.csv
+data/json/
 data/raw/
 data/processed/
 !data/.gitkeep

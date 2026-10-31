@@ -200,3 +200,55 @@ def test_survivorship_note_single_symbol_scope():
     layers, meta = load_layers(cfg2)
     assert meta["symbol"] == cfg2.symbol
     assert "counts" in meta and meta["counts"]["trigger"] == 300
+
+
+# ── دام تایم‌فریمِ اشتباه (پیدا شده در بازبینی autoscan) ──────────────────────
+def test_detect_timeframe_reads_real_spacing():
+    """فایل ۱ ساعته باید 1h تشخیص داده شود، نه آنچه کانفیگ ادعا می‌کند."""
+    from mtflab.data import detect_timeframe, synthetic_candles
+    assert detect_timeframe(synthetic_candles("1h", 50)) == "1h"
+    assert detect_timeframe(synthetic_candles("4h", 50)) == "4h"
+    assert detect_timeframe(synthetic_candles("15m", 50)) == "15m"
+    assert detect_timeframe([]) == ""
+
+
+def test_mislabeled_timeframe_is_fixed_not_silently_wrong():
+    """دام: فایل 1h + کانفیگ 4h. باید خودکار resample شود و در meta ثبت شود."""
+    from mtflab.config import load_config
+    from mtflab.data import load_layers
+    cfg = load_config(["--data", "synthetic", "--tf-trigger", "4h",
+                       "--tf-filter", "1d", "--no-bias", "--quiet"])
+    from dataclasses import replace
+    import os
+    import tempfile
+    from mtflab.data import synthetic_candles, write_csv
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "x.csv")
+        write_csv(p, synthetic_candles("1h", 1200))
+        cfg2 = replace(cfg, data_mode="csv", csv_path=p)
+        layers, meta = load_layers(cfg2)
+        fix = meta.get("timeframe_fix") or []
+        assert fix and fix[0]["detected"] == "1h" and fix[0]["declared"] == "4h"
+        # تعداد کندل باید ~۱/۴ دادهٔ اصلی باشد (نه همان تعداد با برچسب غلط)
+        assert 250 <= len(layers["trigger"]) <= 320
+
+
+def test_fabricating_lower_timeframe_is_refused():
+    """فایل 1h + درخواست 15m نباید بی‌صدا قبول شود (اطلاعات وجود ندارد)."""
+    import os
+    import tempfile
+    from dataclasses import replace
+    from mtflab.config import load_config
+    from mtflab.data import load_layers, synthetic_candles, write_csv
+    cfg = load_config(["--data", "synthetic", "--tf-trigger", "15m",
+                       "--tf-filter", "1h", "--quiet"])
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "x.csv")
+        write_csv(p, synthetic_candles("1h", 500))
+        cfg2 = replace(cfg, data_mode="csv", csv_path=p)
+        try:
+            load_layers(cfg2)
+        except ValueError as e:
+            assert "ریزتر" in str(e) or "مجاز نیست" in str(e)
+        else:
+            raise AssertionError("باید خطای صریح می‌داد، نه دادهٔ ساختگی")

@@ -14,7 +14,7 @@
 | `evolve_report_5y.md` | تطبیق روی **۵.۷ سال BTC + ۴.۷ سال ETH** (حالت سخت‌گیرانه) | ✅ |
 | `evolve_report_5y_rolling.md` | همان، حالت چرخشی + **توزیع ۵ پلاسیبو** (نتیجه: از نویز جدا نیست) | ✅ |
 | `robust_report_5y.md` | آزمون بقا روی دادهٔ بلندمدت: `entry_quality` رد شد (۱۶.۷٪ پنجره‌ها) | ✅ |
-| `robust_report_trend4h.md` | آزمون بقا برای `trend_4h`: BTC مثبت، ETH منفی (۴۱.۷٪ پنجره‌ها) | ✅ |
+| `robust_report_trend4h.md` | آزمون بقا `trend_4h` (۴h واقعی): BTC PF ۱.۹۵ همهٔ ۶ پنجره مثبت، ETH ۳/۶ → **۹/۱۲ (۷۵٪)**؛ رد فقط به‌خاطر p=۰.۵ با ۲ نماد | ✅ |
 | `dash_evolve_5y*.html` | داشبورد همان اجراهای بلندمدت | ✅ |
 | `scenario_compare_<ts>.json` | payload کامل داشبورد (برای بازسازی: `mtflab dashboard --payload …`) | ❌ |
 | `mtf_report_<run_id>.json/.md` | گزارش سناریوی جدید (شامل اعتبارسنجی) | ❌ |
@@ -36,5 +36,8 @@ python3 -m mtflab robust --source csv --csv ../futures-scalp-lab/data/btcusdt_1h
   --presets entry_quality --windows 4 --out results/robust_report.md
 python3 -m mtflab serve --dir results --port 8080
 ```
+
+| `auto_scan_<tag>.md` | گزارش اسکن خودکار ۲۰نمادی (خروجی `run-auto.sh`) | ✅ |
+| `auto_scan_<tag>.json` | بستهٔ دادهٔ همان اسکن (برای بازبینی/بازتولید) | ✅ |
 
 > ⚠️ اعداد این پوشه **PAPER** هستند. هیچ‌کدام سود واقعی نیستند.

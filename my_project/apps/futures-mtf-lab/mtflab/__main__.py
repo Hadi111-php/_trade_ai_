@@ -8,6 +8,7 @@
   diagnose   کالبدشکافی چرا سود کم برداشت می‌شود + آزمون سود شناور + گزارش فارسی
   robust     آزمون بقا: همان یافته روی چند نماد و چند پنجرهٔ زمانی
   evolve     حلقهٔ تطبیق زنده: قهرمان/چالش‌گر با دروازهٔ ارتقای آماری + پلاسیبو
+  autoscan   اسکن خودکار چندنمادی: دانلود → تحلیل → گزارش (مناسب Termux)
   dashboard  ساخت مجدد داشبورد از payload ذخیره‌شده
   serve      سرو کردن داشبوردها در مرورگر (بدون Flask)
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -19,6 +20,7 @@
   python3 -m mtflab validate --data bybit --symbol BTCUSDT --tf-trigger 15m
   python3 -m mtflab compare --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv
   python3 -m mtflab diagnose --data csv --csv ../futures-scalp-lab/data/btcusdt_1h_lastyear.csv --align A --bias-ema 50
+  python3 -m mtflab autoscan --days 1460 --tf 4h
   python3 -m mtflab robust --source bybit --symbols BTCUSDT ETHUSDT SOLUSDT --presets entry_quality
   python3 -m mtflab serve --dir ../futures-scalp-lab/results --port 8080
 """
@@ -79,6 +81,10 @@ def main(argv=None) -> int:
         print(f"   بهترین فرضیهٔ پایدار: {su['best_robust']} "
               f"(از {su['n_experiments']} فرضیه، {su['robust_count']} پایدار)")
         return 0
+
+    if cmd == "autoscan":
+        from .autoscan import autoscan_command
+        return autoscan_command(rest)
 
     if cmd == "evolve":
         from .evolve import evolve_command
