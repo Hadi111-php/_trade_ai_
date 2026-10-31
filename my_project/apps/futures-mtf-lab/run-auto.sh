@@ -13,6 +13,8 @@
 #   bash run-auto.sh --days 730      # فقط ۲ سال (سریع‌تر)
 #   bash run-auto.sh --symbols BTCUSDT ETHUSDT SOLUSDT
 #   bash run-auto.sh --source json   # فقط تحلیل مجدد روی دادهٔ ذخیره‌شده
+#   bash run-auto.sh --archive        # شناسنامهٔ داده (بدون شبکه)
+#   bash run-auto.sh --data-index     # فهرست داده‌ها (بدون شبکه)
 # =============================================================================
 set -u
 
@@ -50,6 +52,34 @@ if [ "$LANG_EN" = "1" ] && [ "$has_lang_flag" = "0" ]; then set -- "$@" --lang e
 ok()   { say "$G" "✅ $*"; }
 warn() { say "$Y" "⚠️  $*"; }
 err()  { say "$R" "❌ $*"; }
+
+# ── ابزارهای جانبی که «اسکن» نیستند ────────────────────────────────────────
+# چرا اینجا هم هست: اگر کاربر از پوشهٔ اپ اجرا کند (نه ریشهٔ مخزن)، باید همان
+# رفتار را بگیرد. قبلاً --archive بی‌صدا به یک اسکن کامل ۴ ساعته تبدیل می‌شد.
+for a in "$@"; do
+  case "$a" in
+    --archive)
+      _TAG=""; _prev=""
+      for b in "$@"; do
+        [ "$_prev" = "--tag" ] && _TAG="$b"
+        case "$b" in --tag=*) _TAG="${b#--tag=}";; esac
+        _prev="$b"
+      done
+      if [ -n "$_TAG" ]; then
+        exec python3 -m mtflab archive --out-dir data_archive --tag "$_TAG"
+      else
+        exec python3 -m mtflab archive --out-dir data_archive
+      fi
+      ;;
+    --data-index)
+      _L="--lang en"; _D=""
+      for b in "$@"; do
+        case "$b" in --lang=fa|--fa) _L="--lang fa";; --deep) _D="--deep";; esac
+      done
+      exec python3 -m mtflab data-index --reindex $_L $_D
+      ;;
+  esac
+done
 
 # ── --offline: اجرا روی دادهٔ همراهِ خود پروژه، بدون اینترنت ─────────────────
 OFFLINE=0

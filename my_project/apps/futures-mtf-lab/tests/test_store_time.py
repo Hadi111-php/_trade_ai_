@@ -280,3 +280,26 @@ def test_archive_writes_json_and_markdown_manifest():
         assert rep["sha256"]
         md = open(rep["md"], encoding="utf-8").read()
     assert "BTCUSDT_15m" in md and "UTC" in md
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۵) گارد: گزینهٔ ابزار جانبی نباید بی‌صدا به اسکن تبدیل شود
+# ═══════════════════════════════════════════════════════════════════════════
+def test_tool_flags_are_refused_by_the_scanner():
+    """`--archive`/`--data-index` اسکن نیستند؛ باید پیام روشن بدهند نه اجرای ۴ ساعته."""
+    from mtflab.autoscan import autoscan_command
+    from mtflab import autoscan as A
+    A.set_lang("en")
+    try:
+        for flag in ("--archive", "--data-index"):
+            assert autoscan_command([flag, "--tag", "x"]) == 2
+    finally:
+        A.set_lang("fa")
+
+
+def test_app_level_script_handles_archive_and_index():
+    """اسکریپت خود اپ هم باید این دو را بشناسد (نه فقط لانچر ریشهٔ مخزن)."""
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    text = open(os.path.join(here, "run-auto.sh"), encoding="utf-8").read()
+    assert "--archive" in text and "mtflab archive" in text
+    assert "--data-index" in text and "mtflab data-index" in text

@@ -1070,6 +1070,17 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
     known, rest = p.parse_known_args(argv if argv is not None else None)
     set_lang(known.lang)
 
+    # گارد: گزینه‌های «ابزار جانبی» اگر به اینجا برسند، بی‌صدا به یک اسکن کامل
+    # تبدیل می‌شوند (parse_known_args آن‌ها را دور نمی‌ریزد، نادیده می‌گیرد).
+    # یک‌بار همین اتفاق افتاد و `--archive` یک اسکن ۴ ساعته راه انداخت.
+    _TOOL_FLAGS = {"--archive": "bash run-auto.sh --archive",
+                   "--data-index": "bash run-auto.sh --data-index"}
+    for flag, how in _TOOL_FLAGS.items():
+        if flag in rest or flag in (argv or []):
+            print(_t(f"❌ `{flag}` یک اسکن نیست؛ دستور درستش: {how}",
+                     f"❌ `{flag}` is not a scan; run: {how}"))
+            return 2
+
     if known.probe_only:
         targets = [known.base_url] if known.base_url else list(BASE_URLS)
         print(_t("🔍 تشخیص شبکه — هر آدرس با دو endpoint تست می‌شود:",
