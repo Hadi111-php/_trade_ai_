@@ -335,18 +335,24 @@ class Lab:
     def data_fp(self) -> str:
         return data_fingerprint(self.universe())
 
-    def variant_def(self) -> Tuple[str, str, dict]:
-        by_id = {v[0]: v for v in variants_for(self.tf, self.tf_filter, self.tf_bias)}
-        if self.variant not in by_id:
-            self.variant = "trend" if "trend" in by_id else next(iter(by_id))
-        return by_id[self.variant]
+    def variant_defs(self) -> List[Tuple[str, str, dict]]:
+        """همهٔ تیم‌ها/الگوها روی همین تایم‌فریم (برای انتخاب در داشبورد)."""
+        return list(variants_for(self.tf, self.tf_filter, self.tf_bias))
 
-    def base_cfg(self, overrides: Optional[dict] = None) -> MTFConfig:
+    def variant_def(self, variant: Optional[str] = None) -> Tuple[str, str, dict]:
+        by_id = {v[0]: v for v in self.variant_defs()}
+        vid = variant or self.variant
+        if vid not in by_id:
+            vid = self.variant if self.variant in by_id else next(iter(by_id))
+        return by_id[vid]
+
+    def base_cfg(self, overrides: Optional[dict] = None,
+                 variant: Optional[str] = None) -> MTFConfig:
         cfg = load_config(["--data", "synthetic", "--quiet"])
         cfg = replace(cfg, tf_trigger=self.tf, tf_filter=self.tf_filter,
                       tf_bias=self.tf_bias, verbose=False, forensics=False,
                       run_id="", symbol="")
-        cfg = replace(cfg, **self.variant_def()[2])
+        cfg = replace(cfg, **self.variant_def(variant)[2])
         if overrides:
             cfg = replace(cfg, **overrides)
         return cfg
@@ -354,7 +360,8 @@ class Lab:
     # -- اجرای یک آزمایش ---------------------------------------------------
     def evaluate(self, overrides: Optional[dict] = None,
                  symbols: Optional[Sequence[str]] = None,
-                 oos_frac: float = 0.30) -> dict:
+                 oos_frac: float = 0.30,
+                 variant: Optional[str] = None) -> dict:
         uni = self.universe()
         if not uni:
             raise RuntimeError("هیچ داده‌ای در کش نیست — اول `bash run-auto.sh --live` "
@@ -362,7 +369,8 @@ class Lab:
         syms = [s for s in (symbols or list(uni)) if s in uni]
         if not syms:
             raise RuntimeError("نماد انتخاب‌شده داده ندارد")
-        cfg = self.base_cfg(overrides)
+        vid, vlabel, _vov = self.variant_def(variant)
+        cfg = self.base_cfg(overrides, variant)
         rows: List[dict] = []
         errors: List[str] = []
         for sym in syms:
@@ -391,7 +399,8 @@ class Lab:
         return {
             "digest": cfg_digest(overrides or {}),
             "overrides": dict(overrides or {}),
-            "variant": self.variant,
+            "variant": vid,
+            "variant_label": vlabel,
             "symbols": syms,
             "n_bars": sum(len(uni[s]) for s in syms),
             "span": [t0, t1],
@@ -406,26 +415,32 @@ class Lab:
             "errors": errors,
         }
 
-    def baseline(self, reload: bool = False) -> dict:
-        """خط پایه = همان الگوریتم زنده، **بدون** هیچ تغییر تنظیمی."""
+    def baseline(self, reload: bool = False, variant: Optional[str] = None) -> dict:
+        """خط پایه = همان **تیم** با تنظیمات دست‌نخورده.
+
+        خط پایه به‌ازای هر تیم جداست: مقایسهٔ «تیم pullback با تنظیم تازه» در
+        برابر «خط پایهٔ trend» بی‌معنا بود — دو چیز مختلف را می‌سنجید.
+        """
         fp = self.data_fp
-        if not reload and fp in self._baselines:
-            return self._baselines[fp]
-        path = os.path.join(self.lab_dir, f"baseline_{fp}.json")
+        vid = self.variant_def(variant)[0]
+        key = f"{fp}__{vid}"
+        if not reload and key in self._baselines:
+            return self._baselines[key]
+        path = os.path.join(self.lab_dir, f"baseline_{fp}__{vid}.json")
         if not reload and os.path.exists(path):
             try:
                 with open(path, encoding="utf-8") as f:
                     data = json.load(f)
-                self._baselines[fp] = data
+                self._baselines[key] = data
                 return data
             except (OSError, ValueError):
                 pass
-        ev = self.evaluate({})
+        ev = self.evaluate({}, variant=vid)
         slim = {k: v for k, v in ev.items() if k != "trades"}
         slim["r_list"] = [x["r"] for x in ev["trades"]]
         with open(path, "w", encoding="utf-8") as f:
             json.dump(slim, f, ensure_ascii=False, indent=1)
-        self._baselines[fp] = slim
+        self._baselines[key] = slim
         return slim
 
     # -- ثبت آزمایش --------------------------------------------------------
@@ -445,14 +460,16 @@ class Lab:
 
     def run_experiment(self, overrides: Optional[dict] = None,
                        label: str = "", gate: Optional[dict] = None,
-                       symbols: Optional[Sequence[str]] = None) -> dict:
+                       symbols: Optional[Sequence[str]] = None,
+                       variant: Optional[str] = None) -> dict:
         with self._lock:
             clean, ignored = sanitize_overrides(overrides or {})
+            vid = self.variant_def(variant)[0]
             fp = self.data_fp
             prev = [r for r in self.runs() if r.get("data_fp") == fp]
             trial_index = len(prev) + 1
-            ev = self.evaluate(clean, symbols=symbols)
-            base = self.baseline() if clean else None
+            ev = self.evaluate(clean, symbols=symbols, variant=vid)
+            base = self.baseline(variant=vid) if clean else None
 
             delta = None
             if base and clean:
@@ -473,6 +490,7 @@ class Lab:
                 "trial_index": trial_index,
                 "trial_warning": _trial_warning(trial_index),
                 "variant": ev["variant"],
+                "variant_label": ev["variant_label"],
                 "overrides": ev["overrides"],
                 "ignored_keys": ignored,
                 "symbols": ev["symbols"],
@@ -498,6 +516,7 @@ class Lab:
             idx = self.runs()
             idx.append({k: rec[k] for k in ("run_id", "created", "label", "digest",
                                             "data_fp", "trial_index", "variant",
+                                            "variant_label",
                                             "overrides", "metrics", "out_of_sample",
                                             "verdict", "delta_vs_baseline")})
             with open(self._index_path(), "w", encoding="utf-8") as f:
@@ -531,6 +550,94 @@ class Lab:
         return {"checks": checks, "passed": passed,
                 "note": ("✅ همهٔ شرط‌های ازپیش‌نوشته پاس شد" if passed else
                          "❌ دروازه پاس نشد" if checks else "— دروازه‌ای تعیین نشد")}
+
+    # -- تیم‌ها: همان موتور + یک دستهٔ تنظیماتِ نام‌دار ----------------------
+    def teams_path(self) -> str:
+        return os.path.join(self.lab_dir, "teams.json")
+
+    def teams(self) -> List[dict]:
+        """تیم‌های ذخیره‌شده (فقط تنظیمات؛ هیچ منطق تازه‌ای اضافه نمی‌کنند)."""
+        path = self.teams_path()
+        if not os.path.exists(path):
+            return []
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, list) else []
+        except (OSError, ValueError):
+            return []
+
+    def save_team(self, name: str, overrides: Optional[dict] = None,
+                  variant: Optional[str] = None, note: str = "") -> dict:
+        """ذخیرهٔ تنظیمات فعلی به‌عنوان یک «تیم» نام‌دار.
+
+        چرا لازم است: بدون آن، هر بار باید ده knob را دستی برگردانی. اما تیم
+        **اعتبار آماری ندارد** — فقط یک اسم برای یک دستهٔ تنظیمات است؛ هر اجرا
+        باز هم شمارهٔ آزمایش و Δ با خط پایهٔ همان تیم را ثبت می‌کند.
+        """
+        nm = (name or "").strip()[:60]
+        if not nm:
+            raise ValueError("اسم تیم خالی است")
+        vid, vlabel, _ = self.variant_def(variant)
+        clean, ignored = sanitize_overrides(overrides or {})
+        rec = {
+            "id": f"team_{time.strftime('%Y%m%d_%H%M%S')}_{cfg_digest(clean)[:6]}",
+            "name": nm,
+            "note": (note or "").strip()[:200],
+            "variant": vid,
+            "variant_label": vlabel,
+            "overrides": clean,
+            "ignored_keys": ignored,
+            "created": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "data_fp": self.data_fp if self.universe() else None,
+        }
+        items = self.teams()
+        items.append(rec)
+        with open(self.teams_path(), "w", encoding="utf-8") as f:
+            json.dump(items, f, ensure_ascii=False, indent=1)
+        return rec
+
+    def delete_team(self, team_id: str) -> bool:
+        items = self.teams()
+        keep = [t for t in items if t.get("id") != team_id]
+        if len(keep) == len(items):
+            return False
+        with open(self.teams_path(), "w", encoding="utf-8") as f:
+            json.dump(keep, f, ensure_ascii=False, indent=1)
+        return True
+
+    # -- تنظیمات نمایشی مغز ------------------------------------------------
+    def brain_settings_path(self) -> str:
+        return os.path.join(self.report_dir, "brain_settings.json")
+
+    def brain_settings(self) -> dict:
+        """آستانه‌های برچسبِ دیدگاه. **فقط نمایش**؛ هیچ معامله‌ای از آن خوانده نمی‌شود."""
+        out = {"long_th": 0.55, "short_th": 0.45}
+        path = self.brain_settings_path()
+        if os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    raw = json.load(f)
+                out.update({k: float(raw[k]) for k in ("long_th", "short_th")
+                            if raw.get(k) is not None})
+            except (OSError, ValueError, TypeError):
+                pass
+        out["long_th"] = min(0.95, max(0.505, out["long_th"]))
+        out["short_th"] = min(0.495, max(0.05, out["short_th"]))
+        return out
+
+    def save_brain_settings(self, long_th, short_th) -> dict:
+        try:
+            lo = min(0.95, max(0.505, float(long_th)))
+            sh = min(0.495, max(0.05, float(short_th)))
+        except (TypeError, ValueError):
+            raise ValueError("آستانه باید عدد باشد")
+        path = self.brain_settings_path()
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"long_th": lo, "short_th": sh}, f, ensure_ascii=False, indent=1)
+        self._views_cache = (0.0, None)
+        return self.brain_settings()
 
     def run_detail(self, run_id: str) -> Optional[dict]:
         path = os.path.join(self.lab_dir, "runs", f"{os.path.basename(run_id)}.json")
@@ -646,8 +753,16 @@ class Lab:
                    "model_path": self.brain_model_path}
         else:
             views = obs.views_now(self.universe())
+            st = self.brain_settings()
+            from .brainview import lean_label
+            for v in views.values():
+                if not isinstance(v, dict) or v.get("p_up") is None:
+                    continue
+                v["lean_model"] = v.get("lean")
+                v["lean"] = lean_label(float(v["p_up"]), st["long_th"], st["short_th"])
             m = obs.model or {}
             out = {"available": True,
+                   "settings": st,
                    "model": {"version": m.get("version"),
                              "trained_through_ts": m.get("trained_through_ts"),
                              "trained_utc": m.get("trained_utc"),
@@ -663,12 +778,22 @@ class Lab:
         cfg = self.base_cfg({})
         base_vals = {k["k"]: getattr(cfg, k["k"], None) for k in KNOBS}
         vid, label, overrides = self.variant_def()
+        variants = []
+        for v_id, v_label, v_ov in self.variant_defs():
+            vcfg = self.base_cfg({}, v_id)
+            variants.append({
+                "id": v_id,
+                "label": v_label,
+                "overrides": v_ov,
+                "values": {k["k"]: getattr(vcfg, k["k"], None) for k in KNOBS},
+            })
         return {
             "knobs": KNOBS,
             "baseline_values": base_vals,
             "variant": {"id": vid, "label": label, "overrides": overrides},
-            "variants": [{"id": v[0], "label": v[1]} for v in
-                         variants_for(self.tf, self.tf_filter, self.tf_bias)],
+            "variants": variants,
+            "teams": self.teams(),
+            "brain_settings": self.brain_settings(),
             "symbols": sorted(self.universe()),
             "data_fp": self.data_fp,
             "gate_defaults": {"min_expectancy_r": 0.0, "min_trades": 100,

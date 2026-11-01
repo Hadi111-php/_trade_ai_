@@ -121,6 +121,20 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
           <label style="color:var(--fg)"><input type="checkbox" id="gCi"> بله</label></div>
       </div>
     </div>
+    <div class="knob" style="margin-bottom:10px">
+      <div class="t">تیم (الگو + تنظیماتِ نام‌دار)</div>
+      <div class="grid2">
+        <div><label>الگوی پایه</label><select id="teamSel"></select></div>
+        <div><label>تیم ذخیره‌شده</label><select id="savedSel"><option value="">— هیچ —</option></select></div>
+      </div>
+      <div class="row" style="margin:8px 0 0">
+        <input id="teamName" placeholder="اسم تیم تازه" style="flex:1;min-width:160px">
+        <button class="ghost" id="teamSave">ذخیرهٔ تنظیمات فعلی به‌عنوان تیم</button>
+        <button class="ghost" id="teamDel">حذف تیم انتخاب‌شده</button>
+      </div>
+      <div class="h" id="teamMsg">تیم فقط یک اسم برای یک دستهٔ تنظیمات است — اعتبار آماری نمی‌دهد.
+        هر اجرا باز هم شمارهٔ آزمایش روی این داده و Δ با خط پایهٔ همان تیم را ثبت می‌کند.</div>
+    </div>
     <div><label>اسم این آزمایش (فرضیه‌ات را بنویس)</label>
       <input id="runLabel" placeholder="مثال: تریل پهن‌تر، شاید روندهای بزرگ را نگه دارد"></div>
     <h3>نمادها</h3><div class="syms" id="syms"></div>
@@ -137,6 +151,22 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
       <b>رتبه</b> بدهد یا کم‌اعتمادها را رد کند — نه این‌که سیگنال تازه بسازد.
       این صفحه فقط آخرین گزارش آزمون را نشان می‌دهد؛ ساختنش دستی است:
       <code>bash run-auto.sh --brain</code> (روی دادهٔ کش‌شده، بدون شبکه).</div>
+    <div class="knob" style="margin-bottom:10px">
+      <div class="t">آستانهٔ برچسبِ دیدگاه</div>
+      <div class="grid2">
+        <div><label>صعودی اگر احتمال ≥</label>
+          <input id="bLong" type="number" step="0.01" min="0.51" max="0.95" value="0.55"></div>
+        <div><label>نزولی اگر احتمال ≤</label>
+          <input id="bShort" type="number" step="0.01" min="0.05" max="0.49" value="0.45"></div>
+      </div>
+      <div class="row" style="margin:8px 0 0">
+        <button class="ghost" id="bSave">ذخیره</button>
+        <span class="spin" id="bMsg" style="display:none"></span>
+      </div>
+      <div class="h">این دو عدد <b>فقط برچسب</b> را عوض می‌کنند (صعودی/نزولی/بی‌طرف).
+        هیچ معامله‌ای از آن‌ها خوانده نمی‌شود — قرارداد نظاره‌گر دست‌نخورده است.
+        آموزش مدل جداگانه است: <code>bash run-auto.sh --brain-view --train</code></div>
+    </div>
     <h3>دیدگاه فعلی روی هر نماد (قبل از سیگنال)</h3>
     <div id="brainViews"></div>
     <div id="brainBody"></div>
@@ -309,13 +339,33 @@ $("#fSym").onchange = loadSignals; $("#fRule").onchange = loadSignals;
 $("#fStatus").onchange = loadSignals; $("#fRisk").onchange = loadSignals;
 
 /* ── آزمایشگاه ─────────────────────────────────────────────────────── */
-let SCHEMA = null, BASE = {};
+let SCHEMA = null, BASE = {}, CURV = "", TEAM_OV = {};
+function valuesFor(vid, extra) {
+  const v = (SCHEMA.variants || []).find(x => x.id === vid);
+  const base = Object.assign({}, (v && v.values) || SCHEMA.baseline_values || {});
+  return Object.assign(base, extra || {});
+}
 async function loadSchema() {
   SCHEMA = await api("/api/schema");
-  BASE = SCHEMA.baseline_values || {};
+  $("#teamSel").innerHTML = (SCHEMA.variants || []).map(v =>
+    `<option value="${esc(v.id)}">${esc(v.label)}</option>`).join("");
   $("#syms").innerHTML = SCHEMA.symbols.map(s =>
     `<label><input type="checkbox" class="sym" value="${esc(s)}" checked>${esc(s)}</label>`).join("")
     || `<span class="mut">هیچ داده‌ای در کش نیست</span>`;
+  await loadTeams();
+  const bs = SCHEMA.brain_settings || {};
+  if ($("#bLong")) $("#bLong").value = bs.long_th ?? 0.55;
+  if ($("#bShort")) $("#bShort").value = bs.short_th ?? 0.45;
+  setVariant((SCHEMA.variant && SCHEMA.variant.id) || "trend", {});
+}
+function setVariant(vid, extra) {
+  CURV = vid || (SCHEMA.variant && SCHEMA.variant.id) || "";
+  TEAM_OV = Object.assign({}, extra || {});
+  BASE = valuesFor(CURV, TEAM_OV);
+  if ($("#teamSel")) $("#teamSel").value = CURV;
+  renderKnobs();
+}
+function renderKnobs() {
   const groups = {};
   SCHEMA.knobs.forEach(k => (groups[k.g] = groups[k.g] || []).push(k));
   let h = "";
@@ -345,6 +395,12 @@ async function loadSchema() {
     el.addEventListener("input", () => { markChanged(); }));
   markChanged();
 }
+async function loadTeams() {
+  const r = await api("/api/teams");
+  SCHEMA.teams = r.teams || [];
+  $("#savedSel").innerHTML = `<option value="">— هیچ —</option>` +
+    SCHEMA.teams.map(t => `<option value="${esc(t.id)}">${esc(t.name)} · ${esc(t.variant_label || t.variant)}</option>`).join("");
+}
 function currentOverrides() {
   const out = {};
   document.querySelectorAll("[data-k]").forEach(el => {
@@ -373,9 +429,53 @@ function markChanged() {
   $("#changedCount").textContent = Object.keys(o).length
     ? `— ${Object.keys(o).length} تغییر نسبت به خط پایه` : "— بدون تغییر (همان الگوریتم فعلی)";
 }
-$("#resetBtn").onclick = () => loadSchema();
+$("#resetBtn").onclick = () => setVariant(CURV, TEAM_OV);
+/* ── تیم‌ها ─────────────────────────────────────────────────────────── */
+$("#teamSel").onchange = () => setVariant($("#teamSel").value, {});
+$("#savedSel").onchange = () => {
+  const id = $("#savedSel").value;
+  if (!id) return;
+  const t = (SCHEMA.teams || []).find(x => x.id === id);
+  if (!t) return;
+  setVariant(t.variant, t.overrides || {});
+  if (!$("#runLabel").value.trim()) $("#runLabel").value = t.name;
+  $("#teamMsg").textContent = `تیم «${t.name}» بارگذاری شد — ${Object.keys(t.overrides||{}).length} تنظیم.`;
+};
+$("#teamSave").onclick = async () => {
+  const name = $("#teamName").value.trim();
+  if (!name) { $("#teamMsg").textContent = "اول اسم تیم را بنویس."; return; }
+  const overrides = Object.assign({}, TEAM_OV, currentOverrides());
+  try {
+    const t = await api("/api/teams", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({name, variant: CURV, overrides, note: $("#runLabel").value})});
+    $("#teamMsg").textContent = `✅ تیم «${t.name}» ذخیره شد (${Object.keys(t.overrides||{}).length} تنظیم).`;
+    await loadTeams();
+    $("#savedSel").value = t.id;
+  } catch (e) { $("#teamMsg").textContent = "خطا: " + e.message; }
+};
+$("#teamDel").onclick = async () => {
+  const id = $("#savedSel").value;
+  if (!id) { $("#teamMsg").textContent = "اول یک تیم ذخیره‌شده را انتخاب کن."; return; }
+  try {
+    await api("/api/teams", {method:"DELETE", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({id})});
+    $("#teamMsg").textContent = "🗑 تیم حذف شد.";
+    $("#savedSel").value = "";
+    await loadTeams();
+  } catch (e) { $("#teamMsg").textContent = "خطا: " + e.message; }
+};
+$("#bSave").onclick = async () => {
+  $("#bMsg").style.display = "inline"; $("#bMsg").textContent = "ذخیره";
+  try {
+    await api("/api/brain/settings", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({long_th: Number($("#bLong").value), short_th: Number($("#bShort").value)})});
+    $("#bMsg").textContent = "✅ ذخیره شد — فقط برچسب عوض می‌شود";
+    loadBrainViews();
+  } catch (e) { $("#bMsg").textContent = "خطا: " + e.message; }
+  setTimeout(() => { $("#bMsg").style.display = "none"; }, 2500);
+};
 $("#runBtn").onclick = async () => {
-  const overrides = currentOverrides();
+  const overrides = Object.assign({}, TEAM_OV, currentOverrides());
   const symbols = [...document.querySelectorAll(".sym:checked")].map(x=>x.value);
   const gate = {min_expectancy_r: Number($("#gExp").value),
                 min_trades: Number($("#gN").value),
@@ -385,7 +485,8 @@ $("#runBtn").onclick = async () => {
   $("#runMsg").textContent = "در حال اجرا روی داده (بدون شبکه)";
   try {
     const rec = await api("/api/run", {method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({overrides, gate, label:$("#runLabel").value, symbols})});
+      body: JSON.stringify({overrides, gate, label:$("#runLabel").value, symbols,
+                            variant: CURV})});
     showRun(rec, "#runResult");
     loadRuns(true);
   } catch (e) {
@@ -418,7 +519,7 @@ function showRun(rec, target) {
     ["بازهٔ ۹۰٪ Δ", d ? `[${num(d.ci[0])} , ${num(d.ci[1])}]` : "—"],
     ["معنادار؟", d ? (d.significant ? "✅ بله" : "❌ نه") : "—"],
   ])}</div>`;
-  h += `<div class="note">شناسهٔ اجرا <code>${esc(rec.run_id)}</code> · هش تنظیمات
+  h += `<div class="note">تیم <b>${esc(rec.variant_label || rec.variant || "—")}</b> · شناسهٔ اجرا <code>${esc(rec.run_id)}</code> · هش تنظیمات
     <code>${esc(rec.digest)}</code> · آزمایش شمارهٔ <b>${rec.trial_index}</b> روی این داده ·
     ${rec.symbols.length} نماد · ${rec.n_bars} کندل</div>`;
   const ov = Object.entries(rec.overrides||{});
@@ -600,6 +701,10 @@ def make_handler(lab):
                         only_risk=q.get("only_risk") in ("1", "true", "on"),
                         status=q.get("status", ""),
                         limit=int(q.get("limit", 300) or 300)))
+                elif path == "/api/teams":
+                    self._json({"teams": lab.teams()})
+                elif path == "/api/brain/settings":
+                    self._json(lab.brain_settings())
                 elif path == "/api/runs":
                     self._json(lab.runs())
                 elif path.startswith("/api/runs/"):
@@ -614,6 +719,18 @@ def make_handler(lab):
             except Exception as e:                                 # noqa: BLE001
                 self._err(500, f"{type(e).__name__}: {e}")
 
+        def do_DELETE(self):
+            path = unquote(urlsplit(self.path).path)
+            body = self._body()
+            try:
+                if path == "/api/teams":
+                    ok = lab.delete_team(str(body.get("id") or ""))
+                    self._json({"ok": ok, "teams": lab.teams()}, 200 if ok else 404)
+                else:
+                    self._err(404, "unknown path")
+            except Exception as e:                                 # noqa: BLE001
+                self._err(500, f"{type(e).__name__}: {e}")
+
         def do_POST(self):
             path = unquote(urlsplit(self.path).path)
             body = self._body()
@@ -623,8 +740,18 @@ def make_handler(lab):
                         overrides=body.get("overrides") or {},
                         label=body.get("label") or "",
                         gate=body.get("gate") or {},
-                        symbols=body.get("symbols") or None)
+                        symbols=body.get("symbols") or None,
+                        variant=body.get("variant") or None)
                     self._json(rec)
+                elif path == "/api/teams":
+                    t = lab.save_team(name=body.get("name") or "",
+                                      overrides=body.get("overrides") or {},
+                                      variant=body.get("variant") or None,
+                                      note=body.get("note") or "")
+                    self._json(t)
+                elif path == "/api/brain/settings":
+                    self._json(lab.save_brain_settings(body.get("long_th"),
+                                                       body.get("short_th")))
                 elif path == "/api/step":
                     from .desk import run_step
                     self._json(run_step(lab))

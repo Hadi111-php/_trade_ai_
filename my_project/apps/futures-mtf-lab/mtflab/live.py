@@ -992,7 +992,8 @@ def _serve_desk(a) -> int:
     out(t("🧪 آماده‌سازی داشبورد …", "🧪 starting the desk …"))
     lab = Lab(data_dir=a.data_dir, tf=a.tf, tf_filter=a.tf_filter, tf_bias=a.tf_bias,
               variant=a.variant, state_path=a.state, journal_path=a.journal,
-              lab_dir=a.lab_dir, demo=a.demo, symbols=a.symbols)
+              lab_dir=a.lab_dir, demo=a.demo, symbols=a.symbols,
+              report_dir=a.out_dir)
 
     try:
         srv = bind_server(lab, a.host, a.port)

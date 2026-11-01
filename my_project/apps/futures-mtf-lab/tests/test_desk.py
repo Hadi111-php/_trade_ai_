@@ -281,3 +281,122 @@ def test_every_knob_is_a_real_config_field():
             for k in KNOBS}
     cfg = replace(MTFConfig(), **vals)
     assert cfg.max_concurrent >= 1
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۶) تیم‌ها (الگوهای نام‌دار) و تنظیمات نمایشی مغز
+# ═══════════════════════════════════════════════════════════════════════════
+def test_variant_switch_picks_that_teams_defaults():
+    with tempfile.TemporaryDirectory() as td:
+        lab = _lab(td)
+        assert lab.base_cfg({}, "trend_tp").take_profit_atr_mult == 6.0
+        assert lab.base_cfg({}, "trend").take_profit_atr_mult == 50.0
+        # نسخهٔ ناشناخته، بی‌صدا به نسخهٔ فعال برمی‌گردد (نه استثنا)
+        assert lab.variant_def("nope")[0] == lab.variant
+        ev = lab.evaluate({}, symbols=["BTCUSDT"], variant="pullback")
+        assert ev["variant"] == "pullback" and ev["variant_label"]
+
+
+def test_baseline_is_kept_per_team():
+    with tempfile.TemporaryDirectory() as td:
+        lab = _lab(td)
+        a = lab.baseline(variant="trend")
+        b = lab.baseline(variant="trend_tp")
+        assert a["variant"] == "trend" and b["variant"] == "trend_tp"
+        files = [f for f in os.listdir(lab.lab_dir) if f.startswith("baseline_")]
+        assert len(files) == 2, files          # دو خط پایهٔ جدا، نه یکی مشترک
+
+
+def test_team_save_load_delete_and_sanitize():
+    with tempfile.TemporaryDirectory() as td:
+        lab = _lab(td)
+        t = lab.save_team("تیم من", {"stop_atr_mult": 0.01, "nonsense": 1},
+                          variant="climax", note="یادداشت")
+        assert t["name"] == "تیم من" and t["variant"] == "climax"
+        assert t["overrides"] == {"stop_atr_mult": 0.3}     # به کف بازه برگشت
+        assert t["ignored_keys"] == ["nonsense"]
+        assert [x["id"] for x in lab.teams()] == [t["id"]]
+        assert lab.delete_team("team_nope") is False
+        assert lab.delete_team(t["id"]) is True
+        assert lab.teams() == []
+        try:
+            lab.save_team("   ")
+            raise AssertionError("اسم خالی باید خطا بدهد")
+        except ValueError:
+            pass
+
+
+def _fake_brain_model(path: str) -> None:
+    from mtflab.brainview import FEATURES
+    names = [n for n, _ in FEATURES]
+    model = {"version": "test", "kind": "brainview", "features": names,
+             "fa": {n: n for n in names}, "means": {n: 0.0 for n in names},
+             "stds": {n: 1.0 for n in names},
+             "w": [0.0] * len(names), "b": 0.0, "horizon_bars": 6,
+             "cost_frac": 0.0015, "trained_rows": 1,
+             "trained_through_ts": 1_700_000_000_000, "trained_utc": "x",
+             "symbols": ["X"], "oof": {"auc": 0.5, "acc": 0.5, "base_rate": 0.5,
+                                      "majority_acc": 0.5, "n": 1}}
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(model, f)
+
+
+def test_brain_thresholds_are_clamped_and_change_only_the_label():
+    with tempfile.TemporaryDirectory() as td:
+        rep = os.path.join(td, "rep")
+        os.makedirs(rep, exist_ok=True)
+        _fake_brain_model(os.path.join(rep, "brain_model.json"))
+        lab = Lab(demo=True, demo_bars=900, lab_dir=os.path.join(td, "lab"),
+                  report_dir=rep)
+        v0 = lab.brain_views()
+        assert v0["available"] is True
+        p = next(iter(v0["views"].values()))["p_up"]
+        # آستانه‌های افراطی: هر احتمال مثبتی «بی‌طرف» می‌شود
+        lab.save_brain_settings(0.999, -1)
+        v1 = lab.brain_views()
+        assert v1["settings"]["long_th"] <= 0.95      # کلمپ بالا
+        assert v1["settings"]["short_th"] >= 0.05     # کلمپ پایین
+        assert all(x["lean"] == "neutral" for x in v1["views"].values())
+        # و خودِ احتمال دست‌نخورده مانده — فقط برچسب عوض شده
+        assert abs(next(iter(v1["views"].values()))["p_up"] - p) < 1e-9
+        assert all("lean_model" in x for x in v1["views"].values())
+
+
+def test_http_teams_settings_and_variant_run():
+    from mtflab.labweb import serve as serve_lab
+    with tempfile.TemporaryDirectory() as td:
+        lab = Lab(demo=True, demo_bars=900, lab_dir=os.path.join(td, "lab"),
+                  report_dir=os.path.join(td, "rep"))
+        srv = serve_lab(lab, host="127.0.0.1", port=0)
+        port = srv.server_address[1]
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            code, body = _get(port, "/api/schema")
+            sc = json.loads(body)
+            assert [v["id"] for v in sc["variants"]][:2] == ["base", "trend"]
+            assert "values" in sc["variants"][0] and "teams" in sc
+            code, t = _post(port, "/api/teams",
+                            {"name": "تیم HTTP", "variant": "trend_tp",
+                             "overrides": {"stop_atr_mult": 2.0}})
+            assert code == 200 and t["variant"] == "trend_tp"
+            code, body = _get(port, "/api/teams")
+            assert json.loads(body)["teams"][0]["name"] == "تیم HTTP"
+            code, bset = _post(port, "/api/brain/settings",
+                               {"long_th": 0.6, "short_th": 0.4})
+            assert code == 200 and bset == {"long_th": 0.6, "short_th": 0.4}
+            code, rec = _post(port, "/api/run", {
+                "overrides": {"trail_atr_mult": 4.0}, "label": "تیم",
+                "symbols": ["BTCUSDT"], "variant": "trend_tp",
+                "gate": {"min_trades": 1, "require_oos_positive": False}})
+            assert code == 200 and rec["variant"] == "trend_tp"
+            assert rec["variant_label"]
+            # حذف تیم از راه HTTP
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{port}/api/teams", method="DELETE",
+                data=json.dumps({"id": t["id"]}).encode(), headers={
+                    "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                assert json.loads(r.read())["ok"] is True
+        finally:
+            srv.shutdown()
+            srv.server_close()
