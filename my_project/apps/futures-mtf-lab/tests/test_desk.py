@@ -242,6 +242,9 @@ def test_server_serves_page_and_api():
             assert len(sc["knobs"]) == len(KNOBS) and sc["symbols"]
             code, body = _get(port, "/api/runs")
             assert json.loads(body) == []
+            code, body = _get(port, "/api/brain")
+            b = json.loads(body)
+            assert b["available"] is False and b["hint"]
 
             code, rec = _post(port, "/api/run", {
                 "overrides": {"trail_atr_mult": 4.0},

@@ -21,6 +21,7 @@
 #   bash run-auto.sh --live           # اتوترید مجازی: رصد سیگنال‌ها روی کندل تازه
 #   bash run-auto.sh --live --status  # فقط گزارش وضعیت (بدون گرفتن داده)
 #   bash run-auto.sh --dash           # داشبورد کارگاه (وب) روی همین گوشی
+#   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 # =============================================================================
 set -u
 
@@ -122,6 +123,26 @@ for a in "$@"; do
         python3 -m mtflab trade-lab --out-dir results "${_TL[@]+"${_TL[@]}"}"
       else
         python3 -m mtflab trade-lab "${_TL[@]+"${_TL[@]}"}"
+      fi
+      exit $?
+      ;;
+    --brain|--model)
+      _BR=()
+      for b in "$@"; do
+        case "$b" in --brain|--model) continue;; esac
+        _BR+=("$b")
+      done
+      _HAS_LANG=0
+      for b in "${_BR[@]+"${_BR[@]}"}"; do case "$b" in --lang*) _HAS_LANG=1;; esac; done
+      if [ "$_HAS_LANG" = "0" ]; then
+        if [ "$LANG_EN" = "1" ]; then _BR+=("--lang" "en"); else _BR+=("--lang" "fa"); fi
+      fi
+      _HAS_OUT=0
+      for b in "${_BR[@]+"${_BR[@]}"}"; do case "$b" in --out-dir*) _HAS_OUT=1;; esac; done
+      if [ "$_HAS_OUT" = "0" ]; then
+        python3 -m mtflab brain --out-dir results "${_BR[@]+"${_BR[@]}"}"
+      else
+        python3 -m mtflab brain "${_BR[@]+"${_BR[@]}"}"
       fi
       exit $?
       ;;

@@ -305,13 +305,15 @@ class Lab:
                  state_path: str = "results/live/state.json",
                  journal_path: str = "results/live/journal.jsonl",
                  lab_dir: str = LAB_DIR, demo: bool = False,
-                 demo_bars: int = 1500, symbols: Optional[Sequence[str]] = None):
+                 demo_bars: int = 1500, symbols: Optional[Sequence[str]] = None,
+                 report_dir: str = "results"):
         self.data_dir = data_dir
         self.tf, self.tf_filter, self.tf_bias = tf, tf_filter, tf_bias
         self.variant = variant
         self.state_path = state_path
         self.journal_path = journal_path
         self.lab_dir = lab_dir
+        self.report_dir = report_dir
         self.demo = demo
         self.demo_bars = demo_bars
         self.symbols_filter = list(symbols) if symbols else None
@@ -610,6 +612,20 @@ class Lab:
             out.append(card)
         out.sort(key=lambda x: x.get("ts") or 0, reverse=True)
         return out[:max(1, min(int(limit or 300), 2000))]
+
+    def brain_report(self) -> dict:
+        """آخرین گزارش «مغز دوم» (اگر ساخته شده باشد)."""
+        path = os.path.join(self.report_dir, "brain_report.json")
+        if not os.path.exists(path):
+            return {"available": False,
+                    "hint": "bash run-auto.sh --brain"}
+        try:
+            with open(path, encoding="utf-8") as f:
+                rep = json.load(f)
+            rep["available"] = True
+            return rep
+        except (OSError, ValueError):
+            return {"available": False, "hint": "گزارش خوانده نشد"}
 
     def schema(self) -> dict:
         cfg = self.base_cfg({})

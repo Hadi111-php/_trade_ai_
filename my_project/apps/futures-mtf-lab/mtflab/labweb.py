@@ -77,6 +77,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="signals">سیگنال‌ها</button>
   <button data-tab="lab">آزمایشگاه</button>
   <button data-tab="runs">آزمایش‌ها</button>
+  <button data-tab="brain">مغز دوم</button>
 </nav>
 <main>
   <section id="tab-live" class="on">
@@ -129,6 +130,14 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
     <div id="runResult"></div>
   </section>
 
+  <section id="tab-brain">
+    <div class="note">«مغز دوم» یک مدل کوچک است که کنار اتوترید می‌نشیند تا سیگنال‌ها را
+      <b>رتبه</b> بدهد یا کم‌اعتمادها را رد کند — نه این‌که سیگنال تازه بسازد.
+      این صفحه فقط آخرین گزارش آزمون را نشان می‌دهد؛ ساختنش دستی است:
+      <code>bash run-auto.sh --brain</code> (روی دادهٔ کش‌شده، بدون شبکه).</div>
+    <div id="brainBody"></div>
+  </section>
+
   <section id="tab-runs">
     <div class="note">همهٔ آزمایش‌ها ذخیره می‌شوند (در <code>results/live_lab/runs/</code>).
       هیچ آزمایشی دور ریخته نمی‌شود — چون اگر فقط بهترین را نگه داریم، دقیقاً همان
@@ -164,6 +173,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   b.classList.add("on"); $("#tab-" + b.dataset.tab).classList.add("on");
   if (b.dataset.tab === "signals") loadSignals();
   if (b.dataset.tab === "runs") loadRuns();
+  if (b.dataset.tab === "brain") loadBrain();
 });
 
 /* ── زنده ──────────────────────────────────────────────────────────── */
@@ -427,6 +437,47 @@ function showRun(rec, target) {
   document.querySelector(target).innerHTML = h;
 }
 
+/* ── مغز دوم ───────────────────────────────────────────────────────── */
+async function loadBrain() {
+  const b = await api("/api/brain");
+  if (!b.available) {
+    $("#brainBody").innerHTML = `<div class="note">هنوز گزارشی ساخته نشده. در Termux بزن:
+      <code>bash run-auto.sh --brain</code></div>`;
+    return;
+  }
+  const j = b.judge || {checks:[]};
+  let h = `<div class="note ${j.passed ? "good" : "bad"}">${esc(j.verdict || "")}</div>`;
+  h += `<div class="cards">${cards([
+    ["معامله", b.n_trades ?? "—"], ["پیش‌بینی بیرون‌نمونه", b.n_oof ?? "—"],
+    ["AUC", b.auc ?? "—"], ["نرخ برد پایه", num((b.base_win_rate||0)*100,1)+"%"],
+    ["expectancy پایه", R(b.base_expectancy_r)],
+    ["بلوک‌های زمانی", b.folds ?? "—"],
+  ])}</div>`;
+  h += `<h3>دروازهٔ ازپیش‌نوشته</h3>` + table(["شرط","نتیجه","وضعیت"],
+    (j.checks||[]).map(c => [esc(c.fa),
+      esc(Array.isArray(c.got) ? "["+c.got.map(g=>g===null?"—":Number(g).toFixed?Number(g).toFixed(2):g).join(", ")+"]" : (c.got===null||c.got===undefined?"—":c.got)),
+      c.ok ? "✅" : "❌"]));
+  h += `<h3>پیش‌بینی بیرون‌نمونه به تفکیک چهارک</h3>` + table(
+    ["چهارک","تعداد","بازهٔ احتمال","expectancy (R)","نرخ برد","سود"],
+    (b.buckets||[]).map(x => [x.part, x.n, `${num(x.p_lo,2)}–${num(x.p_hi,2)}`,
+      `<span class="${sgn(x.expectancy_r)}">${R(x.expectancy_r)}</span>`,
+      num(x.win_rate*100,1)+"%", `<span class="${sgn(x.pnl)}">${num(x.pnl)}$</span>`]));
+  const ft = b.filter || {};
+  if (ft.ok) {
+    h += `<div class="note">فیلتر (رد ${Math.round((ft.skip_frac||0)*100)}٪ کم‌اعتماد):
+      نگه‌داشته <b>${ft.n_kept}</b> با expectancy <b>${R(ft.expectancy_kept)}</b> ·
+      ردشده <b>${ft.n_dropped}</b> با <b>${R(ft.expectancy_dropped)}</b> ·
+      Δ نسبت به همه <b>${R(ft.delta_kept_vs_all)}</b> ·
+      بازهٔ ۹۰٪: ${esc(JSON.stringify((ft.ci||{}).ci))} — ${esc((ft.ci||{}).note||"")}</div>`;
+  }
+  h += `<h3>ضرایب مدل</h3>` + table(["ویژگی","توضیح","علامت","پایداری","ضریب میانگین"],
+    (b.coefficients||[]).map(c => [`<code>${esc(c.name)}</code>`, esc(c.fa),
+      (c.sign>0?"＋":(c.sign<0?"－":"۰")),
+      c.stability===null?"—":num(c.stability*100,0)+"%",
+      c.mean_coef===null?"—":R(c.mean_coef)]));
+  $("#brainBody").innerHTML = h;
+}
+
 /* ── آزمایش‌ها ─────────────────────────────────────────────────────── */
 async function loadRuns(silent) {
   const runs = await api("/api/runs");
@@ -513,6 +564,8 @@ def make_handler(lab):
                     self._json(lab.overview())
                 elif path == "/api/schema":
                     self._json(lab.schema())
+                elif path == "/api/brain":
+                    self._json(lab.brain_report())
                 elif path == "/api/signals":
                     self._json(lab.signals(
                         symbol=q.get("symbol", ""), rule=q.get("rule", ""),
