@@ -283,3 +283,53 @@ def rolling_max_drawdown(equity: Sequence[float]) -> float:
         if peak > 0:
             mdd = min(mdd, (e - peak) / peak * 100.0)
     return round(mdd, 4)
+
+
+def swings(candles: Sequence[Candle], k: int = 3) -> List[dict]:
+    """قله و درهٔ **تأییدشده** با پنجرهٔ k کندل در هر طرف.
+
+    چرا «تأییدشده» مهم است؟ یک قله فقط وقتی قله است که k کندل بعدش هم پایین‌تر
+    بسته باشد. پس قلهٔ کندل i **در کندل i+k** معلوم می‌شود، نه زودتر. خروجی هر
+    خانه چیزی است که در **پایان همان کندل** بی‌خطر است بدانیم:
+
+        {peak: آخرین قلهٔ تأییدشده (قیمت), trough: آخرین دره, peak_i, trough_i}
+
+    `peak_i`/`trough_i` ایندکس کندلی است که آن قله/دره در آن رخ داده (نه ایندکسِ
+    تأییدش). برای هیچ تصمیمی در کندل i از قله‌ای که در i با i+k تأیید می‌شود
+    استفاده نمی‌شود — این تابع خودش آن را تضمین می‌کند.
+    """
+    n = len(candles)
+    out: List[dict] = [{"peak": None, "trough": None, "peak_i": -1, "trough_i": -1}
+                       for _ in range(n)]
+    peak = trough = None
+    peak_i = trough_i = -1
+    for i in range(n):
+        j = i - k                       # کندلی که امروز می‌توان تأییدش کرد
+        if j - k >= 0:
+            hi = candles[j].high
+            lo = candles[j].low
+            left = candles[j - k:j]
+            right = candles[j + 1:i + 1]
+            if left and right:
+                if hi >= max(c.high for c in left) and hi > max(c.high for c in right):
+                    peak, peak_i = hi, j
+                if lo <= min(c.low for c in left) and lo < min(c.low for c in right):
+                    trough, trough_i = lo, j
+        out[i] = {"peak": peak, "trough": trough, "peak_i": peak_i, "trough_i": trough_i}
+    return out
+
+
+def swing_ratio(candles: Sequence[Candle], i: int, k: int = 3) -> Optional[float]:
+    """نسبت جایگاه قیمت میان **آخرین قله و درهٔ تأییدشده** در کندل i.
+
+    ۰ = روی دره · ۱ = روی قله · بیرون بازه هم ممکن است (شکست)، که خودش خبر است.
+    `None` یعنی هنوز قله و درهٔ تأییدشده‌ای نداریم.
+    """
+    sw = swings(candles[: i + 1], k)
+    s = sw[-1] if sw else None
+    if not s or s["peak"] is None or s["trough"] is None:
+        return None
+    span = s["peak"] - s["trough"]
+    if span <= 0:
+        return None
+    return round((candles[i].close - s["trough"]) / span, 4)
