@@ -19,6 +19,8 @@
   brain      «مغز دوم»: آزمون صادقانهٔ یک مدل کوچک کنار اتوترید (walk-forward)
   view       «چشم مغز»: دیدگاه مستقلِ هر نماد (فقط مشاهده، بدون تصمیم)
   doctor     معاینهٔ نصب: پورت، داده، پوشه‌ها، termux-api (بدون شبکه)
+  bundle     ساخت بستهٔ مستقل موتور (برای وصل‌کردن به داشبورد دیگر)
+  audit      بازبینی سلامت معاملات: هر ضرر ≈۱R بود؟ با قاعدهٔ ضدضرر بست؟
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -167,6 +169,31 @@ def main(argv=None) -> int:
     if cmd in ("view", "eye", "brain-view"):
         from .eye import view_command
         return view_command(rest)
+
+    if cmd in ("audit", "integrity", "health"):
+        import argparse
+        from .audit import audit, render as render_audit
+        p = argparse.ArgumentParser(prog="mtflab audit",
+                                    description="بازبینی سلامت معاملات ژورنال")
+        p.add_argument("--journal", default="results/live/journal.jsonl")
+        p.add_argument("--out", default="", help="مسیر ذخیرهٔ گزارش md")
+        p.add_argument("--json", action="store_true")
+        p.add_argument("--lang", choices=["fa", "en"], default="fa")
+        a = p.parse_args(rest)
+        rep = audit(a.journal)
+        if a.json:
+            print(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
+        else:
+            md = render_audit(rep, a.lang)
+            print(md, end="")
+            if a.out:
+                with open(a.out, "w", encoding="utf-8") as f:
+                    f.write(md)
+        return 0
+
+    if cmd in ("bundle", "export-core", "core"):
+        from .bundle import bundle_command
+        return bundle_command(rest)
 
     if cmd in ("doctor", "check", "diag-env"):
         from .doctor import doctor_command

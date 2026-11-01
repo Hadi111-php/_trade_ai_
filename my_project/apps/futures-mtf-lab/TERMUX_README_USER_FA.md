@@ -720,6 +720,57 @@ bash run-auto.sh --brain-view --train
 اگر تیم `pullback` را با تنظیمات تازه اجرا کنی، مقایسه با خط پایهٔ **همان تیم**
 انجام می‌شود، نه با `trend`. قبلاً یک خط پایه برای همه بود و Δ بی‌معنا می‌شد.
 
+## ۳.۱۷) راهنما، نقشهٔ کد، و بستهٔ مستقل
+
+### راهنما داخل داشبورد
+
+تب تازهٔ **«راهنما»** در همان صفحه: پنج تب در یک خط، سه عددی که تصمیم می‌سازند،
+پنج قانون طلایی، و این‌که «ضررِ سالم» با «خطا» چه فرقی دارد. نسخهٔ کامل و
+قابل‌چاپ: `docs/GUIDE_DASHBOARD_FA.md`.
+
+### نقشهٔ کد — کدام فایل چه کاری می‌کند
+
+`docs/ENGINE_MAP_FA.md` — دقیقاً همان چیزی که برای وصل‌کردن به یک داشبورد دیگر
+لازم است:
+
+| بخش | فایل |
+|---|---|
+| الگوها/تیم‌ها | `mtflab/patterns.py` |
+| تنظیمات مجاز | `mtflab/knobs.py` |
+| موتور | `engine.py` + `signals.py` + `alignment.py` + `indicators.py` |
+| آمار و انتساب | `stats.py` + `rules.py` |
+| رصد | `live.py` (+ `desk.py`/`labweb.py` برای داشبورد) |
+| قرارداد بیرونی | `autotrade_api.py` |
+
+### بستهٔ مستقل (برای دادن به داشبورد دیگر)
+
+```bash
+python3 -m mtflab bundle            # می‌سازد: exports/autotrade_core/
+python3 -m mtflab bundle --check    # آیا این بسته با کد فعلی یکی است؟
+python3 exports/autotrade_core/demo.py
+```
+
+پوشهٔ `exports/autotrade_core/` شامل ۱۴ فایل موتور + `manifest.json` (هش هر فایل)
++ `README_FA.md` + `demo.py` است و **بدون این مخزن هم کار می‌کند**. سه تابعی که
+داشبورد دیگر لازم دارد:
+
+```python
+import sys; sys.path.insert(0, "/path/to/parent")
+from autotrade_core import autotrade_api as api
+api.schema()             # الگوها + ۲۷ کلید + پیش‌فرض
+api.run(data)            # بک‌تست: سنجه‌ها، OOS، by_rule، معاملات
+api.signals_now(data)    # سیگنال کندل بستهٔ آخر
+```
+
+### بازبینی سلامت معاملات
+
+```bash
+python3 -m mtflab audit --journal results/live/journal.jsonl --out results/audit_fa.md
+```
+
+می‌گوید هر ضرر ≈۱R بود یا نه، با کدام قاعده بسته شد، و بلندترین رشتهٔ ضرر چقدر
+بوده. گزارش کامل تحلیل «سه سیگنال ضررده»: `docs/REPORT_3_LOSSES_FA.md`.
+
 ## ۴) قاعدهٔ پذیرش — از قبل تعیین شده
 
 این قاعده **قبل از دیدن نتیجه** نوشته شده و بعد از دیدن نتیجه تغییر نمی‌کند.

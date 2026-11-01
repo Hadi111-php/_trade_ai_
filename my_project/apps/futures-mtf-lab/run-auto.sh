@@ -22,6 +22,8 @@
 #   bash run-auto.sh --live --status  # فقط گزارش وضعیت (بدون گرفتن داده)
 #   bash run-auto.sh --dash           # داشبورد کارگاه (وب) روی همین گوشی
 #   bash run-auto.sh --doctor         # معاینهٔ نصب: پورت/داده/پوشه‌ها (بدون شبکه)
+#   bash run-auto.sh --audit          # بازبینی سلامت معاملات (هر ضرر ≈۱R؟)
+#   bash run-auto.sh --bundle         # ساخت بستهٔ مستقل موتور برای داشبورد دیگر
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -166,6 +168,19 @@ for a in "$@"; do
       else
         python3 -m mtflab brain "${_BR[@]+"${_BR[@]}"}"
       fi
+      exit $?
+      ;;
+    --audit)
+      _AU=()
+      for b in "$@"; do
+        case "$b" in --audit) continue;; esac
+        _AU+=("$b")
+      done
+      python3 -m mtflab audit --journal results/live/journal.jsonl "${_AU[@]+"${_AU[@]}"}"
+      exit $?
+      ;;
+    --bundle)
+      python3 -m mtflab bundle
       exit $?
       ;;
     --doctor|--check)

@@ -466,3 +466,31 @@ def _load_or_resample(path: str, trig: Sequence[Candle], src_tf: str, dst_tf: st
     meta["resample"].append(rep)
     meta["sources"][dst_tf] = f"resample({src_tf}→{dst_tf})"
     return cs
+
+
+def build_layers(trig: Sequence[Candle], tf_trigger: str, tf_filter: str,
+                 tf_bias: str, bias_enabled: bool,
+                 exec_candles: Optional[Sequence[Candle]] = None) -> Dict[str, List[Candle]]:
+    """لایه‌های فیلتر/بایاس از کندل تریگر ساخته می‌شوند.
+
+    `exec_candles` اختیاری است: کندل‌های ریزترِ مدیریت پوزیشن (مثلاً ۱۵ دقیقه
+    در کنار تریگر ۴ ساعته). اگر نباشد، رفتار موتور دقیقاً همان قبلی است.
+    """
+    layers = {"trigger": list(trig)}
+    if exec_candles:
+        layers["exec"] = list(exec_candles)
+    if tf_filter and tf_filter != tf_trigger:
+        layers["filter"] = resample_up(trig, tf_trigger, tf_filter)[0]
+    else:
+        layers["filter"] = list(trig)
+    if bias_enabled:
+        layers["bias"] = (resample_up(trig, tf_trigger, tf_bias)[0]
+                          if tf_bias and tf_bias != tf_trigger else list(trig))
+    else:
+        layers["bias"] = []
+    return layers
+
+
+# ----------------------------------------------------------------------------
+# اجرای یک نسخه روی یک نماد
+# ----------------------------------------------------------------------------

@@ -29,7 +29,8 @@ from dataclasses import replace
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from .config import PRESETS, MTFConfig
-from .data import Candle, resample_up, tf_to_minutes
+from .data import (Candle, build_layers, resample_up,  # noqa: F401
+                   tf_to_minutes)
 from .diagnose import _position_pnls
 from .engine import run_backtest
 from .robust import sign_test_p
@@ -414,32 +415,7 @@ def validate_tf_stack(tf_trigger: str, tf_filter: str, tf_bias: str) -> None:
                    f"`{tf_trigger}` ({dst} / {trig}). A valid stack: 15m→1h→4h."))
 
 
-def build_layers(trig: Sequence[Candle], tf_trigger: str, tf_filter: str,
-                 tf_bias: str, bias_enabled: bool,
-                 exec_candles: Optional[Sequence[Candle]] = None) -> Dict[str, List[Candle]]:
-    """لایه‌های فیلتر/بایاس از کندل تریگر ساخته می‌شوند.
 
-    `exec_candles` اختیاری است: کندل‌های ریزترِ مدیریت پوزیشن (مثلاً ۱۵ دقیقه
-    در کنار تریگر ۴ ساعته). اگر نباشد، رفتار موتور دقیقاً همان قبلی است.
-    """
-    layers = {"trigger": list(trig)}
-    if exec_candles:
-        layers["exec"] = list(exec_candles)
-    if tf_filter and tf_filter != tf_trigger:
-        layers["filter"] = resample_up(trig, tf_trigger, tf_filter)[0]
-    else:
-        layers["filter"] = list(trig)
-    if bias_enabled:
-        layers["bias"] = (resample_up(trig, tf_trigger, tf_bias)[0]
-                          if tf_bias and tf_bias != tf_trigger else list(trig))
-    else:
-        layers["bias"] = []
-    return layers
-
-
-# ----------------------------------------------------------------------------
-# اجرای یک نسخه روی یک نماد
-# ----------------------------------------------------------------------------
 def _year_of(ts_ms: int) -> int:
     return time.gmtime(ts_ms / 1000).tm_year
 
@@ -505,30 +481,7 @@ def _exit_reason_counts(trades) -> Dict[str, int]:
 # ----------------------------------------------------------------------------
 # نسخه‌های قابل مقایسه (همه روی یک تایم‌فریم)
 # ----------------------------------------------------------------------------
-def variants_for(tf_trigger: str, tf_filter: str, tf_bias: str) -> List[Tuple[str, str, dict]]:
-    """نسخه‌ها: (شناسه، برچسب، overrides).
-
-    همه روی **همان** تایم‌فریم اجرا می‌شوند تا اختلاف فقط از «منطق» بیاید، نه از
-    تعداد معامله یا هزینه. این نکته‌ای است که در آزمون‌های قبلی رعایت نشده بود.
-    """
-    base_tf = {"tf_trigger": tf_trigger, "tf_filter": tf_filter, "tf_bias": tf_bias}
-    preset_trend = dict(PRESETS["trend_4h"])
-    # پریست trend_4h تایم‌فریم خودش را دارد؛ اینجا به تایم‌فریم اسکن تحمیل می‌شود
-    preset_trend.pop("tf_trigger", None)
-    preset_trend.pop("tf_filter", None)
-    preset_trend.pop("tf_bias", None)
-
-    return [
-        ("base", "پایه (همان تایم‌فریم اسکن)", dict(base_tf)),
-        ("trend", "روندکاوی: شکست + بدون TP + تریل باز",
-         dict(base_tf, **preset_trend)),
-        ("trend_tp", "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)",
-         dict(base_tf, **dict(preset_trend, take_profit_atr_mult=6.0))),
-        ("pullback", "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)",
-         dict(base_tf, trigger_entry_modes=["pullback"])),
-        ("climax", "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)",
-         dict(base_tf, trigger_max_range_atr=1.0)),
-    ]
+from .patterns import variants_for  # noqa: F401,E402
 
 
 # ----------------------------------------------------------------------------
@@ -1112,6 +1065,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--model": "bash run-auto.sh --brain",
                    "--dash": "bash run-auto.sh --dash",
                    "--doctor": "bash run-auto.sh --doctor",
+                   "--bundle": "python3 -m mtflab bundle",
+                   "--audit": "bash run-auto.sh --audit",
                    "--desk": "bash run-auto.sh --dash",
                    "--serve": "bash run-auto.sh --dash",
                    "--paper": "bash run-auto.sh --live",
