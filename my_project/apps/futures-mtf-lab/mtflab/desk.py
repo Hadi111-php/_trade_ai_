@@ -690,11 +690,13 @@ def _trial_warning(k: int) -> str:
 # ══════════════════════════════════════════════════════════════════════════
 #  ۴) قدم زنده (همان مسیر `mtflab live`، از داخل داشبورد)
 # ══════════════════════════════════════════════════════════════════════════
-def run_step(lab: "Lab", min_gap: int = 20) -> dict:
+def run_step(lab: "Lab", min_gap: int = 20, quiet: bool = False) -> dict:
     """یک قدمِ اتوترید مجازی: کندل تازه → سیگنال تازه → گزارش. (شبکه)
 
     `min_gap` جلوی فشار دادن دکمه پشت‌سرهم را می‌گیرد (خودِ کش هم بیشترِ
     درخواست‌ها را حذف می‌کند، ولی این‌جا صریح‌تر است).
+    `quiet` جدول را در ترمینال چاپ نمی‌کند — داشبورد همان داده را نشان می‌دهد و
+    ریختن یک صفحه markdown روی پیام‌های سرور فقط کاربر را گم می‌کند.
     """
     if lab.demo:
         return {"ok": False, "note": "حالت نمایشی: داده مصنوعی است، قدم زنده ندارد"}
@@ -707,6 +709,8 @@ def run_step(lab: "Lab", min_gap: int = 20) -> dict:
             "--tf-filter", lab.tf_filter, "--tf-bias", lab.tf_bias,
             "--data-dir", lab.data_dir, "--state", lab.state_path,
             "--journal", lab.journal_path, "--lang", "fa"]
+    if quiet:
+        argv.append("--quiet")
     if lab.symbols_filter:
         argv += ["--symbols"] + list(lab.symbols_filter)
     rc = live_command(argv)

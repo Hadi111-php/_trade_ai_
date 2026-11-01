@@ -828,6 +828,8 @@ def live_command(argv: Optional[List[str]] = None) -> int:
                    help="کجا آزمایش‌های کارگاه ذخیره شوند")
     p.add_argument("--no-open", action="store_true",
                    help="با --serve: مرورگر را خودکار باز نکن")
+    p.add_argument("--quiet", action="store_true",
+                   help="جدول کامل را در ترمینال چاپ نکن (فایل‌ها نوشته می‌شوند)")
     p.add_argument("--brain-model", default="results/brain_model.json",
                    help="مدل «چشم مغز»؛ اگر نباشد، فقط ثبت می‌شود که نبوده")
     p.add_argument("--no-brain", action="store_true",
@@ -932,10 +934,17 @@ def live_command(argv: Optional[List[str]] = None) -> int:
     if errors:
         print(_t(f"⚠️  {len(errors)} نماد خطا داد (بقیه ادامه یافتند)",
                  f"⚠️  {len(errors)} symbols failed (others continued)"))
-    print("\n" + md)
+    if not a.quiet:
+        print("\n" + md)
     print(f"📄 {os.path.abspath(md_path)}\n🗂 {os.path.abspath(js_path)}")
     print(_t(f"📓 ژورنال: {os.path.abspath(a.journal)}",
              f"📓 journal: {os.path.abspath(a.journal)}"))
+    if not a.quiet:
+        # «--live» یک قدم است و تمام می‌شود؛ داشبورد چیز دیگری است. تا وقتی
+        # این خط نبود، کاربر بعد از دیدن جدول فکر می‌کرد داشبورد را هم زده.
+        print(_t("\n💡 این یک قدم بود، نه داشبورد. برای داشبورد زنده:",
+                 "\n💡 that was one step, not the dashboard. for the live desk:"))
+        print("   bash run-auto.sh --dash")
     deliver([md_path, js_path], a.out_dir, lang=a.lang)
     return 0
 
@@ -1006,8 +1015,9 @@ def _serve_desk(a) -> int:
 
         def _first_step() -> None:
             try:
-                r = run_step(lab, min_gap=0)
-                out(t(f"✅ قدم اول تمام شد: {r}", f"✅ first step done: {r}"))
+                r = run_step(lab, min_gap=0, quiet=True)
+                out(t(f"✅ قدم اول تمام شد: {r} — جدول‌ها در داشبورد",
+                      f"✅ first step done: {r} — see the desk"))
                 lab.universe(reload=True)
             except Exception as e:                              # noqa: BLE001
                 out(t(f"⚠️  قدم اول خطا داد (داشبورد سالم است): {e}",

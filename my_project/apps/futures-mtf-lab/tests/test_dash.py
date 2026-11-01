@@ -190,3 +190,47 @@ def test_dash_survives_busy_port():
                 p.kill()
     finally:
         s.close()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۴) «--live» داشبورد نیست — و باید همین را بگوید
+# ═══════════════════════════════════════════════════════════════════════════
+def _cache_and_run(td, *extra):
+    import json
+    from mtflab.autoscan import candles_to_json
+    from mtflab.data import synthetic_candles
+    data = os.path.join(td, "data")
+    os.makedirs(os.path.join(data, "json"))
+    for i, sym in enumerate(("AAAUSDT", "BBBUSDT")):
+        cs = synthetic_candles("4h", 1200, seed=41 + i)
+        with open(os.path.join(data, "json", f"{sym.lower()}_4h.json"),
+                  "w", encoding="utf-8") as f:
+            json.dump(candles_to_json(cs, {"symbol": sym, "tf": "4h",
+                                           "days": 200}), f)
+    out = os.path.join(td, "out")
+    env = dict(os.environ, HOME=os.path.join(td, "home"))
+    os.makedirs(os.path.join(td, "home"), exist_ok=True)
+    return subprocess.run(
+        [sys.executable, "-m", "mtflab", "live", "--offline",
+         "--data-dir", data, "--symbols", "AAAUSDT", "BBBUSDT",
+         "--backfill", "300", "--state", os.path.join(td, "live", "state.json"),
+         "--journal", os.path.join(td, "live", "journal.jsonl"),
+         "--out-dir", out, "--lang", "en", *extra],
+        cwd=HERE, env=env, capture_output=True, text=True, timeout=180), out
+
+
+def test_live_run_says_where_the_dashboard_is():
+    with tempfile.TemporaryDirectory() as td:
+        r, _out = _cache_and_run(td)
+        assert r.returncode == 0, (r.stdout + r.stderr)[-1500:]
+        assert "bash run-auto.sh --dash" in r.stdout
+        assert "not the dashboard" in r.stdout
+
+
+def test_quiet_live_writes_report_without_dumping_tables():
+    with tempfile.TemporaryDirectory() as td:
+        r, out = _cache_and_run(td, "--quiet")
+        assert r.returncode == 0, (r.stdout + r.stderr)[-1500:]
+        assert os.path.exists(os.path.join(out, "live_report.md"))
+        assert "## " not in r.stdout, "جدول کامل نباید در ترمینال بریزد"
+        assert "bash run-auto.sh --dash" not in r.stdout, "پیام داشبورد هم لازم نیست"
