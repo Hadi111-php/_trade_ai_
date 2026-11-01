@@ -21,6 +21,7 @@
 #   bash run-auto.sh --live           # اتوترید مجازی: رصد سیگنال‌ها روی کندل تازه
 #   bash run-auto.sh --live --status  # فقط گزارش وضعیت (بدون گرفتن داده)
 #   bash run-auto.sh --dash           # داشبورد کارگاه (وب) روی همین گوشی
+#   bash run-auto.sh --doctor         # معاینهٔ نصب: پورت/داده/پوشه‌ها (بدون شبکه)
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -165,6 +166,15 @@ for a in "$@"; do
       else
         python3 -m mtflab brain "${_BR[@]+"${_BR[@]}"}"
       fi
+      exit $?
+      ;;
+    --doctor|--check)
+      _DR=()
+      for b in "$@"; do
+        case "$b" in --doctor|--check) continue;; esac
+        _DR+=("$b")
+      done
+      python3 -m mtflab doctor "${_DR[@]+"${_DR[@]}"}"
       exit $?
       ;;
     --dash|--desk)

@@ -19,6 +19,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
+import subprocess
+import threading
 import time
 from dataclasses import asdict, fields, replace
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
@@ -823,6 +826,8 @@ def live_command(argv: Optional[List[str]] = None) -> int:
                    help="با --serve: قبل از بالا آمدن، قدم زنده نزن")
     p.add_argument("--lab-dir", default="results/live_lab",
                    help="کجا آزمایش‌های کارگاه ذخیره شوند")
+    p.add_argument("--no-open", action="store_true",
+                   help="با --serve: مرورگر را خودکار باز نکن")
     p.add_argument("--brain-model", default="results/brain_model.json",
                    help="مدل «چشم مغز»؛ اگر نباشد، فقط ثبت می‌شود که نبوده")
     p.add_argument("--no-brain", action="store_true",
@@ -935,44 +940,112 @@ def live_command(argv: Optional[List[str]] = None) -> int:
     return 0
 
 
+def _open_url(url: str) -> str:
+    """بازکردن نشانی در مرورگرِ گوشی — فقط اگر `termux-api` نصب باشد.
+
+    خروجی: نام برنامه‌ای که اجرا شد (برای پیام) یا رشتهٔ خالی.
+    هیچ خطایی پرتاب نمی‌شود: باز نشدن مرورگر نباید داشبورد را بخواباند.
+    """
+    exe = shutil.which("termux-open-url") or shutil.which("termux-open")
+    if not exe:
+        return ""
+    try:
+        subprocess.Popen([exe, url], stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+        return os.path.basename(exe)
+    except OSError:
+        return ""
+
+
 def _serve_desk(a) -> int:
-    """داشبورد کارگاه + (اختیاری) یک قدم زنده و حلقهٔ پس‌زمینه."""
+    """داشبورد کارگاه + (اختیاری) حلقهٔ پس‌زمینه.
+
+    **ترتیب کار عمداً عوض شد:** قبلاً اول یک قدمِ شبکه‌ای زده می‌شد و بعد سرور
+    بالا می‌آمد. روی گوشی، گرفتن کندل ۲۰ نماد چند دقیقه طول می‌کشد و کاربر تا
+    آن موقع فقط یک خط فارسی می‌دید و فکر می‌کرد «داشبورد بالا نیامد». حالا:
+
+      ۱. سرور اول بالا می‌آید (کمتر از یک ثانیه) و نشانی چاپ می‌شود،
+      ۲. مرورگر گوشی خودکار باز می‌شود (اگر termux-api باشد)،
+      ۳. قدمِ شبکه‌ای در پس‌زمینه اجرا می‌شود و نتیجه‌اش چاپ می‌شود.
+    """
     from .autoscan import _t
     from .desk import Lab, run_step, start_auto
-    from .labweb import serve as serve_lab
+    from .labweb import bind_server
 
+    def out(msg: str = "") -> None:
+        # flush صریح: بدون آن، وقتی خروجی به فایل/لوله می‌رود، کاربر تا پایان
+        # کار هیچ چیزی نمی‌بیند (روی گوشی همین «هیچی نیامد» به نظر می‌رسد).
+        print(msg, flush=True)
+
+    def t(fa: str, en: str) -> str:
+        return _t(fa, en)
+
+    out(t("🧪 آماده‌سازی داشبورد …", "🧪 starting the desk …"))
     lab = Lab(data_dir=a.data_dir, tf=a.tf, tf_filter=a.tf_filter, tf_bias=a.tf_bias,
               variant=a.variant, state_path=a.state, journal_path=a.journal,
               lab_dir=a.lab_dir, demo=a.demo, symbols=a.symbols)
+
+    try:
+        srv = bind_server(lab, a.host, a.port)
+    except OSError as e:                                        # noqa: BLE001
+        out(t(f"❌ هیچ پورت آزادی پیدا نشد: {e}",
+              f"❌ no free port: {e}"))
+        return 1
+    port = int(srv.server_address[1])
+    if a.port and port != a.port:
+        out(t(f"⚠️  پورت {a.port} اشغال بود (یک داشبورد قدیمی؟) — روی {port} بالا آمدم.",
+              f"⚠️  port {a.port} was busy — serving on {port} instead."))
     if a.demo:
-        print(_t("⚠️  حالت نمایشی: کندل‌ها مصنوعی‌اند (نه بازار واقعی).",
-                 "⚠️  demo mode: synthetic candles, not real market data."))
-    elif not a.no_step:
-        print(_t("یک قدم زنده پیش از بالا آمدن داشبورد …",
-                 "one live step before the dashboard starts …"))
-        try:
-            run_step(lab, min_gap=0)
-        except Exception as e:                                     # noqa: BLE001
-            print(_t(f"⚠️  قدم اول خطا داد: {e}", f"⚠️  first step failed: {e}"))
+        out(t("⚠️  حالت نمایشی: کندل‌ها مصنوعی‌اند (نه بازار واقعی).",
+              "⚠️  demo mode: synthetic candles, not real market data."))
+
+    # ── قدمِ شبکه‌ای، بعد از بالا آمدن سرور و در پس‌زمینه ─────────────────
+    if not a.demo and not a.no_step:
+        out(t("⏳ گرفتن کندل تازه در پس‌زمینه — داشبورد همین حالا باز است.",
+              "⏳ fetching fresh candles in the background — the desk is already up."))
+
+        def _first_step() -> None:
+            try:
+                r = run_step(lab, min_gap=0)
+                out(t(f"✅ قدم اول تمام شد: {r}", f"✅ first step done: {r}"))
+                lab.universe(reload=True)
+            except Exception as e:                              # noqa: BLE001
+                out(t(f"⚠️  قدم اول خطا داد (داشبورد سالم است): {e}",
+                      f"⚠️  first step failed (desk still fine): {e}"))
+
+        threading.Thread(target=_first_step, daemon=True, name="first-step").start()
 
     if a.every > 0 and not a.demo:
-        start_auto(lab, a.every, logger=lambda m: print(m, flush=True))
-        print(_t(f"⏱ حلقهٔ خودکار روشن است: هر {a.every} ثانیه یک قدم.",
-                 f"⏱ auto loop: one step every {a.every}s"))
+        start_auto(lab, a.every, logger=out)
+        out(t(f"⏱ حلقهٔ خودکار روشن است: هر {a.every} ثانیه یک قدم.",
+              f"⏱ auto loop: one step every {a.every}s"))
 
-    srv = serve_lab(lab, a.host, a.port)
-    port = srv.server_address[1]
-    print("=" * 62)
-    print(_t("🧪 کارگاه اتوترید مجازی بالا آمد", "🧪 paper trading desk is up"))
-    print(f"   روی همین گوشی:  http://127.0.0.1:{port}/")
+    url = f"http://127.0.0.1:{port}/"
+    out("=" * 62)
+    out(t("🧪 کارگاه اتوترید مجازی بالا آمد", "🧪 paper trading desk is up"))
+    out(t(f"   روی همین گوشی:  {url}", f"   on this phone:  {url}"))
     for ip in _local_ips():
-        print(f"   از شبکهٔ محلی:   http://{ip}:{port}/")
-    print(_t("   برای بستن: Ctrl+C", "   to stop: Ctrl+C"))
-    print("=" * 62)
+        out(t(f"   از شبکهٔ محلی:   http://{ip}:{port}/",
+              f"   from your LAN:  http://{ip}:{port}/"))
+    out(t("   برای بستن: Ctrl+C   (یا دکمهٔ بستنِ Termux)",
+          "   to stop: Ctrl+C"))
+    out("=" * 62)
+
+    if not getattr(a, "no_open", False):
+        opener = _open_url(url)
+        if opener:
+            out(t(f"📱 تلاش کردم با {opener} بازش کنم — اگر باز نشد، نشانی بالا را دستی بزن.",
+                  f"📱 tried to open it with {opener} — if nothing happened, use the URL above."))
+        else:
+            out(t("📱 همین نشانی را در مرورگر گوشی بزن (http://127.0.0.1:…).",
+                  "📱 open the URL above in your phone browser."))
+            out(t("   برای باز شدن خودکار: pkg install termux-api + افزونهٔ Termux:API",
+                  "   for auto-open: pkg install termux-api + the Termux:API app"))
+
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
-        print(_t("\nبسته شد.", "\nstopped."))
+        out(t("\nبسته شد.", "\nstopped."))
     finally:
         srv.server_close()
     return 0

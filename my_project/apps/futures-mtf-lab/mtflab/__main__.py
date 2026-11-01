@@ -18,6 +18,7 @@
   live       اتوترید مجازی: هر سیگنال و هر بستن با انتساب کامل ثبت می‌شود
   brain      «مغز دوم»: آزمون صادقانهٔ یک مدل کوچک کنار اتوترید (walk-forward)
   view       «چشم مغز»: دیدگاه مستقلِ هر نماد (فقط مشاهده، بدون تصمیم)
+  doctor     معاینهٔ نصب: پورت، داده، پوشه‌ها، termux-api (بدون شبکه)
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -166,6 +167,10 @@ def main(argv=None) -> int:
     if cmd in ("view", "eye", "brain-view"):
         from .eye import view_command
         return view_command(rest)
+
+    if cmd in ("doctor", "check", "diag-env"):
+        from .doctor import doctor_command
+        return doctor_command(rest)
 
     if cmd == "archive":
         from .archive import archive_command

@@ -6,10 +6,12 @@
 """
 from __future__ import annotations
 
+import errno
 import json
 import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Optional
 from urllib.parse import parse_qsl, urlsplit, unquote
 
 PAGE = r"""<!doctype html>
@@ -640,5 +642,35 @@ def make_handler(lab):
 
 
 def serve(lab, host: str = "0.0.0.0", port: int = 8770) -> ThreadingHTTPServer:
+    """سرور را روی همان پورت می‌سازد (بدون جایگزین)."""
     srv = ThreadingHTTPServer((host, port), make_handler(lab))
     return srv
+
+
+def bind_server(lab, host: str = "0.0.0.0", port: int = 8770,
+                tries: int = 10) -> ThreadingHTTPServer:
+    """سرور را می‌سازد و اگر پورت اشغال بود، پورت بعدی را امتحان می‌کند.
+
+    **چرا:** روی گوشی، یک `--dash` قدیمی که با `Ctrl+C` بسته نشده یا در تب
+    دیگری از Termux زنده مانده، پورت ۸۷۷۰ را نگه می‌دارد. آن‌وقت اجرای تازه با
+    `OSError: [Errno 98] Address already in use` می‌میرد و کاربر فقط یک
+    traceback می‌بیند. حالا خودش پورت آزاد بعدی را برمی‌دارد و می‌گوید کدام.
+
+    ترتیب: `port`, `port+1`, …، و در آخر پورت تصادفی سیستم (`0`) تا هرگز
+    «بالا نیامدن» بی‌دلیل نداشته باشیم.
+    """
+    candidates = [port + i for i in range(max(1, int(tries)))] + [0]
+    hosts = [host]
+    if host not in ("127.0.0.1", "localhost"):
+        hosts.append("127.0.0.1")          # اگر 0.0.0.0 بسته باشد، فقط محلی
+    last: Optional[OSError] = None
+    for h in hosts:
+        for p in candidates:
+            try:
+                return ThreadingHTTPServer((h, p), make_handler(lab))
+            except OSError as e:                                # noqa: PERF203
+                if e.errno not in (errno.EADDRINUSE, errno.EACCES,
+                                   errno.EADDRNOTAVAIL):
+                    raise
+                last = e
+    raise last if last else OSError("no free port")

@@ -1111,6 +1111,7 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--view": "bash run-auto.sh --brain-view",
                    "--model": "bash run-auto.sh --brain",
                    "--dash": "bash run-auto.sh --dash",
+                   "--doctor": "bash run-auto.sh --doctor",
                    "--desk": "bash run-auto.sh --dash",
                    "--serve": "bash run-auto.sh --dash",
                    "--paper": "bash run-auto.sh --live",
