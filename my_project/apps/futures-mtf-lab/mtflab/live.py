@@ -716,10 +716,16 @@ def _variant_of(state: dict) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 def default_fetch(symbol: str, tf: str, days: int) -> List[Candle]:
-    """کندل‌های عمومی Bybit — فقط کندل‌های **بسته‌شده**."""
+    """کندل‌های عمومی Bybit — فقط کندل‌های **بسته‌شده**.
+
+    `save_csv=True` عمدی است: کشِ CSV باعث می‌شود حلقهٔ رصد روی گوشی ارزان شود.
+    تا وقتی کندل تازه‌ای باز نشده، هر اجرا از کش می‌خواند؛ فقط سرِ هر کندل تازه
+    (روی ۴ ساعته، ۶ بار در روز) دوباره دانلود می‌کند. با `save_csv=False` هر
+    اجرا ۲۴۰ روز را از نو می‌گرفت — روی ۲۰ نماد یعنی هزاران درخواست در روز.
+    """
     from .bybit_public import fetch_klines_range
     return fetch_klines_range(symbol, tf, days=days, cache_dir="data",
-                              progress=False, save_csv=False)
+                              progress=False, save_csv=True)
 
 
 def live_command(argv: Optional[List[str]] = None) -> int:
