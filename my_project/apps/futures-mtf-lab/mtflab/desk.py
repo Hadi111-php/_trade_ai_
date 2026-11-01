@@ -314,6 +314,8 @@ class Lab:
         self.journal_path = journal_path
         self.lab_dir = lab_dir
         self.report_dir = report_dir
+        self.brain_model_path = os.path.join(report_dir, "brain_model.json")
+        self._views_cache: tuple = (0.0, None)
         self.demo = demo
         self.demo_bars = demo_bars
         self.symbols_filter = list(symbols) if symbols else None
@@ -626,6 +628,36 @@ class Lab:
             return rep
         except (OSError, ValueError):
             return {"available": False, "hint": "گزارش خوانده نشد"}
+
+    def brain_views(self, max_age: int = 60) -> dict:
+        """دیدگاه مغز روی آخرین کندل بستهٔ هر نماد — برای «قبل از سیگنال».
+
+        فقط نمایش است؛ هیچ تصمیمی از این‌جا خوانده نمی‌شود. نتیجه ۶۰ ثانیه
+        کش می‌شود تا رفرش‌های پشت‌سرهم گوشی را داغ نکند.
+        """
+        ts, cached = self._views_cache
+        if cached is not None and time.time() - ts < max_age:
+            return cached
+        from .brainview import model_digest
+        from .observer import BrainObserver
+        obs = BrainObserver(self.brain_model_path, self.base_cfg({}))
+        if not obs.available:
+            out = {"available": False, "hint": "bash run-auto.sh --brain-view --train",
+                   "model_path": self.brain_model_path}
+        else:
+            views = obs.views_now(self.universe())
+            m = obs.model or {}
+            out = {"available": True,
+                   "model": {"version": m.get("version"),
+                             "trained_through_ts": m.get("trained_through_ts"),
+                             "trained_utc": m.get("trained_utc"),
+                             "digest": model_digest(m),
+                             "oof": m.get("oof"), "w": m.get("w"),
+                             "features": m.get("features")},
+                   "views": views,
+                   "note": "فقط مشاهده — تصمیم ورود/خروج هیچ‌جا از این‌جا خوانده نمی‌شود."}
+        self._views_cache = (time.time(), out)
+        return out
 
     def schema(self) -> dict:
         cfg = self.base_cfg({})

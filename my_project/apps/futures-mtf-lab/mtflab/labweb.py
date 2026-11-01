@@ -135,6 +135,8 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
       <b>رتبه</b> بدهد یا کم‌اعتمادها را رد کند — نه این‌که سیگنال تازه بسازد.
       این صفحه فقط آخرین گزارش آزمون را نشان می‌دهد؛ ساختنش دستی است:
       <code>bash run-auto.sh --brain</code> (روی دادهٔ کش‌شده، بدون شبکه).</div>
+    <h3>دیدگاه فعلی روی هر نماد (قبل از سیگنال)</h3>
+    <div id="brainViews"></div>
     <div id="brainBody"></div>
   </section>
 
@@ -438,7 +440,29 @@ function showRun(rec, target) {
 }
 
 /* ── مغز دوم ───────────────────────────────────────────────────────── */
+async function loadBrainViews() {
+  const v = await api("/api/brain/views");
+  if (!v.available) {
+    $("#brainViews").innerHTML = `<div class="note">مدل مغز ساخته نشده. در Termux:
+      <code>bash run-auto.sh --brain-view --train</code></div>`;
+    return;
+  }
+  const rows = Object.entries(v.views || {}).map(([sym, x]) => {
+    if (!x.available) return [esc(sym), "—", "—", "—", esc(x.reason || "")];
+    const lean = x.lean === "long" ? "🟢 صعودی" : (x.lean === "short" ? "🔴 نزولی" : "⚪ بی‌طرف");
+    const drv = (x.drivers || []).map(d => `${esc(d.fa)} ${d.contrib > 0 ? "+" : ""}${num(d.contrib, 2)}`).join(" · ");
+    return [esc(sym), lean, num(x.p_up * 100, 1) + "%", num(x.confidence * 100, 1) + "%", drv];
+  });
+  const m = v.model || {};
+  $("#brainViews").innerHTML =
+    `<div class="note">مدل <code>${esc(m.version)}</code> · هش <code>${esc(m.digest)}</code> ·
+      AUC بیرون‌نمونه ${m.oof && m.oof.auc !== undefined ? esc(m.oof.auc) : "—"} ·
+      آموزش تا ${esc(new Date(m.trained_through_ts || 0).toISOString().slice(0,10))} ·
+      <b>فقط مشاهده</b></div>` +
+    table(["نماد","دیدگاه","احتمال صعود","اطمینان","محرک‌ها"], rows);
+}
 async function loadBrain() {
+  loadBrainViews();
   const b = await api("/api/brain");
   if (!b.available) {
     $("#brainBody").innerHTML = `<div class="note">هنوز گزارشی ساخته نشده. در Termux بزن:
@@ -566,6 +590,8 @@ def make_handler(lab):
                     self._json(lab.schema())
                 elif path == "/api/brain":
                     self._json(lab.brain_report())
+                elif path == "/api/brain/views":
+                    self._json(lab.brain_views())
                 elif path == "/api/signals":
                     self._json(lab.signals(
                         symbol=q.get("symbol", ""), rule=q.get("rule", ""),

@@ -304,7 +304,8 @@ class LiveRunner:
     """اجرای گام‌به‌گام روی دادهٔ تازه، با حالت ماندگار و ژورنال انتسابی."""
 
     def __init__(self, cfg, variant_id: str, variant_label: str, overrides: dict,
-                 state_path: str, journal_path: str, lang: str = "fa"):
+                 state_path: str, journal_path: str, lang: str = "fa",
+                 brain=None):
         self.cfg = cfg
         self.variant_id = variant_id
         self.variant_label = variant_label
@@ -313,6 +314,8 @@ class LiveRunner:
         self.state_path = state_path
         self.journal_path = journal_path
         self.lang = lang
+        # نظاره‌گر مغز: فقط برای **ثبت** دیدگاه. هیچ تصمیمی از آن خوانده نمی‌شود.
+        self.brain = brain
         self.state = load_state(state_path)
         if self.state.get("equity") is None:
             self.state["equity"] = float(cfg.initial_equity)
@@ -326,7 +329,8 @@ class LiveRunner:
                 "alignment": self.cfg.alignment_version}
 
     def _open_record(self, pos: Position, info: dict, symbol: str,
-                     swing: Optional[float], structure: int, backfilled: bool) -> dict:
+                     swing: Optional[float], structure: int, backfilled: bool,
+                     brain: Optional[dict] = None) -> dict:
         trig = info["trig"]
         return {
             "type": "open",
@@ -348,6 +352,8 @@ class LiveRunner:
             "indicators": info.get("snap_trigger") or {},
             "filter_indicators": info.get("snap_filter") or {},
             "context": {"swing_position": swing, "structure": structure},
+            # دیدگاه مغز در همان لحظه — **فقط ثبت**، نه تصمیم
+            "brain": brain or {"available": False, "reason": "observer-off"},
             "cost_check": getattr(info["decision"], "cost_check", None),
             "order": {
                 "side": "LONG" if pos.direction > 0 else "SHORT",
@@ -456,9 +462,12 @@ class LiveRunner:
             pos.symbol = symbol        # موتور نماد پیش‌فرض می‌گذارد؛ اینجا اصلاح می‌شود
             idx = pos.open_bar
             sw = _swing_at(layers["trigger"], idx) if idx < len(bars) else None
+            bview = (self.brain.view(symbol, layers["trigger"], idx)
+                     if self.brain is not None else None)
             rec = self._open_record(pos, info, symbol, sw,
                                     int(info["filt"].direction),
-                                    backfilled=(idx < len(bars) - 1))
+                                    backfilled=(idx < len(bars) - 1),
+                                    brain=bview)
             append_jsonl(self.journal_path, rec)
             opened += 1
 
@@ -577,10 +586,39 @@ def summarize(journal: Sequence[dict]) -> dict:
             "is_risk_control": cb.get("is_risk_control"),
         })
 
+    # ── هم‌داستانی با مغز: آیا مشاورهٔ مغز با نتیجه هم‌بستگی دارد؟ ─────────
+    # (فقط سنجش؛ هیچ‌جا تصمیم ورود/خروج از این عدد خوانده نمی‌شود)
+    agree: Dict[str, dict] = {}
+    for c in closes:
+        o = opens.get(c.get("open_id") or "") or {}
+        br = (o.get("brain") or {})
+        if not br.get("available"):
+            key = "بدون مغز"
+        else:
+            side = str(((o.get("order") or {}).get("side")) or "")
+            lean = br.get("lean")
+            if lean not in ("long", "short"):
+                key = "بی‌طرف"
+            elif (side == "LONG" and lean == "long") or (side == "SHORT" and lean == "short"):
+                key = "هم‌جهت"
+            else:
+                key = "مخالف"
+        res = c.get("result") or {}
+        d = agree.setdefault(key, {"n": 0, "r_sum": 0.0, "wins": 0, "pnl": 0.0})
+        d["n"] += 1
+        d["r_sum"] += float(res.get("r_multiple") or 0.0)
+        d["wins"] += 1 if res.get("is_win") else 0
+        d["pnl"] += float(res.get("pnl") or 0.0)
+    for d in agree.values():
+        d["expectancy_r"] = round(d["r_sum"] / d["n"], 4) if d["n"] else None
+        d["win_rate"] = round(d["wins"] / d["n"], 4) if d["n"] else None
+        d["pnl"] = round(d["pnl"], 2)
+
     return {"opens": len(opens), "closes": len(closes),
             "open_now": len(opens) - len(closes),
             "by_algorithm": by_algo, "by_rule": by_rule,
-            "by_entry_pattern": per_pattern, "recent": recent}
+            "by_entry_pattern": per_pattern, "recent": recent,
+            "agreement": agree}
 
 
 def render(report: dict, state: dict, lang: str = "fa") -> str:
@@ -637,6 +675,22 @@ def render(report: dict, state: dict, lang: str = "fa") -> str:
             if not v:
                 continue                      # فقط دلیل‌هایی که واقعاً رخ دادند
             w(f"| `{k}` — {VETO_FA.get(k, k) if fa else k} | {v} |")
+        w("")
+
+    if report.get("agreement") and any(
+            k in report["agreement"] for k in ("هم‌جهت", "مخالف")):
+        w(("## مغز چه می‌گفت وقتی سیگنال داد (فقط سنجش)\n" if fa else
+           "## What the brain thought at signal time\n"))
+        w(("| هم‌داستانی مغز با معامله | تعداد | نرخ برد | انتظار (R) | سود |" if fa else
+           "| brain vs trade | count | win rate | expectancy R | PnL |"))
+        w("|---|---:|---:|---:|---:|")
+        for k in ("هم‌جهت", "مخالف", "بی‌طرف", "بدون مغز"):
+            d = (report["agreement"] or {}).get(k)
+            if not d or not d["n"]:
+                continue
+            wr = "—" if d["win_rate"] is None else f"{d['win_rate'] * 100:.0f}%"
+            ex = "—" if d["expectancy_r"] is None else f"{d['expectancy_r']:+.3f}"
+            w(f"| {k} | {d['n']} | {wr} | {ex} | {d['pnl']:+.2f}$ |")
         w("")
 
     if report.get("recent"):
@@ -769,6 +823,10 @@ def live_command(argv: Optional[List[str]] = None) -> int:
                    help="با --serve: قبل از بالا آمدن، قدم زنده نزن")
     p.add_argument("--lab-dir", default="results/live_lab",
                    help="کجا آزمایش‌های کارگاه ذخیره شوند")
+    p.add_argument("--brain-model", default="results/brain_model.json",
+                   help="مدل «چشم مغز»؛ اگر نباشد، فقط ثبت می‌شود که نبوده")
+    p.add_argument("--no-brain", action="store_true",
+                   help="نظاره‌گر مغز را کامل خاموش کن")
     a = p.parse_args(argv)
     set_lang(a.lang)
 
@@ -801,7 +859,15 @@ def live_command(argv: Optional[List[str]] = None) -> int:
     vid, label, overrides = by_id[a.variant]
     cfg = replace(cfg, **overrides)
 
-    runner = LiveRunner(cfg, vid, label, overrides, a.state, a.journal, lang=a.lang)
+    brain = None
+    if not a.no_brain:
+        from .observer import BrainObserver
+        brain = BrainObserver(a.brain_model, cfg)
+        print(("🧠 " + brain.describe()) if brain.available
+              else _t("🧠 مدل مغز پیدا نشد — اتوترید بدون نظاره‌گر اجرا می‌شود",
+                      "🧠 no brain model found — running without observer"))
+    runner = LiveRunner(cfg, vid, label, overrides, a.state, a.journal,
+                        lang=a.lang, brain=brain)
     runner.state["variant"] = vid
     runner.state["algorithm"] = {"id": vid, "label": label,
                                  "cfg_digest": cfg_digest(overrides)}

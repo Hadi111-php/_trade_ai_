@@ -17,6 +17,7 @@
   trade-lab  آزمون قله/دره و «استراحت بعد از سود» روی معاملات (بدون دانلود)
   live       اتوترید مجازی: هر سیگنال و هر بستن با انتساب کامل ثبت می‌شود
   brain      «مغز دوم»: آزمون صادقانهٔ یک مدل کوچک کنار اتوترید (walk-forward)
+  view       «چشم مغز»: دیدگاه مستقلِ هر نماد (فقط مشاهده، بدون تصمیم)
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -161,6 +162,10 @@ def main(argv=None) -> int:
     if cmd in ("brain", "model", "ml"):
         from .brain import brain_command
         return brain_command(rest)
+
+    if cmd in ("view", "eye", "brain-view"):
+        from .eye import view_command
+        return view_command(rest)
 
     if cmd == "archive":
         from .archive import archive_command

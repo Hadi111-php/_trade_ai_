@@ -1107,6 +1107,8 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--trade-lab": "bash run-auto.sh --trade-lab",
                    "--live": "bash run-auto.sh --live",
                    "--brain": "bash run-auto.sh --brain",
+                   "--brain-view": "bash run-auto.sh --brain-view",
+                   "--view": "bash run-auto.sh --brain-view",
                    "--model": "bash run-auto.sh --brain",
                    "--dash": "bash run-auto.sh --dash",
                    "--desk": "bash run-auto.sh --dash",
