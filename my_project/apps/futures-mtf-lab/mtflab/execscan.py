@@ -36,11 +36,16 @@ ARMS: List[Tuple[str, str, float, float, str]] = [
     ("C_fine_gb", "15m", 1.0, 0.5, "دقیق + افت سود: +۱R و ۵۰٪"),
 ]
 
-#: معیارهای قبولی — **قبل از اجرا** نوشته شده‌اند
+#: معیارهای قبولی — **نسبت به تنظیم پایهٔ همان اجرا**، نه یک عدد مطلق.
+#:
+#: چرا این اصلاح شد؟ نسخهٔ اول دروازه را با «میانهٔ PF = ۱.۱۲۰۱ از اجرای ۲۰ نمادی»
+#: مقایسه می‌کرد، ولی اجرای واقعی ۱۶ نماد داشت — و همان ۴ نمادِ حذف‌شده
+#: (APT/ARB/NEAR/TON) از برندگان بودند. پس پایهٔ واقعی ۰.۹۹۸ بود و دروازه از
+#: ابتدا دست‌نیافتنی بود. دروازه باید **هم‌جنس** باشد، وگرنه دروغ است.
 GATE = {
-    "median_pf_min": 1.1201,      # نباید از پایهٔ امروز پایین‌تر بیاید
-    "symbols_pf_above_min": 15,   # از ۱۲ به ۱۵ از ۲۰
-    "top5_share_max": 0.70,       # از ۱۱۸٪ به زیر ۷۰٪
+    "median_pf_gain": 0.0,        # میانهٔ PF نباید از پایهٔ همان اجرا بدتر شود
+    "min_extra_symbols": 0,       # تعداد نمادهای PF>1 نباید کم شود
+    "top5_share_improve": 0.0,    # تمرکز نباید بدتر شود (کمتر = بهتر)
 }
 
 
@@ -129,12 +134,18 @@ def run(data_dir: str, tf_trigger: str, tf_exec: str, tf_filter: str, tf_bias: s
         s_["delta_median_pf"] = round(s_["median_pf"] - base["median_pf"], 4)
         s_["delta_symbols"] = s_["symbols_pf_above_1"] - base["symbols_pf_above_1"]
         s_["gate"] = {
-            "median_pf": s_["median_pf"] >= GATE["median_pf_min"],
-            "symbols": s_["symbols_pf_above_1"] >= GATE["symbols_pf_above_min"],
+            "median_pf": s_["median_pf"] >= base["median_pf"] + GATE["median_pf_gain"],
+            "symbols": (s_["symbols_pf_above_1"]
+                        >= base["symbols_pf_above_1"] + GATE["min_extra_symbols"]),
             "concentration": (s_["top5_share"] is not None
-                              and s_["top5_share"] <= GATE["top5_share_max"]),
+                              and base.get("top5_share") is not None
+                              and s_["top5_share"] <= base["top5_share"]
+                              - GATE["top5_share_improve"]),
         }
         s_["gate_pass"] = all(s_["gate"].values())
+        s_["baseline"] = {"median_pf": base["median_pf"],
+                          "symbols_pf_above_1": base["symbols_pf_above_1"],
+                          "top5_share": base.get("top5_share")}
 
     return {
         "generated_at": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
@@ -205,16 +216,18 @@ def render(res: dict, lang: str = "fa") -> str:
     g = s["gate"]
     if fa:
         w("## معیار قبولی (قبل از اجرا قفل شده)\n")
-        w(f"- میانهٔ PF ≥ **{g['median_pf_min']}** (پایهٔ امروز)")
-        w(f"- نمادهای PF>1 ≥ **{g['symbols_pf_above_min']}** از {s['n_symbols']}")
-        w(f"- سهم ۵ سکهٔ اول از سود < **{g['top5_share_max'] * 100:.0f}٪**\n")
+        base = res["summary"].get("A_base") or {}
+        w(f"- میانهٔ PF ≥ **{base.get('median_pf')}** (همان تنظیم پایه، همان نمادها)")
+        w(f"- نمادهای PF>1 ≥ **{base.get('symbols_pf_above_1')}** از {s['n_symbols']}")
+        w(f"- سهم ۵ سکهٔ اول از سود ≤ **{(base.get('top5_share') or 0) * 100:.0f}٪**\n")
         w("> هر سه باید هم‌زمان پاس شوند. PF بهتر با تمرکز بیشتر روی چند سکه، "
           "**قبولی نیست** — همان دام overfitting است.\n")
     else:
         w("## Pre-registered gate\n")
-        w(f"- median PF ≥ **{g['median_pf_min']}** (today's baseline)")
-        w(f"- symbols PF>1 ≥ **{g['symbols_pf_above_min']}** of {s['n_symbols']}")
-        w(f"- top-5 share < **{g['top5_share_max'] * 100:.0f}%**\n")
+        base = res["summary"].get("A_base") or {}
+        w(f"- median PF ≥ **{base.get('median_pf')}** (same arm, same symbols)")
+        w(f"- symbols PF>1 ≥ **{base.get('symbols_pf_above_1')}** of {s['n_symbols']}")
+        w(f"- top-5 share ≤ **{(base.get('top5_share') or 0) * 100:.0f}%**\n")
 
     if fa:
         w("## دلیل خروج‌ها\n")

@@ -52,6 +52,10 @@ venv/
 !results/cost_sweep_*.json
 !results/cost_sweep_*.md
 !results/cost_sweep_analysis_fa.md
+!results/trade_lab_*.json
+!results/trade_lab_*.md
+!results/exec_tf_*.json
+!results/analysis_*.md
 # Identify files are generated locally; only the README is tracked
 data_archive/*
 !data_archive/README.md

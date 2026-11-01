@@ -367,6 +367,65 @@ def analysis_cluster(symbols: dict,
 
 
 # ---------------------------------------------------------------------------
+# ۳.۵) ساختار پاداش: آیا لبه «قرعه‌کشی» است یا جریان؟
+# ---------------------------------------------------------------------------
+def _events(rows: Sequence[dict], window_days: int = 45) -> int:
+    """چند **رویداد مستقل**؟ معاملات بزرگِ هم‌زمان روی چند سکه، یک رویدادند."""
+    rows = sorted(rows, key=lambda t: t.get("ts") or 0)
+    groups, cur = 0, None
+    for t in rows:
+        ts = t.get("ts") or 0
+        if cur is None or ts - cur > window_days * 86_400_000:
+            groups += 1
+            cur = ts
+    return groups
+
+
+def analysis_payoff(trades: Sequence[dict], window_days: int = 45) -> dict:
+    """کل سود از چند معامله می‌آید؟ و چند «رویداد مستقل» پشت آن است؟
+
+    این مهم‌ترین سنجهٔ ساختاری است و اکثر آزمون‌ها آن را نمی‌بینند: اگر ۸۰٪ سود
+    از ۵ معامله بیاید، هر قاعده‌ای که برنده‌ها را کوتاه کند فاجعه است، و هر
+    آماره‌ای که «میانگین» را می‌سنجد عملاً چند مشاهده دارد نه هزار تا.
+    """
+    rs = sorted((t.get("r") or 0.0 for t in trades), reverse=True)
+    tot = sum(rs)
+    if not rs or tot == 0:
+        return {"ok": False}
+    n = len(rs)
+    top = {str(k): round(sum(rs[:k]), 2) for k in (1, 3, 5, 10, 20) if k <= n}
+    # سهم فقط وقتی معنا دارد که مجموع مثبت باشد؛ با مجموع منفی «۱۲۰٪» بی‌معنی است
+    share = ({k: round(v / tot, 4) for k, v in top.items()} if tot > 0
+             else {k: None for k in top})
+    gains = sum(r for r in rs if r > 0)
+    top_of_gains = {str(k): (round(sum(rs[:k]) / gains, 4) if gains > 0 else None)
+                    for k in (5, 10) if k <= n}
+    # مرز «برندهٔ بزرگ»: mfe ≥ ۲۰٪
+    big = [t for t in trades if (t.get("mfe") or 0) >= 20]
+    horizon = {k: {"n": len(v), "share": round(len(v) / n, 4),
+                   "mean_r": round(sum(x["r"] for x in v) / len(v), 3)
+                   if v else None}
+               for k, v in (("0-2", [t for t in trades if (t.get("mfe") or 0) < 2]),
+                            ("2-5", [t for t in trades if 2 <= (t.get("mfe") or 0) < 5]),
+                            ("5-10", [t for t in trades if 5 <= (t.get("mfe") or 0) < 10]),
+                            ("10-20", [t for t in trades if 10 <= (t.get("mfe") or 0) < 20]),
+                            (">20", big))}
+    return {
+        "ok": True, "n": n, "total_r": round(tot, 2),
+        "top_r": top, "top_share": share, "top_of_gains": top_of_gains,
+        "median_r": round(st.median(rs), 3), "mean_r": round(sum(rs) / n, 3),
+        "big_movers": len(big),
+        "big_mover_rate": round(len(big) / n, 4),
+        "independent_events_45d": _events(
+            sorted([t for t in trades if (t.get("r") or 0) > 0],
+                   key=lambda t: -(t.get("r") or 0))[:15],
+            window_days),
+        "by_horizon": horizon,
+        "lottery": bool(tot > 0 and (share.get("5") or 0.0) >= 0.60),
+    }
+
+
+# ---------------------------------------------------------------------------
 # ۴) گزارش
 # ---------------------------------------------------------------------------
 def _arm_label(key: str, fa: bool) -> str:
@@ -440,6 +499,37 @@ def render(res: dict, lang: str = "fa") -> str:
                f"Q5 {q[-1]['mean_r']:+}R"))
     w("")
 
+    # ── ساختار پاداش
+    po = res.get("payoff") or {}
+    if po.get("ok"):
+        w("## ۰) ساختار پاداش — سود از کجا می‌آید؟\n" if fa else
+          "## 0) Payoff structure — where does the money come from?\n")
+        if fa:
+            w(f"میانهٔ R = **{po['median_r']:+.2f}** · میانگین = **{po['mean_r']:+.2f}** "
+              f"· برندهٔ بزرگ (حرکت ≥۲۰٪): {po['big_movers']} از {po['n']} "
+              f"({po['big_mover_rate'] * 100:.1f}٪)\n")
+            if po["top_share"].get("5") is not None:
+                w("| چند معاملهٔ بزرگ | جمع R | سهم از کل سود |")
+                w("|---|---:|---:|")
+                for k, v in po["top_r"].items():
+                    w(f"| {k} | {v:+} | **{po['top_share'][k] * 100:.0f}٪** |")
+            else:
+                w("⚠️ مجموع R منفی است ⇒ «سهم از سود» بی‌معنی می‌شود؛ "
+                  "این نسخه در کل بازنده است و ساختار پاداش ارزش خواندن ندارد.")
+            w("")
+            w(f"این معاملات از **{po['independent_events_45d']} رویداد مستقل** آمده‌اند "
+              f"(پنجرهٔ {45} روزه) — یعنی نمونهٔ مؤثر از تعداد معاملات خیلی کمتر است.\n")
+            if po.get("lottery"):
+                w("⚠️ **ساختار قرعه‌کشی:** بیش از ۶۰٪ سود از ۵ معامله می‌آید. هر "
+                  "قاعده‌ای که برنده‌ها را کوتاه کند کل سود را می‌کشد، حتی اگر نرخ "
+                  "برد را بالا ببرد.\n")
+            w("**پاداش بر حسب اندازهٔ حرکت:**\n")
+            w("| حرکت (mfe) | سهم معاملات | میانگین R |")
+            w("|---|---:|---:|")
+            for k, v in po["by_horizon"].items():
+                if v["n"]:
+                    w(f"| {k}٪ | {v['share'] * 100:.1f}٪ | {v['mean_r']:+.2f} |")
+            w("")
     # ── آزمون ۲
     cl = res["cluster"]
     w("## ۲) استراحت بعد از سود\n" if fa else "## 2) Rest after a win\n")
@@ -509,9 +599,10 @@ def lab_command(argv: Optional[List[str]] = None) -> int:
     all_trades = [t for box in ex["symbols"].values()
                   for rows in box["trades"].values() for t in rows]
     pv = analysis_peakvalley(all_trades, label=", ".join(a.variants))
+    po = analysis_payoff(all_trades)
     cl = analysis_cluster(flatten_symbols(ex["symbols"],
                                            a.variants[0] if a.variants else None))
-    res = {"export": ex, "peakvalley": pv, "cluster": cl}
+    res = {"export": ex, "payoff": po, "peakvalley": pv, "cluster": cl}
     _ = a.sims
 
     os.makedirs(a.out_dir, exist_ok=True)
@@ -527,6 +618,17 @@ def lab_command(argv: Optional[List[str]] = None) -> int:
         json.dump(ex, f, ensure_ascii=False, separators=(",", ":"))
 
     print("\n" + "=" * 70)
+    if po.get("ok"):
+        print(_t(f"  ساختار پاداش: میانه {po['median_r']:+.2f}R · "
+                 f"میانگین {po['mean_r']:+.2f}R · "
+                 f"۵ معاملهٔ بزرگ = {(po['top_share'].get(5) or 0) * 100:.0f}٪ سود · "
+                 f"{po['independent_events_45d']} رویداد مستقل",
+                 f"  payoff: median {po['median_r']:+.2f}R · mean {po['mean_r']:+.2f}R "
+                 f"· top-5 = {(po['top_share'].get(5) or 0) * 100:.0f}% · "
+                 f"{po['independent_events_45d']} independent events"))
+        if po.get("lottery"):
+            print(_t("  ⚠️ ساختار قرعه‌کشی — کوتاه کردن برنده‌ها فاجعه است",
+                     "  ⚠️ lottery profile — cutting winners is fatal"))
     for key, name in (("swing", _t("قله/دره", "swings")),
                       ("don_pos", _t("کانال", "channel"))):
         blk = pv.get(key) or {}

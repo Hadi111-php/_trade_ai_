@@ -197,3 +197,47 @@ def test_lab_command_fails_cleanly_without_data():
     r = export("/tmp/definitely-not-a-data-dir", "4h", "1d", "1d", ["trend"],
                progress=False)
     assert "error" in r
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۵) ساختار پاداش — مهم‌ترین یافتهٔ ساختاری
+# ═══════════════════════════════════════════════════════════════════════════
+def test_payoff_detects_a_lottery_profile():
+    """اگر ۵ معامله کل سود را بسازند، ابزار باید «قرعه‌کشی» را علامت بزند."""
+    from mtflab.trades import analysis_payoff
+    rows = [{"r": -1.0, "mfe": 0.5, "ts": i * 86_400_000} for i in range(100)]
+    rows += [{"r": 40.0, "mfe": 60.0, "ts": i * 86_400_000} for i in range(5)]
+    po = analysis_payoff(rows)
+    assert po["lottery"] is True
+    assert po["top_share"]["5"] > 0.6
+
+
+def test_payoff_does_not_cry_lottery_for_a_steady_edge():
+    """سود یکنواخت (۶۰٪ برد ۱R) نباید «قرعه‌کشی» علامت بخورد."""
+    from mtflab.trades import analysis_payoff
+    rows = [{"r": (1.0 if i % 5 < 3 else -1.0), "mfe": 3.0,
+             "ts": i * 3_600_000} for i in range(200)]
+    po = analysis_payoff(rows)
+    assert po["lottery"] is False
+    assert po["top_share"]["5"] < 0.6
+
+
+def test_payoff_refuses_to_report_shares_when_total_is_negative():
+    """با مجموع منفی، «۱۲۰٪ از سود» بی‌معنی است — نباید چاپ شود."""
+    from mtflab.trades import analysis_payoff
+    rows = [{"r": -1.0, "mfe": 0.5, "ts": i * 3_600_000} for i in range(50)]
+    rows += [{"r": 2.0, "mfe": 5.0, "ts": i * 3_600_000} for i in range(3)]
+    po = analysis_payoff(rows)
+    assert po["top_share"]["5"] is None      # سهم بی‌معنی است، نه صفر
+    assert po["lottery"] is False
+
+
+def test_independent_events_groups_trades_on_the_same_wave():
+    """۴ معامله در یک هفته = یک رویداد، نه چهار."""
+    from mtflab.trades import analysis_payoff
+    day = 86_400_000
+    rows = [{"r": 10.0, "mfe": 30.0, "ts": i * day} for i in range(4)]        # یک هفته
+    rows += [{"r": 10.0, "mfe": 30.0, "ts": (100 + i) * day} for i in range(4)]  # جدا
+    rows += [{"r": -1.0, "mfe": 1.0, "ts": (200 + i) * day} for i in range(50)]
+    po = analysis_payoff(rows)
+    assert po["independent_events_45d"] == 2, po["independent_events_45d"]
