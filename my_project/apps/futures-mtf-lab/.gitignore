@@ -9,6 +9,9 @@ results/trader_report_*.json
 results/trader_signals_*.jsonl
 results/trader_trades_*.jsonl
 results/*.tmp
+# اتوترید مجازی: وضعیت و ژورنال مالِ اجرای زندهٔ کاربر است، نه کد
+results/live/
+results/live_report.*
 !results/README.md
 !results/diagnosis_report.md
 !results/robust_report.md

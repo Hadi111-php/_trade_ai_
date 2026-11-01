@@ -18,6 +18,8 @@
 #   bash run-auto.sh --sweep --tf 4h  # حساسیت به هزینه/اجرا (بدون شبکه)
 #   bash run-auto.sh --exec-scan      # مدیریت خروج ۱۵دقیقه‌ای (بدون شبکه)
 #   bash run-auto.sh --trade-lab      # آزمون قله/دره + استراحت بعد از سود
+#   bash run-auto.sh --live           # اتوترید مجازی: رصد سیگنال‌ها روی کندل تازه
+#   bash run-auto.sh --live --status  # فقط گزارش وضعیت (بدون گرفتن داده)
 # =============================================================================
 set -u
 
@@ -119,6 +121,26 @@ for a in "$@"; do
         python3 -m mtflab trade-lab --out-dir results "${_TL[@]+"${_TL[@]}"}"
       else
         python3 -m mtflab trade-lab "${_TL[@]+"${_TL[@]}"}"
+      fi
+      exit $?
+      ;;
+    --live)
+      _LV=()
+      for b in "$@"; do
+        [ "$b" = "--live" ] && continue
+        _LV+=("$b")
+      done
+      _HAS_LANG=0
+      for b in "${_LV[@]+"${_LV[@]}"}"; do case "$b" in --lang*) _HAS_LANG=1;; esac; done
+      if [ "$_HAS_LANG" = "0" ]; then
+        if [ "$LANG_EN" = "1" ]; then _LV+=("--lang" "en"); else _LV+=("--lang" "fa"); fi
+      fi
+      _HAS_OUT=0
+      for b in "${_LV[@]+"${_LV[@]}"}"; do case "$b" in --out-dir*) _HAS_OUT=1;; esac; done
+      if [ "$_HAS_OUT" = "0" ]; then
+        python3 -m mtflab live --out-dir results "${_LV[@]+"${_LV[@]}"}"
+      else
+        python3 -m mtflab live "${_LV[@]+"${_LV[@]}"}"
       fi
       exit $?
       ;;

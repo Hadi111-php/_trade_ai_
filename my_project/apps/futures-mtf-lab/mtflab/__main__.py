@@ -15,6 +15,7 @@
   sweep      حساسیت به هزینه: هزینه کشنده است یا سیگنال؟ (بدون دانلود)
   exec-scan  مدیریت خروج در تایم‌فریم ریزتر + قاعدهٔ افت سود (بدون دانلود)
   trade-lab  آزمون قله/دره و «استراحت بعد از سود» روی معاملات (بدون دانلود)
+  live       اتوترید مجازی: هر سیگنال و هر بستن با انتساب کامل ثبت می‌شود
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -151,6 +152,10 @@ def main(argv=None) -> int:
     if cmd in ("trade-lab", "trade_lab", "tradelab"):
         from .trades import lab_command
         return lab_command(rest)
+
+    if cmd in ("live", "paper", "autotrade"):
+        from .live import live_command
+        return live_command(rest)
 
     if cmd == "archive":
         from .archive import archive_command

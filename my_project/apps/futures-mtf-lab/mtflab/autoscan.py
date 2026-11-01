@@ -1104,7 +1104,10 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--verify-archive": "bash run-auto.sh --verify-archive",
                    "--sweep": "bash run-auto.sh --sweep --tf 4h",
                    "--exec-scan": "bash run-auto.sh --exec-scan",
-                   "--trade-lab": "bash run-auto.sh --trade-lab"}
+                   "--trade-lab": "bash run-auto.sh --trade-lab",
+                   "--live": "bash run-auto.sh --live",
+                   "--paper": "bash run-auto.sh --live",
+                   "--autotrade": "bash run-auto.sh --live"}
     for flag, how in _TOOL_FLAGS.items():
         if flag in rest or flag in (argv or []):
             print(_t(f"❌ `{flag}` یک اسکن نیست؛ دستور درستش: {how}",
