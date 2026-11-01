@@ -12,6 +12,7 @@ results/*.tmp
 # اتوترید مجازی: وضعیت و ژورنال مالِ اجرای زندهٔ کاربر است، نه کد
 results/live/
 results/live_report.*
+results/live_lab/
 !results/README.md
 !results/diagnosis_report.md
 !results/robust_report.md

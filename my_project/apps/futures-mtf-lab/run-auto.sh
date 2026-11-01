@@ -20,6 +20,7 @@
 #   bash run-auto.sh --trade-lab      # آزمون قله/دره + استراحت بعد از سود
 #   bash run-auto.sh --live           # اتوترید مجازی: رصد سیگنال‌ها روی کندل تازه
 #   bash run-auto.sh --live --status  # فقط گزارش وضعیت (بدون گرفتن داده)
+#   bash run-auto.sh --dash           # داشبورد کارگاه (وب) روی همین گوشی
 # =============================================================================
 set -u
 
@@ -122,6 +123,15 @@ for a in "$@"; do
       else
         python3 -m mtflab trade-lab "${_TL[@]+"${_TL[@]}"}"
       fi
+      exit $?
+      ;;
+    --dash|--desk)
+      _D=()
+      for b in "$@"; do
+        case "$b" in --dash|--desk) continue;; esac
+        _D+=("$b")
+      done
+      python3 -m mtflab live --serve "${_D[@]+"${_D[@]}"}"
       exit $?
       ;;
     --live)

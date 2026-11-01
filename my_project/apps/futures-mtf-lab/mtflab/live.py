@@ -755,8 +755,25 @@ def live_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--offline", action="store_true",
                    help="از کش محلی بخوان، به شبکه نرو")
     p.add_argument("--lang", choices=["fa", "en"], default="fa")
+    # ── داشبورد کارگاه ──────────────────────────────────────────────────
+    p.add_argument("--serve", action="store_true",
+                   help="داشبورد کارگاه را بالا بیاور (وب، روی همین گوشی)")
+    p.add_argument("--port", type=int, default=8770)
+    p.add_argument("--host", default="0.0.0.0",
+                   help="0.0.0.0 = از شبکهٔ محلی هم دیده می‌شود")
+    p.add_argument("--every", type=int, default=0,
+                   help="با --serve: هر چند ثانیه یک قدم زنده بزن (۰ = خاموش)")
+    p.add_argument("--demo", action="store_true",
+                   help="داده مصنوعی برای دیدن ساختار داشبورد (نه بازار واقعی)")
+    p.add_argument("--no-step", action="store_true",
+                   help="با --serve: قبل از بالا آمدن، قدم زنده نزن")
+    p.add_argument("--lab-dir", default="results/live_lab",
+                   help="کجا آزمایش‌های کارگاه ذخیره شوند")
     a = p.parse_args(argv)
     set_lang(a.lang)
+
+    if a.serve:
+        return _serve_desk(a)
 
     symbols = a.symbols or _default_symbols()
 
@@ -850,6 +867,67 @@ def live_command(argv: Optional[List[str]] = None) -> int:
              f"📓 journal: {os.path.abspath(a.journal)}"))
     deliver([md_path, js_path], a.out_dir, lang=a.lang)
     return 0
+
+
+def _serve_desk(a) -> int:
+    """داشبورد کارگاه + (اختیاری) یک قدم زنده و حلقهٔ پس‌زمینه."""
+    from .autoscan import _t
+    from .desk import Lab, run_step, start_auto
+    from .labweb import serve as serve_lab
+
+    lab = Lab(data_dir=a.data_dir, tf=a.tf, tf_filter=a.tf_filter, tf_bias=a.tf_bias,
+              variant=a.variant, state_path=a.state, journal_path=a.journal,
+              lab_dir=a.lab_dir, demo=a.demo, symbols=a.symbols)
+    if a.demo:
+        print(_t("⚠️  حالت نمایشی: کندل‌ها مصنوعی‌اند (نه بازار واقعی).",
+                 "⚠️  demo mode: synthetic candles, not real market data."))
+    elif not a.no_step:
+        print(_t("یک قدم زنده پیش از بالا آمدن داشبورد …",
+                 "one live step before the dashboard starts …"))
+        try:
+            run_step(lab, min_gap=0)
+        except Exception as e:                                     # noqa: BLE001
+            print(_t(f"⚠️  قدم اول خطا داد: {e}", f"⚠️  first step failed: {e}"))
+
+    if a.every > 0 and not a.demo:
+        start_auto(lab, a.every, logger=lambda m: print(m, flush=True))
+        print(_t(f"⏱ حلقهٔ خودکار روشن است: هر {a.every} ثانیه یک قدم.",
+                 f"⏱ auto loop: one step every {a.every}s"))
+
+    srv = serve_lab(lab, a.host, a.port)
+    port = srv.server_address[1]
+    print("=" * 62)
+    print(_t("🧪 کارگاه اتوترید مجازی بالا آمد", "🧪 paper trading desk is up"))
+    print(f"   روی همین گوشی:  http://127.0.0.1:{port}/")
+    for ip in _local_ips():
+        print(f"   از شبکهٔ محلی:   http://{ip}:{port}/")
+    print(_t("   برای بستن: Ctrl+C", "   to stop: Ctrl+C"))
+    print("=" * 62)
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        print(_t("\nبسته شد.", "\nstopped."))
+    finally:
+        srv.server_close()
+    return 0
+
+
+def _local_ips() -> List[str]:
+    """آی‌پی‌های محلی (بدون کتابخانهٔ بیرونی) — برای چاپ آدرس شبکهٔ محلی."""
+    out: List[str] = []
+    try:
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))       # فقط برای پیدا کردن اینترفیس؛ داده‌ای نمی‌رود
+            ip = s.getsockname()[0]
+            if ip and not ip.startswith("127."):
+                out.append(ip)
+        finally:
+            s.close()
+    except OSError:
+        pass
+    return out
 
 
 def _from_cache(data_dir: str, symbol: str, tf: str) -> List[Candle]:

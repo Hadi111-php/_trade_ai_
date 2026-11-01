@@ -1106,6 +1106,9 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--exec-scan": "bash run-auto.sh --exec-scan",
                    "--trade-lab": "bash run-auto.sh --trade-lab",
                    "--live": "bash run-auto.sh --live",
+                   "--dash": "bash run-auto.sh --dash",
+                   "--desk": "bash run-auto.sh --dash",
+                   "--serve": "bash run-auto.sh --dash",
                    "--paper": "bash run-auto.sh --live",
                    "--autotrade": "bash run-auto.sh --live"}
     for flag, how in _TOOL_FLAGS.items():
