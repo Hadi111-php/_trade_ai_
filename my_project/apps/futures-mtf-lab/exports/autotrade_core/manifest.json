@@ -1,0 +1,24 @@
+{
+ "name": "autotrade_core",
+ "version": "2026-10-28.1",
+ "built_utc": "2026-11-01 09:22 UTC",
+ "python": "3.11",
+ "files": {
+  "__init__.py": "fc0cdbfdfff639b926606f1c7aa26a53d2f242ac2ea4c4a57adfe803e9babcfe",
+  "config.py": "a9f76569d6936b36c49a034f29d695f69a3c400ee99e8ddc4e547d38486008db",
+  "data.py": "d6520d2e68cbd6758e0f576e2ecc4b44a159fc5755a369762981a4426d667672",
+  "indicators.py": "2ebafc328bf2ba082e0fab967443f8cc8fd1783244a927de277d4ba30d377a4e",
+  "alignment.py": "30611ae1f6fb8bfb9eb8f0377553c6cbdf4b431778ad19fcf7f0916b2d72bf49",
+  "fees.py": "39d5899833e23b77579de4a88cd5ad62798cd322f3fedeb0a5453bbf56efb4b3",
+  "signals.py": "ebe6ed4691f4a666c2add5a4785d8b3e2fba0edc8b411136a2c42fffe3b45216",
+  "logger.py": "43d0ab4c60d6b884ed4536081920f2a01ffe4a1d1d12148a6ab52a929ed7dc57",
+  "engine.py": "496f0d69479e8b7fe5fc651cb824bba40acb96c051fbdfd227d1e69f5db63b59",
+  "knobs.py": "80cd424bdc6309664cbea4c4c32f5b4cb907300bd809ff30365c3b49289c18da",
+  "rules.py": "ab823b1fa42a718e570195489616df0ab8ea0ece26393329f55de9dfee63a0c0",
+  "stats.py": "820556071c7e9e34b7d3a00eb6494ce330c80642813440721fd70be5d4fb4698",
+  "patterns.py": "633e3e29086ffa5f9d7e744da795299aad1463fdd060be41e73564f9abbc3770",
+  "autotrade_api.py": "a7a429a573fd41e5b1d0ffa7aff3010b51be368c4dbce992cc3092cc9a95d76d"
+ },
+ "api": "autotrade_api.API_VERSION",
+ "note": "کپیِ عین فایل‌های موتور — بدون بازنویسی. با --check کهنه‌بودن معلوم می‌شود."
+}
