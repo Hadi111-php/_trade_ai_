@@ -61,6 +61,7 @@
 | `labweb.py` | صفحهٔ وب + API (`/api/overview`, `/api/schema`, `/api/run`, `/api/signals`, …) |
 | `brainview.py` + `observer.py` | «چشم مغز» — فقط مشاهده، بدون اثر در تصمیم (بخش ۱۱ سند مرجع) |
 | `audit.py` | بازبینی سلامت معاملات: هر ضرر ≈۱R؟ با قاعدهٔ ضدضرر بست؟ |
+| `pumpdump.py` | **سیستم مستقل** پامپ و دامپ: تشخیص رویداد + اندازه‌گیری واکنش. هیچ‌چیز از `engine`/`signals` ایمپورت نمی‌کند |
 
 ## ۶) قرارداد برای یک داشبورد دیگر
 
@@ -88,6 +89,18 @@ python3 exports/autotrade_core/demo.py   # نمونهٔ اجرا با کندل �
 import sys; sys.path.insert(0, "/path/to/parent")
 from autotrade_core import autotrade_api as api
 ```
+
+## ۶.۵) پامپ و دامپ (سیستم مستقل)
+
+```bash
+bash run-auto.sh --pump --download --days 365    # یا: --symbols BTCUSDT ETHUSDT --days 90
+python3 -m mtflab pumpdump --data-dir data --out-dir results
+```
+
+- تعریف یخ‌زده و دروازهٔ شش‌شرطی: `docs/PUMPDUMP_PLAN_FA.md`
+- مکانیزم: `mtflab/pumpdump.py` (بدون وابستگی به موتور معامله)
+- **عمداً در بستهٔ `exports/autotrade_core/` نیست**: آن بسته موتور اتوترید است،
+  این یکی مکانیزم جدا با ریسک و هزینهٔ متفاوت.
 
 ## ۷) شکل دادهٔ ورودی
 

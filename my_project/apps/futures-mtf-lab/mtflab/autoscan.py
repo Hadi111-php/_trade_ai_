@@ -1067,6 +1067,7 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--doctor": "bash run-auto.sh --doctor",
                    "--bundle": "python3 -m mtflab bundle",
                    "--audit": "bash run-auto.sh --audit",
+                   "--pump": "bash run-auto.sh --pump --download --days 365",
                    "--desk": "bash run-auto.sh --dash",
                    "--serve": "bash run-auto.sh --dash",
                    "--paper": "bash run-auto.sh --live",

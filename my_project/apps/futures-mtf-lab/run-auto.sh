@@ -24,6 +24,8 @@
 #   bash run-auto.sh --doctor         # معاینهٔ نصب: پورت/داده/پوشه‌ها (بدون شبکه)
 #   bash run-auto.sh --audit          # بازبینی سلامت معاملات (هر ضرر ≈۱R؟)
 #   bash run-auto.sh --bundle         # ساخت بستهٔ مستقل موتور برای داشبورد دیگر
+#   bash run-auto.sh --pump --download --days 365   # پامپ و دامپ: دانلود ۱۵m + اندازه‌گیری
+#   bash run-auto.sh --pump                        # همان، روی دادهٔ کش‌شده (بدون شبکه)
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -167,6 +169,21 @@ for a in "$@"; do
         python3 -m mtflab brain --out-dir results "${_BR[@]+"${_BR[@]}"}"
       else
         python3 -m mtflab brain "${_BR[@]+"${_BR[@]}"}"
+      fi
+      exit $?
+      ;;
+    --pump|--pumpdump|--dump)
+      _PM=()
+      for b in "$@"; do
+        case "$b" in --pump|--pumpdump|--dump) continue;; esac
+        _PM+=("$b")
+      done
+      _OUT=0
+      for b in "${_PM[@]+"${_PM[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
+      if [ "$_OUT" = "0" ]; then
+        python3 -m mtflab pumpdump --out-dir results "${_PM[@]+"${_PM[@]}"}"
+      else
+        python3 -m mtflab pumpdump "${_PM[@]+"${_PM[@]}"}"
       fi
       exit $?
       ;;
