@@ -238,3 +238,82 @@ def test_gate_reports_six_predeclared_checks():
     ids = [c["id"] for c in rep["checks"]]
     assert ids == ["n_independent", "median_positive", "months_positive",
                    "left_tail", "symbols_positive", "out_of_sample"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۷) سناریوها — جهت معامله
+# ═══════════════════════════════════════════════════════════════════════════
+def test_trade_direction_matrix():
+    from mtflab.pumpdump import trade_direction
+    assert trade_direction("pump", "event") == "long"
+    assert trade_direction("dump", "event") == "short"
+    assert trade_direction("pump", "opposite") == "short"
+    assert trade_direction("dump", "opposite") == "long"
+    assert trade_direction("pump", "pump") == "long"
+    assert trade_direction("dump", "pump") is None      # سناریو فقط پامپ می‌گیرد
+    assert trade_direction("pump", "dump") is None
+
+
+def test_scenarios_are_declared_and_frozen():
+    from mtflab.pumpdump import SCENARIOS
+    assert set(SCENARIOS) == {"follow", "fade", "pump_long_only"}
+    for name, sc in SCENARIOS.items():
+        assert sc["fa"] and sc["side"] in ("event", "opposite", "pump", "dump")
+        for k in ("range_mult", "vol_mult", "close_pos"):
+            assert sc[k] > 0, (name, k)
+
+
+def test_fade_is_the_mirror_of_follow_on_the_same_events():
+    """سناریوی بازگشت باید تقریباً قرینهٔ سناریوی دنباله باشد، نه چیز دیگری."""
+    from mtflab.pumpdump import compare_scenarios
+    uni = {"X": synthetic_candles("15m", 4000, seed=21)}
+    rows = {r["scenario"]: r for r in compare_scenarios(uni, "15m",
+                                                       names=["follow", "fade"])}
+    f, b = rows["follow"], rows["fade"]
+    # آستانهٔ متفاوت است (fade رویدادهای شدیدتر را می‌گیرد) پس برابری دقیق نه،
+    # ولی هر دو باید هم‌علامتِ منفی/مثبت همدیگر را نشان ندهند.
+    assert f["median"] is not None and b["median"] is not None
+    assert abs(f["median"] - b["median"]) < 0.02
+
+
+def test_pump_long_only_ignores_dumps():
+    from mtflab.pumpdump import evaluate
+    uni = {"X": synthetic_candles("15m", 4000, seed=22)}
+    rep_all = evaluate(uni, "15m", scenario="follow")
+    rep_long = evaluate(uni, "15m", scenario="pump_long_only")
+    assert rep_long["n_independent"] <= rep_all["n_independent"]
+    assert all(r.get("direction") == "long" for r in rep_long["events_evaluated"])
+
+
+def test_compare_scenarios_reports_every_scenario_with_trial_warning():
+    from mtflab.pumpdump import compare_scenarios, render_scenarios
+    uni = {"X": synthetic_candles("15m", 3000, seed=23)}
+    rows = compare_scenarios(uni, "15m")
+    assert [r["scenario"] for r in rows] == ["follow", "fade", "pump_long_only"]
+    for r in rows:
+        assert r["checks_total"] == 6 and 0 <= r["checks_ok"] <= 6
+        assert "report" in r and r["report"]["scenario"] == r["scenario"]
+    md = render_scenarios(rows)
+    assert "سه آزمون" in md and "خط پایه" in md
+
+
+def test_latency_profile_measures_the_one_bar_gap():
+    from mtflab.pumpdump import latency_profile
+    cs = _quiet(200)
+    cs = _plant_pump(cs, 80)
+    # بازِ کندل بعد را ۲٪ بالاتر از بستهٔ پامپ بگذار (دیر رسیدن)
+    nxt = cs[81]
+    cs = list(cs)
+    cs[81] = Candle(nxt.open_time_ms, cs[80].close * 1.02, nxt.high, nxt.low,
+                    nxt.close, nxt.volume)
+    ev = [dict(e) for e in detect(cs) if e["i"] == 80]
+    lat = latency_profile(cs, ev, "pump")
+    assert lat["n"] == 1
+    assert abs(lat["gap_pct"] - 2.0) < 1e-6        # ۲٪ گران‌تر می‌خریم
+    assert lat["event_move_pct"] > 0
+
+
+def test_synthetic_data_warns_that_latency_is_meaningless():
+    from mtflab.pumpdump import evaluate
+    rep = evaluate({"X": synthetic_candles("15m", 2500, seed=24)}, "15m")
+    assert any("پروفایل تأخیر بی‌معناست" in w for w in rep["warnings"])
