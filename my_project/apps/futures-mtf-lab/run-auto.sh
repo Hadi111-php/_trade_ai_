@@ -27,6 +27,9 @@
 #   bash run-auto.sh --pump --download --days 365   # پامپ و دامپ: دانلود ۱۵m + اندازه‌گیری
 #   bash run-auto.sh --pump                        # همان، روی دادهٔ کش‌شده (بدون شبکه)
 #   bash run-auto.sh --hunt                        # چشم شکارچی: زمینهٔ سیگنال‌ها در برد/باخت
+#   bash run-auto.sh --watch                       # شکار زنده: یک‌بار همهٔ نمادها (+بوق/اعلان)
+#   bash run-auto.sh --watch-loop                  # همان، هر ۵ دقیقه تا Ctrl+C
+#   bash run-auto.sh --exits                       # حسابرسی خروج: چقدر سود روی میز ماند
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -171,6 +174,30 @@ for a in "$@"; do
       else
         python3 -m mtflab brain "${_BR[@]+"${_BR[@]}"}"
       fi
+      exit $?
+      ;;
+    --watch|--radar)
+      _WA=()
+      for b in "$@"; do
+        case "$b" in --watch|--radar) continue;; esac
+        _WA+=("$b")
+      done
+      _OUT=0
+      for b in "${_WA[@]+"${_WA[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
+      if [ "$_OUT" = "0" ]; then _WA=(--out-dir results "${_WA[@]+"${_WA[@]}"}"); fi
+      python3 -m mtflab watch --once --out-dir results "${_WA[@]+"${_WA[@]}"}"
+      exit $?
+      ;;
+    --watch-loop)
+      _WL=()
+      for b in "$@"; do case "$b" in --watch-loop) continue;; esac; _WL+=("$b"); done
+      python3 -m mtflab watch --out-dir results "${_WL[@]+"${_WL[@]}"}"
+      exit $?
+      ;;
+    --exits|--exit-audit)
+      _EX=()
+      for b in "$@"; do case "$b" in --exits|--exit-audit) continue;; esac; _EX+=("$b"); done
+      python3 -m mtflab exits --journal results/live/journal.jsonl --out results/exits_fa.md "${_EX[@]+"${_EX[@]}"}"
       exit $?
       ;;
     --hunt|--hunter)

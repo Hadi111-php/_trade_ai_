@@ -23,6 +23,8 @@
   audit      بازبینی سلامت معاملات: هر ضرر ≈۱R بود؟ با قاعدهٔ ضدضرر بست؟
   pumpdump   پامپ و دامپ: تشخیص رویداد + اندازه‌گیری واکنش (مستقل از اتوترید)
   hunter     چشم شکارچی: مقایسهٔ زمینهٔ سیگنال‌ها در برد و باخت (فقط خواندن)
+  watch      شکار زنده: کدام نماد به سیگنال نزدیک است + وزن هر شرط + هشدار
+  exits      حسابرسی خروج: چقدر سود با بستن زودهنگام از دست رفت
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -171,6 +173,14 @@ def main(argv=None) -> int:
     if cmd in ("view", "eye", "brain-view"):
         from .eye import view_command
         return view_command(rest)
+
+    if cmd in ("watch", "scan-live", "radar"):
+        from .watch import watch_command
+        return watch_command(rest)
+
+    if cmd in ("exits", "exit-audit", "giveback"):
+        from .exits import exits_command
+        return exits_command(rest)
 
     if cmd in ("hunter", "hunt", "eye2"):
         from .hunter import hunter_command

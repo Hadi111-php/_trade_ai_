@@ -475,6 +475,39 @@ class Lab:
             "tf": f"{self.tf}/{self.tf_filter}/{self.tf_bias}",
         }
 
+    # -- شکار زنده و خروج زودهنگام ---------------------------------------
+    def watch_report(self) -> dict:
+        """آخرین پیمایش «شکار زنده» — فایل `watch.json` کنار خروجی‌ها."""
+        # گزارش شکار زنده کنار خروجی‌ها می‌نشیند (همان جایی که live --out-dir
+        # می‌نویسد). اگر آن‌جا نبود، `results/` نسبی را هم امتحان می‌کنیم.
+        cands = [os.path.join(self.report_dir, "watch.json"),
+                 os.path.join("results", "watch.json")]
+        path = next((p for p in cands if os.path.exists(p)), cands[0])
+        if not os.path.exists(path):
+            return {"rows": [], "n": 0, "signals": 0, "near": 0,
+                    "hint": "شکار زنده اجرا نشده — bash run-auto.sh --watch --once"}
+        try:
+            with open(path, encoding="utf-8") as f:
+                rep = json.load(f)
+        except (OSError, ValueError) as e:
+            return {"rows": [], "n": 0, "error": f"{type(e).__name__}: {e}"}
+        rep.setdefault("rows", [])
+        rep["stale_sec"] = None
+        try:
+            rep["stale_sec"] = int(time.time() - os.path.getmtime(path))
+        except OSError:
+            pass
+        return rep
+
+    def exit_report(self) -> dict:
+        """حسابرسی خروج از همین ژورنال (محاسبهٔ هنگام درخواست)."""
+        from .exits import analyze, collect
+        try:
+            return analyze(collect(self.journal_path))
+        except Exception as e:                                     # noqa: BLE001
+            return {"trades": [], "overall": {}, "n": 0,
+                    "error": f"{type(e).__name__}: {e}"}
+
     def signals(self, symbol: str = "", rule: str = "", only_risk: bool = False,
                 status: str = "", limit: int = 300) -> List[dict]:
         jr = read_journal(self.journal_path)

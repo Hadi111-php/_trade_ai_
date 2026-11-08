@@ -79,6 +79,8 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="signals">سیگنال‌ها</button>
   <button data-tab="lab">آزمایشگاه</button>
   <button data-tab="runs">آزمایش‌ها</button>
+  <button data-tab="watch">شکار زنده</button>
+  <button data-tab="exit">خروج زودهنگام</button>
   <button data-tab="brain">مغز دوم</button>
   <button data-tab="help">راهنما</button>
 </nav>
@@ -145,6 +147,44 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
       <button class="ghost" id="resetBtn">برگرد به خط پایه</button>
       <span class="spin" id="runMsg" style="display:none"></span></div>
     <div id="runResult"></div>
+  </section>
+
+  <section id="tab-watch">
+    <div class="note">هر نماد: <b>چه شرطی پاس است، چه شرطی نه، و وزن آمادگی</b>.
+      وزن از همان شرط‌های واقعی موتور ساخته می‌شود (بایاس، فیلتر، تریگر، هزینه، اعتماد).
+      <span id="watchMeta" class="mut"></span></div>
+    <div class="row">
+      <input id="wSearch" placeholder="جستجوی نماد…" style="flex:1;min-width:120px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit">
+      <select id="wState"><option value="">همهٔ حالت‌ها</option>
+        <option value="سیگنال">سیگنال</option><option value="نزدیک">نزدیک</option>
+        <option value="دور">دور</option></select>
+      <select id="wSort"><option value="ready">مرتب: آمادگی</option>
+        <option value="sym">مرتب: نماد</option><option value="miss">مرتب: شرط‌های مانده</option></select>
+      <button class="ghost" id="wReload">تازه‌سازی</button>
+    </div>
+    <div class="row"><label style="display:flex;gap:6px;align-items:center">
+      <input type="checkbox" id="wOnlyNear"> فقط سیگنال و نزدیک</label></div>
+    <div id="watchTable"></div>
+    <div class="note">برای دیدن جزئیات هر نماد، روی ردیف بزن. اگر «شکار زنده» را اجرا نکرده‌ای:
+      <code>bash run-auto.sh --watch</code></div>
+  </section>
+
+  <section id="tab-exit">
+    <div class="note">همان دغدغهٔ «زود بسته شد»: برای هر معامله، <b>بیشترین سود شناور (MFE)</b>
+      با سود واقعی مقایسه می‌شود. «سودِ ریخته‌شده» = MFE − نتیجه.</div>
+    <div class="row">
+      <input id="eSearch" placeholder="جستجو (نماد/قاعده)…" style="flex:1;min-width:120px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit">
+      <select id="eCat"><option value="">همهٔ دسته‌ها</option>
+        <option value="برندهٔ پس‌داده‌شده">برندهٔ پس‌داده‌شده</option>
+        <option value="کوتاه‌شده">کوتاه‌شده</option><option value="خوب">خوب</option>
+        <option value="ضرر پس از سود">ضرر پس از سود</option>
+        <option value="حد ضرر سالم">حد ضرر سالم</option></select>
+      <select id="eSort"><option value="give">مرتب: سود ریخته</option>
+        <option value="r">مرتب: R</option><option value="ts">مرتب: زمان</option></select>
+      <button class="ghost" id="eReload">تازه‌سازی</button>
+    </div>
+    <div class="cards" id="exitCards"></div>
+    <div id="exitTable"></div>
   </section>
 
   <section id="tab-brain">
@@ -256,7 +296,119 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "signals") loadSignals();
   if (b.dataset.tab === "runs") loadRuns();
   if (b.dataset.tab === "brain") loadBrain();
+  if (b.dataset.tab === "watch") loadWatch();
+  if (b.dataset.tab === "exit") loadExit();
 });
+
+/* ── شکار زنده ─────────────────────────────────────────────────────── */
+let WATCH = {rows: [], n: 0};
+function readinessBar(pct) {
+  const cls = pct >= 75 ? "pos" : (pct >= 45 ? "" : "neg");
+  return `<div style="display:flex;align-items:center;gap:7px">
+    <div style="flex:1;height:7px;background:#0d1420;border-radius:6px;overflow:hidden">
+      <div style="width:${Math.max(2, Math.min(100, pct))}%;height:100%;background:${
+        pct >= 75 ? "var(--pos,#4ade80)" : pct >= 45 ? "#eab308" : "#64748b"}"></div>
+    </div><b class="num ${cls}">${pct}٪</b></div>`;
+}
+function renderWatch() {
+  const q = ($("#wSearch").value || "").trim().toUpperCase();
+  const st = $("#wState").value;
+  const onlyNear = $("#wOnlyNear").checked;
+  const sort = $("#wSort").value;
+  let rows = (WATCH.rows || []).filter(r => {
+    if (q && !(r.symbol || "").toUpperCase().includes(q)) return false;
+    if (st && r.state !== st) return false;
+    if (onlyNear && !["سیگنال", "نزدیک"].includes(r.state)) return false;
+    return true;
+  });
+  if (sort === "sym") rows.sort((a, b) => a.symbol.localeCompare(b.symbol));
+  else if (sort === "miss") rows.sort((a, b) => (a.missing || []).length - (b.missing || []).length);
+  else rows.sort((a, b) => (b.readiness || 0) - (a.readiness || 0));
+  $("#watchMeta").textContent = WATCH.n
+    ? ` · ${WATCH.n} نماد · ${WATCH.signals} سیگنال · ${WATCH.near} نزدیک · ${WATCH.created_utc || ""}${WATCH.intra_candle ? " · داخل کندل (تقریبی)" : ""}`
+    : " · هنوز پیمایشی ثبت نشده";
+  if (!rows.length) {
+    $("#watchTable").innerHTML = `<div class="mut" style="padding:10px">چیزی نیست.
+      برای پر شدن: <code>bash run-auto.sh --watch --once</code></div>`;
+    return;
+  }
+  $("#watchTable").innerHTML = `<table><thead><tr>
+    <th>نماد</th><th>قیمت</th><th>آمادگی</th><th>حالت</th><th>مانده</th><th>توضیح</th>
+    </tr></thead><tbody>${rows.map((r, i) => `<tr data-wi="${i}" style="cursor:pointer">
+      <td><b>${r.symbol}</b></td>
+      <td class="num">${r.price ?? "—"}</td>
+      <td style="min-width:130px">${readinessBar(Math.round((r.readiness || 0) * 100))}</td>
+      <td class="${r.state === "سیگنال" ? "pos" : r.state === "نزدیک" ? "" : "mut"}">${r.state}</td>
+      <td class="num">${(r.missing || []).length}</td>
+      <td class="mut" style="font-size:11px">${(r.blocking || "").slice(0, 70)}</td>
+    </tr>`).join("")}</tbody></table>
+    <div id="watchDetail"></div>`;
+  $("#watchTable").querySelectorAll("tr[data-wi]").forEach(tr => tr.onclick = () => {
+    const r = rows[Number(tr.dataset.wi)];
+    $("#watchDetail").innerHTML = `<div class="card" style="margin-top:10px">
+      <div class="k">${r.symbol} — شرط‌ها</div>
+      <table><thead><tr><th>شرط</th><th>وزن</th><th>وضعیت</th><th>جزئیات</th></tr></thead>
+      <tbody>${(r.checks || []).map(c => `<tr>
+        <td>${c.fa}</td><td class="num">${c.weight}</td>
+        <td class="${c.ok ? "pos" : "neg"}">${c.ok ? "پاس" : "نه"}</td>
+        <td class="mut" style="font-size:11px">${c.detail}</td></tr>`).join("")}</tbody></table>
+      </div>`;
+  });
+}
+async function loadWatch() {
+  try {
+    WATCH = await api("/api/watch");
+  } catch (e) {
+    WATCH = {rows: [], n: 0};
+  }
+  renderWatch();
+}
+$("#wSearch").oninput = renderWatch;
+$("#wState").onchange = renderWatch;
+$("#wSort").onchange = renderWatch;
+$("#wOnlyNear").onchange = renderWatch;
+$("#wReload").onclick = loadWatch;
+
+/* ── خروج زودهنگام ─────────────────────────────────────────────────── */
+let EXITS = {trades: [], overall: {}};
+function renderExit() {
+  const q = ($("#eSearch").value || "").trim().toUpperCase();
+  const cat = $("#eCat").value;
+  const sort = $("#eSort").value;
+  let rows = (EXITS.trades || []).filter(t => {
+    if (q && !(`${t.symbol} ${t.rule}`.toUpperCase().includes(q))) return false;
+    if (cat && t.category !== cat) return false;
+    return true;
+  });
+  if (sort === "r") rows.sort((a, b) => (a.r || 0) - (b.r || 0));
+  else if (sort === "ts") rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  else rows.sort((a, b) => (b.give_back_r || 0) - (a.give_back_r || 0));
+  const o = EXITS.overall || {};
+  $("#exitCards").innerHTML = cards([
+    ["معامله", EXITS.n || 0, ""],
+    ["expectancy", R(o.expectancy_r) + "R", (o.expectancy_r || 0) >= 0 ? "pos" : "neg"],
+    ["میانهٔ MFE", R(o.median_mfe_r) + "R", ""],
+    ["سودِ ریخته", (EXITS.leak_total_r || 0).toFixed(2) + "R", (EXITS.leak_total_r || 0) > 0 ? "neg" : "pos"],
+  ]);
+  if (!rows.length) {
+    $("#exitTable").innerHTML = `<div class="mut" style="padding:10px">معامله‌ای نیست.
+      اول <code>bash run-auto.sh --live</code> را چند بار بزن.</div>`;
+    return;
+  }
+  $("#exitTable").innerHTML = table(
+    ["نماد", "R", "MFE(R)", "سود ریخته", "قاعده", "دسته", "کندل"],
+    rows.map(t => [t.symbol, R(t.r), R(t.mfe_r),
+      (t.give_back_r === null || t.give_back_r === undefined) ? "—" : t.give_back_r.toFixed(2),
+      t.rule, t.category, t.bars ?? "—"]));
+}
+async function loadExit() {
+  try { EXITS = await api("/api/exit"); } catch (e) { EXITS = {trades: [], overall: {}}; }
+  renderExit();
+}
+$("#eSearch").oninput = renderExit;
+$("#eCat").onchange = renderExit;
+$("#eSort").onchange = renderExit;
+$("#eReload").onclick = loadExit;
 
 /* ── زنده ──────────────────────────────────────────────────────────── */
 async function loadLive() {
@@ -739,6 +891,10 @@ def make_handler(lab):
                     self._json(lab.overview())
                 elif path == "/api/schema":
                     self._json(lab.schema())
+                elif path == "/api/watch":
+                    self._json(lab.watch_report())
+                elif path == "/api/exit":
+                    self._json(lab.exit_report())
                 elif path == "/api/brain":
                     self._json(lab.brain_report())
                 elif path == "/api/brain/views":
