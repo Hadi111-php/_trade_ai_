@@ -22,6 +22,7 @@
   bundle     ساخت بستهٔ مستقل موتور (برای وصل‌کردن به داشبورد دیگر)
   audit      بازبینی سلامت معاملات: هر ضرر ≈۱R بود؟ با قاعدهٔ ضدضرر بست؟
   pumpdump   پامپ و دامپ: تشخیص رویداد + اندازه‌گیری واکنش (مستقل از اتوترید)
+  hunter     چشم شکارچی: مقایسهٔ زمینهٔ سیگنال‌ها در برد و باخت (فقط خواندن)
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -170,6 +171,10 @@ def main(argv=None) -> int:
     if cmd in ("view", "eye", "brain-view"):
         from .eye import view_command
         return view_command(rest)
+
+    if cmd in ("hunter", "hunt", "eye2"):
+        from .hunter import hunter_command
+        return hunter_command(rest)
 
     if cmd in ("pumpdump", "pump", "pump-dump", "dump"):
         from .pumpdump import pumpdump_command

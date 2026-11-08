@@ -26,6 +26,7 @@
 #   bash run-auto.sh --bundle         # ساخت بستهٔ مستقل موتور برای داشبورد دیگر
 #   bash run-auto.sh --pump --download --days 365   # پامپ و دامپ: دانلود ۱۵m + اندازه‌گیری
 #   bash run-auto.sh --pump                        # همان، روی دادهٔ کش‌شده (بدون شبکه)
+#   bash run-auto.sh --hunt                        # چشم شکارچی: زمینهٔ سیگنال‌ها در برد/باخت
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -170,6 +171,15 @@ for a in "$@"; do
       else
         python3 -m mtflab brain "${_BR[@]+"${_BR[@]}"}"
       fi
+      exit $?
+      ;;
+    --hunt|--hunter)
+      _HU=()
+      for b in "$@"; do
+        case "$b" in --hunt|--hunter) continue;; esac
+        _HU+=("$b")
+      done
+      python3 -m mtflab hunter --journal results/live/journal.jsonl --out results/hunter_fa.md "${_HU[@]+"${_HU[@]}"}"
       exit $?
       ;;
     --pump|--pumpdump|--dump)

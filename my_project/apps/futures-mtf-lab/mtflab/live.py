@@ -37,6 +37,7 @@ STATE_VERSION = 1
 
 from .rules import (RULE_META, VETO_FA, cfg_digest,   # noqa: F401,E402
                    normalize_reason, rule_meta)
+from .context import snapshot as context_snapshot      # noqa: E402
 
 
 _SKIP = {"layers", "snap_trigger", "snap_filter", "snap_bias"}
@@ -284,7 +285,8 @@ class LiveRunner:
 
     def _open_record(self, pos: Position, info: dict, symbol: str,
                      swing: Optional[float], structure: int, backfilled: bool,
-                     brain: Optional[dict] = None) -> dict:
+                     brain: Optional[dict] = None,
+                     ctx_extra: Optional[dict] = None) -> dict:
         trig = info["trig"]
         return {
             "type": "open",
@@ -305,7 +307,10 @@ class LiveRunner:
             "layers": info["decision"].layers,
             "indicators": info.get("snap_trigger") or {},
             "filter_indicators": info.get("snap_filter") or {},
-            "context": {"swing_position": swing, "structure": structure},
+            # زمینهٔ کامل لحظهٔ ورود (context.py) — فقط از دادهٔ تا همین کندل.
+            # این همان «صحنهٔ جرم» است که hunter.py بعداً مقایسه می‌کند.
+            "context": {**{"swing_position": swing, "structure": structure},
+                        **(ctx_extra or {})},
             # دیدگاه مغز در همان لحظه — **فقط ثبت**، نه تصمیم
             "brain": brain or {"available": False, "reason": "observer-off"},
             "cost_check": getattr(info["decision"], "cost_check", None),
@@ -418,16 +423,31 @@ class LiveRunner:
             sw = _swing_at(layers["trigger"], idx) if idx < len(bars) else None
             bview = (self.brain.view(symbol, layers["trigger"], idx)
                      if self.brain is not None else None)
+            try:
+                _cost_pct = (float(getattr(cfg, "fee_bps", 5.5)) / 10_000.0
+                             + float(getattr(cfg, "slippage_pct", 0.02)) / 100.0) * 2 * 100
+                ctxsnap = context_snapshot(
+                    layers["trigger"], idx, swing=sw,
+                    structure=int(info["filt"].direction),
+                    recent_r=self.state.get("recent_r") or [],
+                    roundtrip_cost_pct=_cost_pct)
+            except Exception:                                  # noqa: BLE001
+                ctxsnap = {}          # ثبت زمینه هرگز نباید معامله را بشکند
             rec = self._open_record(pos, info, symbol, sw,
                                     int(info["filt"].direction),
                                     backfilled=(idx < len(bars) - 1),
-                                    brain=bview)
+                                    brain=bview, ctx_extra=ctxsnap)
             append_jsonl(self.journal_path, rec)
             opened += 1
 
         def on_close(rec: dict, info: dict, pos: Position) -> None:
             nonlocal closed
             pending_closes.append((rec, pos.open_ts))
+            r = rec.get("r_multiple")
+            if r is not None:
+                rr = list(self.state.get("recent_r") or [])
+                rr.append(float(r))
+                self.state["recent_r"] = rr[-10:]     # فقط ۱۰ تای آخر
             closed += 1
 
         for i in fresh:
