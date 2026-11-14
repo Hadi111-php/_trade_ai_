@@ -262,3 +262,35 @@ def test_proximity_signal_matches_signal_at():
     assert (pr["signal"] is None) == (s is None)
     if s:
         assert pr["signal"]["side"] == s["side"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ۴) اتصال به داشبورد (تب V10 Pro)
+# ═══════════════════════════════════════════════════════════════════════════
+def test_desk_v10_report_reads_both_files(tmp_path=None):
+    import json as _json
+    import tempfile
+    from mtflab.desk import Lab
+
+    d = tempfile.mkdtemp()
+    with open(os.path.join(d, "v10_report.json"), "w", encoding="utf-8") as f:
+        _json.dump({"summary": {"n": 3, "win_rate": 33.3},
+                    "trades": [{"symbol": "X", "side": "LONG", "r": 1.0,
+                                "reason": "TP", "bars": 2}],
+                    "data": {"sources": ["bybit"], "labeled": True}}, f)
+    with open(os.path.join(d, "v10_proximity.json"), "w", encoding="utf-8") as f:
+        _json.dump([{"symbol": "X", "long_score": 80, "short_score": 10}], f)
+    rep = Lab(report_dir=d).v10_report()
+    assert rep["available"] is True
+    assert rep["summary"]["n"] == 3
+    assert rep["rows"][0]["long_score"] == 80
+    assert rep["trades"][0]["side"] == "LONG"
+    assert rep["stale_sec"] is not None
+
+
+def test_desk_v10_report_is_graceful_when_missing():
+    import tempfile
+    from mtflab.desk import Lab
+    rep = Lab(report_dir=tempfile.mkdtemp()).v10_report()
+    assert rep["available"] is False and rep["rows"] == []
+    assert "v10" in rep["hint"]

@@ -499,6 +499,42 @@ class Lab:
             pass
         return rep
 
+    def v10_report(self) -> dict:
+        """گزارش V10 Pro + فهرست نزدیکی — خواندنِ فقط‌خواندنی از فایل‌های results."""
+        def _load(name):
+            cands = [os.path.join(self.report_dir, name),
+                     os.path.join("results", name)]
+            path = next((x for x in cands if os.path.exists(x)), None)
+            if not path:
+                return None, None
+            try:
+                with open(path, encoding="utf-8") as f:
+                    return json.load(f), path
+            except (OSError, ValueError):
+                return None, path
+
+        rep, rpath = _load("v10_report.json")
+        prox, ppath = _load("v10_proximity.json")
+        if rep is None and prox is None:
+            return {"available": False, "rows": [], "trades": [], "summary": None,
+                    "hint": "V10 Pro اجرا نشده — python3 -m mtflab v10 --compare --proximity"}
+        out = {"available": True, "rows": prox or [],
+               "trades": (rep or {}).get("trades") or [],
+               "summary": (rep or {}).get("summary") or {},
+               "no_bb_exit": (rep or {}).get("no_bb_exit") or {},
+               "data": (rep or {}).get("data") or {},
+               "entry": (rep or {}).get("entry"), "tf": (rep or {}).get("tf"),
+               "same_bar": (rep or {}).get("same_bar")}
+        ages = []
+        for path in (rpath, ppath):
+            if path:
+                try:
+                    ages.append(int(time.time() - os.path.getmtime(path)))
+                except OSError:
+                    pass
+        out["stale_sec"] = min(ages) if ages else None
+        return out
+
     def exit_report(self) -> dict:
         """حسابرسی خروج از همین ژورنال (محاسبهٔ هنگام درخواست)."""
         from .exits import analyze, collect

@@ -81,6 +81,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="runs">آزمایش‌ها</button>
   <button data-tab="watch">شکار زنده</button>
   <button data-tab="exit">خروج زودهنگام</button>
+  <button data-tab="v10">V10 Pro</button>
   <button data-tab="brain">مغز دوم</button>
   <button data-tab="help">راهنما</button>
 </nav>
@@ -167,6 +168,24 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
     <div id="watchTable"></div>
     <div class="note">برای دیدن جزئیات هر نماد، روی ردیف بزن. اگر «شکار زنده» را اجرا نکرده‌ای:
       <code>bash run-auto.sh --watch</code></div>
+  </section>
+
+  <section id="tab-v10">
+    <div class="note">سناریوی <b>V10 Pro</b> (بازگشت به میانگین: باند بولینگر + RSI + حجم)
+      — جدا از الگوهای MTF، روی همان داده و همان هزینه. اعداد پروپوزال
+      <b>ادعای تأییدنشده</b> است؛ فقط عددِ اجرای خودمان معتبر است.</div>
+    <div class="row"><span id="v10Meta" class="mut"></span></div>
+    <div class="cards" id="v10Cards"></div>
+    <div class="row">
+      <input id="v10Search" placeholder="جستجوی نماد…" style="flex:1;min-width:120px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit">
+      <select id="v10Sort"><option value="score">مرتب: نزدیکی</option>
+        <option value="sym">مرتب: نماد</option></select>
+      <button class="ghost" id="v10Reload">تازه‌سازی</button>
+    </div>
+    <div id="v10Prox"></div>
+    <div id="v10Trades"></div>
+    <div class="note">اگر خالی است: <code>python3 -m mtflab v10 --compare --proximity</code>
+      (یا <code>bash run-auto.sh --v10</code>).</div>
   </section>
 
   <section id="tab-exit">
@@ -298,7 +317,75 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "brain") loadBrain();
   if (b.dataset.tab === "watch") loadWatch();
   if (b.dataset.tab === "exit") loadExit();
+  if (b.dataset.tab === "v10") loadV10();
 });
+
+/* ── V10 Pro ───────────────────────────────────────────────────────── */
+let V10 = {available: false, rows: [], trades: []};
+function v10Card(k, v, cls) {
+  return `<div class="card"><div class="k">${k}</div><div class="v ${cls || ""}">${v}</div></div>`;
+}
+function renderV10() {
+  const D = V10;
+  if (!D.available) {
+    $("#v10Meta").textContent = " · گزارشی نیست";
+    $("#v10Cards").innerHTML = "";
+    $("#v10Prox").innerHTML = `<div class="mut" style="padding:10px">${D.hint || ""}</div>`;
+    $("#v10Trades").innerHTML = "";
+    return;
+  }
+  const s = D.summary || {};
+  const age = D.stale_sec == null ? "" : ` · ${Math.round(D.stale_sec / 60)} دقیقه پیش`;
+  const src = (D.data && D.data.sources) ? D.data.sources.join("، ") : "نامشخص";
+  const warn = (D.data && D.data.labeled === false) ? " · ⚠️ منبع داده برچسب ندارد" : "";
+  $("#v10Meta").textContent = ` · ${D.tf || ""} · ورود ${D.entry || ""} · داده: ${src}${warn}${age}`;
+  const cls = x => (x > 0 ? "pos" : x < 0 ? "neg" : "");
+  $("#v10Cards").innerHTML = [
+    v10Card("معامله", s.n ?? "—"),
+    v10Card("نرخ برد", (s.win_rate == null ? "—" : s.win_rate.toFixed(1) + "٪")),
+    v10Card("expectancy", (s.expectancy_r == null ? "—" : s.expectancy_r.toFixed(3) + "R"), cls(s.expectancy_r)),
+    v10Card("ضریب سود", (s.profit_factor == null ? "—" : s.profit_factor.toFixed(2)), cls((s.profit_factor || 1) - 1)),
+    v10Card("بیشترین افت", (s.max_dd_pct == null ? "—" : s.max_dd_pct.toFixed(1) + "٪"), "neg"),
+    v10Card("هزینهٔ کل", (s.fees_pct_total ?? "—") + "٪", "neg"),
+  ].join("");
+
+  const q = ($("#v10Search").value || "").trim().toUpperCase();
+  const sort = $("#v10Sort").value;
+  let rows = (D.rows || []).filter(r => !q || (r.symbol || "").toUpperCase().includes(q));
+  if (sort === "sym") rows.sort((a, b) => a.symbol.localeCompare(b.symbol));
+  else rows.sort((a, b) => Math.max(b.short_score, b.long_score) - Math.max(a.short_score, a.long_score));
+  $("#v10Prox").innerHTML = rows.length ? `<table><thead><tr>
+    <th>نماد</th><th>قیمت</th><th>LONG</th><th>SHORT</th><th>RSI</th><th>حجم×</th><th>سیگنال</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td><b>${r.symbol}</b></td><td class="num">${r.price ?? "—"}</td>
+      <td style="min-width:110px">${readinessBar(Math.round(r.long_score || 0))}</td>
+      <td style="min-width:110px">${readinessBar(Math.round(r.short_score || 0))}</td>
+      <td class="num">${r.rsi ?? "—"}</td><td class="num">${r.vol_ratio ?? "—"}</td>
+      <td class="${r.signal ? "pos" : "mut"}">${r.signal ? r.signal.side : "—"}</td>
+    </tr>`).join("")}</tbody></table>` : `<div class="mut" style="padding:10px">نزدیکی ثبت نشده.</div>`;
+
+  const ts = (D.trades || []).slice(-20).reverse();
+  $("#v10Trades").innerHTML = ts.length ? `<table style="margin-top:10px"><thead><tr>
+    <th>نماد</th><th>جهت</th><th>ورود</th><th>خروج</th><th>R</th><th>قاعده</th><th>کندل</th>
+    </tr></thead><tbody>${ts.map(t => `<tr>
+      <td>${t.symbol || "—"}</td>
+      <td class="${t.side === "LONG" ? "pos" : "neg"}">${t.side}</td>
+      <td class="num">${t.entry}</td><td class="num">${t.exit}</td>
+      <td class="num ${t.r > 0 ? "pos" : "neg"}">${t.r}</td>
+      <td>${t.reason_fa || t.reason}</td><td class="num">${t.bars}</td>
+    </tr>`).join("")}</tbody></table>` : "";
+}
+async function loadV10() {
+  try {
+    V10 = await api("/api/v10");
+  } catch (e) {
+    V10 = {available: false, rows: [], trades: [], hint: "خطا در خواندن گزارش"};
+  }
+  renderV10();
+}
+$("#v10Search").oninput = renderV10;
+$("#v10Sort").onchange = renderV10;
+$("#v10Reload").onclick = loadV10;
 
 /* ── شکار زنده ─────────────────────────────────────────────────────── */
 let WATCH = {rows: [], n: 0};
@@ -895,6 +982,8 @@ def make_handler(lab):
                     self._json(lab.watch_report())
                 elif path == "/api/exit":
                     self._json(lab.exit_report())
+                elif path == "/api/v10":
+                    self._json(lab.v10_report())
                 elif path == "/api/brain":
                     self._json(lab.brain_report())
                 elif path == "/api/brain/views":
