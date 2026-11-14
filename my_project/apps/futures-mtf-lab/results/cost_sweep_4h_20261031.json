@@ -1,0 +1,9707 @@
+{
+ "version": "1.1",
+ "generated_at": "2026-10-31 20:11 UTC",
+ "elapsed_s": 396.4,
+ "settings": {
+  "tf_trigger": "4h",
+  "tf_filter": "1d",
+  "tf_bias": "1d",
+  "symbols": [
+   "ADAUSDT",
+   "APTUSDT",
+   "ARBUSDT",
+   "ATOMUSDT",
+   "AVAXUSDT",
+   "BCHUSDT",
+   "BNBUSDT",
+   "BTCUSDT",
+   "DOGEUSDT",
+   "DOTUSDT",
+   "ETHUSDT",
+   "LINKUSDT",
+   "LTCUSDT",
+   "NEARUSDT",
+   "OPUSDT",
+   "SOLUSDT",
+   "SUIUSDT",
+   "TONUSDT",
+   "TRXUSDT",
+   "XRPUSDT"
+  ],
+  "n_symbols": 20,
+  "bars_per_symbol": {
+   "ADAUSDT": 8760,
+   "APTUSDT": 8760,
+   "ARBUSDT": 7907,
+   "ATOMUSDT": 8760,
+   "AVAXUSDT": 8760,
+   "BCHUSDT": 8760,
+   "BNBUSDT": 8760,
+   "BTCUSDT": 8760,
+   "DOGEUSDT": 8760,
+   "DOTUSDT": 8760,
+   "ETHUSDT": 8760,
+   "LINKUSDT": 8760,
+   "LTCUSDT": 8760,
+   "NEARUSDT": 8760,
+   "OPUSDT": 8760,
+   "SOLUSDT": 8760,
+   "SUIUSDT": 7661,
+   "TONUSDT": 6116,
+   "TRXUSDT": 8760,
+   "XRPUSDT": 8760
+  },
+  "variants": [
+   "trend",
+   "base"
+  ],
+  "policies": [
+   {
+    "name": "taker",
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "limit_exits": false,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 15.0
+   },
+   {
+    "name": "taker_noslip",
+    "fee_bps": 5.5,
+    "slippage_pct": 0.0,
+    "limit_exits": false,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 11.0
+   },
+   {
+    "name": "maker_tp",
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "limit_exits": true,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 9.5
+   },
+   {
+    "name": "all_maker",
+    "fee_bps": 2.0,
+    "slippage_pct": 0.0,
+    "limit_exits": true,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 4.0
+   },
+   {
+    "name": "zero",
+    "fee_bps": 0.0,
+    "slippage_pct": 0.0,
+    "limit_exits": false,
+    "maker_fee_bps": 0.0,
+    "round_trip_bps": 0.0
+   }
+  ]
+ },
+ "summary": {
+  "trend": {
+   "taker": {
+    "ok": true,
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "limit_exits": false,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 15.0,
+    "n_symbols": 20,
+    "trades": 1418,
+    "median_pf": 1.1201,
+    "median_expectancy": 0.7627,
+    "total_pnl": 1418.65,
+    "symbols_pf_above_1": 12,
+    "median_fees_paid": 20.37,
+    "limit_fill_share": 0.0014
+   },
+   "taker_noslip": {
+    "ok": true,
+    "fee_bps": 5.5,
+    "slippage_pct": 0.0,
+    "limit_exits": false,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 11.0,
+    "n_symbols": 20,
+    "trades": 1418,
+    "median_pf": 1.1188,
+    "median_expectancy": 0.7561,
+    "total_pnl": 1572.91,
+    "symbols_pf_above_1": 12,
+    "median_fees_paid": 20.42,
+    "limit_fill_share": 0.0014
+   },
+   "maker_tp": {
+    "ok": true,
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "limit_exits": true,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 9.5,
+    "n_symbols": 20,
+    "trades": 1418,
+    "median_pf": 1.1201,
+    "median_expectancy": 0.7627,
+    "total_pnl": 1419.11,
+    "symbols_pf_above_1": 12,
+    "median_fees_paid": 20.37,
+    "limit_fill_share": 0.0014
+   },
+   "all_maker": {
+    "ok": true,
+    "fee_bps": 2.0,
+    "slippage_pct": 0.0,
+    "limit_exits": true,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 4.0,
+    "n_symbols": 20,
+    "trades": 1418,
+    "median_pf": 1.1541,
+    "median_expectancy": 0.981,
+    "total_pnl": 1912.33,
+    "symbols_pf_above_1": 13,
+    "median_fees_paid": 7.47,
+    "limit_fill_share": 0.0014
+   },
+   "zero": {
+    "ok": true,
+    "fee_bps": 0.0,
+    "slippage_pct": 0.0,
+    "limit_exits": false,
+    "maker_fee_bps": 0.0,
+    "round_trip_bps": 0.0,
+    "n_symbols": 20,
+    "trades": 1418,
+    "median_pf": 1.1749,
+    "median_expectancy": 1.1111,
+    "total_pnl": 2108.98,
+    "symbols_pf_above_1": 13,
+    "median_fees_paid": 0.0,
+    "limit_fill_share": 0.0014
+   },
+   "exit_structure": {
+    "stop_loss": 59.6,
+    "stop_trail": 40.1,
+    "end_of_data": 0.1,
+    "take_profit": 0.1
+   },
+   "breakeven": {
+    "n": 1,
+    "median_round_trip_bps": 5.594,
+    "per_symbol": {
+     "BNBUSDT": 5.594
+    },
+    "of_symbols": 20
+   }
+  },
+  "base": {
+   "taker": {
+    "ok": true,
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "limit_exits": false,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 15.0,
+    "n_symbols": 20,
+    "trades": 2488,
+    "median_pf": 1.0198,
+    "median_expectancy": 0.1292,
+    "total_pnl": 448.01,
+    "symbols_pf_above_1": 11,
+    "median_fees_paid": 31.21,
+    "limit_fill_share": 0.3083
+   },
+   "taker_noslip": {
+    "ok": true,
+    "fee_bps": 5.5,
+    "slippage_pct": 0.0,
+    "limit_exits": false,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 11.0,
+    "n_symbols": 20,
+    "trades": 2490,
+    "median_pf": 1.0291,
+    "median_expectancy": 0.174,
+    "total_pnl": 878.04,
+    "symbols_pf_above_1": 13,
+    "median_fees_paid": 31.3,
+    "limit_fill_share": 0.3133
+   },
+   "maker_tp": {
+    "ok": true,
+    "fee_bps": 5.5,
+    "slippage_pct": 0.02,
+    "limit_exits": true,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 9.5,
+    "n_symbols": 20,
+    "trades": 2488,
+    "median_pf": 1.0269,
+    "median_expectancy": 0.1743,
+    "total_pnl": 580.88,
+    "symbols_pf_above_1": 11,
+    "median_fees_paid": 27.81,
+    "limit_fill_share": 0.3083
+   },
+   "all_maker": {
+    "ok": true,
+    "fee_bps": 2.0,
+    "slippage_pct": 0.0,
+    "limit_exits": true,
+    "maker_fee_bps": 2.0,
+    "round_trip_bps": 4.0,
+    "n_symbols": 20,
+    "trades": 2492,
+    "median_pf": 1.064,
+    "median_expectancy": 0.386,
+    "total_pnl": 1409.19,
+    "symbols_pf_above_1": 16,
+    "median_fees_paid": 11.55,
+    "limit_fill_share": 0.313
+   },
+   "zero": {
+    "ok": true,
+    "fee_bps": 0.0,
+    "slippage_pct": 0.0,
+    "limit_exits": false,
+    "maker_fee_bps": 0.0,
+    "round_trip_bps": 0.0,
+    "n_symbols": 20,
+    "trades": 2490,
+    "median_pf": 1.0875,
+    "median_expectancy": 0.5263,
+    "total_pnl": 1733.91,
+    "symbols_pf_above_1": 17,
+    "median_fees_paid": 0.0,
+    "limit_fill_share": 0.3129
+   },
+   "exit_structure": {
+    "stop_loss": 57.0,
+    "take_profit": 30.8,
+    "stop_trail": 12.1,
+    "end_of_data": 0.1
+   },
+   "breakeven": {
+    "n": 7,
+    "median_round_trip_bps": 6.611,
+    "per_symbol": {
+     "ARBUSDT": 9.217,
+     "BTCUSDT": 6.413,
+     "DOGEUSDT": 6.611,
+     "NEARUSDT": 1.665,
+     "SOLUSDT": 10.563,
+     "SUIUSDT": 6.037,
+     "TONUSDT": 6.66
+    },
+    "of_symbols": 20
+   }
+  }
+ },
+ "detail": {
+  "trend": {
+   "taker": {
+    "ADAUSDT": {
+     "n": 64,
+     "n_legs": 64,
+     "pnl": 238.8667,
+     "expectancy": 3.7323,
+     "win_rate": 0.3906,
+     "profit_factor": 1.6364,
+     "return_pct": 23.89,
+     "max_drawdown_pct": -6.37,
+     "total_fees": 20.16,
+     "per_year": {
+      "2022": {
+       "pnl": 10.4,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 21.96,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2024": {
+       "pnl": 12.39,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 76.41,
+       "n": 11,
+       "win_rate": 0.5455
+      },
+      "2026": {
+       "pnl": 117.71,
+       "n": 13,
+       "win_rate": 0.4615
+      }
+     },
+     "positive_years": 5,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8080,
+      "filter": 442,
+      "slots": 163,
+      "cooldown": 8,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 33,
+      "stop_loss": 31
+     }
+    },
+    "APTUSDT": {
+     "n": 61,
+     "n_legs": 61,
+     "pnl": 126.7393,
+     "expectancy": 2.0777,
+     "win_rate": 0.4098,
+     "profit_factor": 1.3338,
+     "return_pct": 12.67,
+     "max_drawdown_pct": -10.4,
+     "total_fees": 16.1,
+     "per_year": {
+      "2022": {
+       "pnl": 6.06,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 122.52,
+       "n": 8,
+       "win_rate": 0.625
+      },
+      "2024": {
+       "pnl": 57.05,
+       "n": 22,
+       "win_rate": 0.4545
+      },
+      "2025": {
+       "pnl": -59.69,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2026": {
+       "pnl": 0.8,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 4,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8068,
+      "filter": 478,
+      "slots": 142,
+      "circuit_breaker": 8,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 32,
+      "stop_loss": 29
+     }
+    },
+    "ARBUSDT": {
+     "n": 73,
+     "n_legs": 73,
+     "pnl": 118.1004,
+     "expectancy": 1.6178,
+     "win_rate": 0.3699,
+     "profit_factor": 1.2396,
+     "return_pct": 11.81,
+     "max_drawdown_pct": -9.4,
+     "total_fees": 20.48,
+     "per_year": {
+      "2023": {
+       "pnl": -16.99,
+       "n": 10,
+       "win_rate": 0.4
+      },
+      "2024": {
+       "pnl": 211.88,
+       "n": 19,
+       "win_rate": 0.4737
+      },
+      "2025": {
+       "pnl": -100.91,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2026": {
+       "pnl": 24.12,
+       "n": 19,
+       "win_rate": 0.3684
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7279,
+      "filter": 386,
+      "slots": 161,
+      "cooldown": 7,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 31
+     }
+    },
+    "ATOMUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -66.8462,
+     "expectancy": -0.8462,
+     "win_rate": 0.3291,
+     "profit_factor": 0.8678,
+     "return_pct": -6.68,
+     "max_drawdown_pct": -16.62,
+     "total_fees": 24.82,
+     "per_year": {
+      "2023": {
+       "pnl": -61.6,
+       "n": 27,
+       "win_rate": 0.2593
+      },
+      "2024": {
+       "pnl": 75.83,
+       "n": 19,
+       "win_rate": 0.5789
+      },
+      "2025": {
+       "pnl": -34.86,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -46.21,
+       "n": 17,
+       "win_rate": 0.1176
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8107,
+      "filter": 415,
+      "slots": 150,
+      "circuit_breaker": 6,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 31
+     }
+    },
+    "AVAXUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": 47.2654,
+     "expectancy": 0.5627,
+     "win_rate": 0.3214,
+     "profit_factor": 1.0888,
+     "return_pct": 4.73,
+     "max_drawdown_pct": -11.77,
+     "total_fees": 24.41,
+     "per_year": {
+      "2023": {
+       "pnl": 7.31,
+       "n": 30,
+       "win_rate": 0.3
+      },
+      "2024": {
+       "pnl": -68.95,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 82.66,
+       "n": 18,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": 26.24,
+       "n": 19,
+       "win_rate": 0.2105
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8074,
+      "filter": 426,
+      "slots": 167,
+      "cooldown": 7,
+      "circuit_breaker": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 36
+     }
+    },
+    "BCHUSDT": {
+     "n": 76,
+     "n_legs": 76,
+     "pnl": -153.4341,
+     "expectancy": -2.0189,
+     "win_rate": 0.2105,
+     "profit_factor": 0.7129,
+     "return_pct": -15.34,
+     "max_drawdown_pct": -24.12,
+     "total_fees": 22.07,
+     "per_year": {
+      "2023": {
+       "pnl": -79.26,
+       "n": 21,
+       "win_rate": 0.0952
+      },
+      "2024": {
+       "pnl": -10.18,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2025": {
+       "pnl": -95.41,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2026": {
+       "pnl": 31.41,
+       "n": 16,
+       "win_rate": 0.1875
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8072,
+      "filter": 457,
+      "slots": 138,
+      "cooldown": 11,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "stop_trail": 22
+     }
+    },
+    "BNBUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": -19.8604,
+     "expectancy": -0.2878,
+     "win_rate": 0.2464,
+     "profit_factor": 0.9591,
+     "return_pct": -1.99,
+     "max_drawdown_pct": -16.4,
+     "total_fees": 30.46,
+     "per_year": {
+      "2023": {
+       "pnl": -121.67,
+       "n": 19,
+       "win_rate": 0.0526
+      },
+      "2024": {
+       "pnl": 51.65,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 81.02,
+       "n": 22,
+       "win_rate": 0.3636
+      },
+      "2026": {
+       "pnl": -30.86,
+       "n": 14,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8101,
+      "filter": 458,
+      "slots": 121,
+      "cooldown": 7,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 44,
+      "stop_trail": 25
+     }
+    },
+    "BTCUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": 421.6515,
+     "expectancy": 5.698,
+     "win_rate": 0.3378,
+     "profit_factor": 1.7305,
+     "return_pct": 42.17,
+     "max_drawdown_pct": -8.39,
+     "total_fees": 49.51,
+     "per_year": {
+      "2023": {
+       "pnl": 53.16,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 218.2,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2025": {
+       "pnl": 61.8,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 88.5,
+       "n": 18,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8040,
+      "filter": 488,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 32
+     }
+    },
+    "DOGEUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -19.7794,
+     "expectancy": -0.2383,
+     "win_rate": 0.3012,
+     "profit_factor": 0.9624,
+     "return_pct": -1.98,
+     "max_drawdown_pct": -14.22,
+     "total_fees": 27.33,
+     "per_year": {
+      "2022": {
+       "pnl": -10.37,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": -104.8,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 132.44,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 65.42,
+       "n": 18,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -102.47,
+       "n": 26,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 2,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8087,
+      "filter": 429,
+      "slots": 156,
+      "circuit_breaker": 3,
+      "cooldown": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 47,
+      "stop_trail": 35,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 70,
+     "n_legs": 70,
+     "pnl": -56.3304,
+     "expectancy": -0.8047,
+     "win_rate": 0.2857,
+     "profit_factor": 0.8732,
+     "return_pct": -5.63,
+     "max_drawdown_pct": -11.7,
+     "total_fees": 20.23,
+     "per_year": {
+      "2023": {
+       "pnl": -90.52,
+       "n": 22,
+       "win_rate": 0.2273
+      },
+      "2024": {
+       "pnl": 66.13,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -34.91,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": 2.97,
+       "n": 12,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8094,
+      "filter": 451,
+      "slots": 136,
+      "cooldown": 6,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 39,
+      "stop_trail": 31
+     }
+    },
+    "ETHUSDT": {
+     "n": 93,
+     "n_legs": 93,
+     "pnl": 125.7184,
+     "expectancy": 1.3518,
+     "win_rate": 0.2903,
+     "profit_factor": 1.1755,
+     "return_pct": 12.57,
+     "max_drawdown_pct": -10.72,
+     "total_fees": 41.25,
+     "per_year": {
+      "2023": {
+       "pnl": 108.11,
+       "n": 24,
+       "win_rate": 0.375
+      },
+      "2024": {
+       "pnl": -66.87,
+       "n": 23,
+       "win_rate": 0.2609
+      },
+      "2025": {
+       "pnl": 83.87,
+       "n": 25,
+       "win_rate": 0.36
+      },
+      "2026": {
+       "pnl": 0.61,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8034,
+      "filter": 434,
+      "slots": 184,
+      "cooldown": 9,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "stop_trail": 36
+     }
+    },
+    "LINKUSDT": {
+     "n": 67,
+     "n_legs": 67,
+     "pnl": 14.7364,
+     "expectancy": 0.2199,
+     "win_rate": 0.3284,
+     "profit_factor": 1.0333,
+     "return_pct": 1.47,
+     "max_drawdown_pct": -11.57,
+     "total_fees": 19.49,
+     "per_year": {
+      "2023": {
+       "pnl": 15.96,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2024": {
+       "pnl": -46.32,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -11.68,
+       "n": 14,
+       "win_rate": 0.3571
+      },
+      "2026": {
+       "pnl": 56.78,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8035,
+      "filter": 505,
+      "slots": 146,
+      "cooldown": 4,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 40,
+      "stop_trail": 27
+     }
+    },
+    "LTCUSDT": {
+     "n": 55,
+     "n_legs": 55,
+     "pnl": 58.0909,
+     "expectancy": 1.0562,
+     "win_rate": 0.2545,
+     "profit_factor": 1.1515,
+     "return_pct": 5.81,
+     "max_drawdown_pct": -9.74,
+     "total_fees": 18.63,
+     "per_year": {
+      "2023": {
+       "pnl": -41.15,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2024": {
+       "pnl": 42.12,
+       "n": 12,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -47.69,
+       "n": 11,
+       "win_rate": 0.2727
+      },
+      "2026": {
+       "pnl": 104.81,
+       "n": 18,
+       "win_rate": 0.2222
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8089,
+      "filter": 502,
+      "slots": 110,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 33,
+      "stop_trail": 21,
+      "end_of_data": 1
+     }
+    },
+    "NEARUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 257.1283,
+     "expectancy": 3.7265,
+     "win_rate": 0.2609,
+     "profit_factor": 1.5538,
+     "return_pct": 25.71,
+     "max_drawdown_pct": -10.26,
+     "total_fees": 16.68,
+     "per_year": {
+      "2023": {
+       "pnl": 76.4,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": -53.53,
+       "n": 12,
+       "win_rate": 0.25
+      },
+      "2025": {
+       "pnl": -10.09,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2026": {
+       "pnl": 244.36,
+       "n": 16,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8084,
+      "filter": 453,
+      "slots": 148,
+      "circuit_breaker": 6,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 31
+     }
+    },
+    "OPUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -170.3032,
+     "expectancy": -2.1557,
+     "win_rate": 0.2152,
+     "profit_factor": 0.6826,
+     "return_pct": -17.03,
+     "max_drawdown_pct": -19.53,
+     "total_fees": 16.2,
+     "per_year": {
+      "2023": {
+       "pnl": -42.61,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2024": {
+       "pnl": -90.73,
+       "n": 23,
+       "win_rate": 0.1304
+      },
+      "2025": {
+       "pnl": -35.21,
+       "n": 19,
+       "win_rate": 0.2105
+      },
+      "2026": {
+       "pnl": -1.75,
+       "n": 13,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8048,
+      "filter": 478,
+      "slots": 138,
+      "cooldown": 10,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 26
+     }
+    },
+    "SOLUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -133.258,
+     "expectancy": -1.6055,
+     "win_rate": 0.1928,
+     "profit_factor": 0.7803,
+     "return_pct": -13.33,
+     "max_drawdown_pct": -24.25,
+     "total_fees": 22.99,
+     "per_year": {
+      "2022": {
+       "pnl": -13.3,
+       "n": 2,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": 157.5,
+       "n": 23,
+       "win_rate": 0.3043
+      },
+      "2024": {
+       "pnl": -118.49,
+       "n": 14,
+       "win_rate": 0.1429
+      },
+      "2025": {
+       "pnl": -109.78,
+       "n": 26,
+       "win_rate": 0.1923
+      },
+      "2026": {
+       "pnl": -49.19,
+       "n": 18,
+       "win_rate": 0.1111
+      }
+     },
+     "positive_years": 1,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8070,
+      "filter": 452,
+      "slots": 135,
+      "cooldown": 13,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 30
+     }
+    },
+    "SUIUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": -184.1126,
+     "expectancy": -2.488,
+     "win_rate": 0.2297,
+     "profit_factor": 0.6229,
+     "return_pct": -18.41,
+     "max_drawdown_pct": -18.41,
+     "total_fees": 14.71,
+     "per_year": {
+      "2023": {
+       "pnl": -79.31,
+       "n": 8,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": -30.44,
+       "n": 30,
+       "win_rate": 0.2667
+      },
+      "2025": {
+       "pnl": 9.74,
+       "n": 15,
+       "win_rate": 0.4
+      },
+      "2026": {
+       "pnl": -84.11,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7032,
+      "filter": 425,
+      "slots": 121,
+      "circuit_breaker": 5,
+      "cooldown": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 50,
+      "stop_trail": 24
+     }
+    },
+    "TONUSDT": {
+     "n": 46,
+     "n_legs": 46,
+     "pnl": 342.7993,
+     "expectancy": 7.4522,
+     "win_rate": 0.3043,
+     "profit_factor": 1.9484,
+     "return_pct": 34.28,
+     "max_drawdown_pct": -11.61,
+     "total_fees": 15.92,
+     "per_year": {
+      "2023": {
+       "pnl": -4.71,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": 65.4,
+       "n": 13,
+       "win_rate": 0.3077
+      },
+      "2025": {
+       "pnl": 297.4,
+       "n": 25,
+       "win_rate": 0.32
+      },
+      "2026": {
+       "pnl": -15.3,
+       "n": 7,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5704,
+      "filter": 254,
+      "slots": 106,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 15,
+      "take_profit": 1
+     }
+    },
+    "TRXUSDT": {
+     "n": 63,
+     "n_legs": 63,
+     "pnl": 417.5713,
+     "expectancy": 6.6281,
+     "win_rate": 0.3016,
+     "profit_factor": 1.8851,
+     "return_pct": 41.76,
+     "max_drawdown_pct": -13.2,
+     "total_fees": 50.68,
+     "per_year": {
+      "2023": {
+       "pnl": -5.25,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 218.0,
+       "n": 22,
+       "win_rate": 0.1364
+      },
+      "2025": {
+       "pnl": 15.48,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 189.34,
+       "n": 9,
+       "win_rate": 0.5556
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8196,
+      "filter": 386,
+      "slots": 105,
+      "cooldown": 6,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 37,
+      "stop_trail": 25,
+      "take_profit": 1
+     }
+    },
+    "XRPUSDT": {
+     "n": 56,
+     "n_legs": 56,
+     "pnl": 53.9048,
+     "expectancy": 0.9626,
+     "win_rate": 0.3036,
+     "profit_factor": 1.1519,
+     "return_pct": 5.39,
+     "max_drawdown_pct": -13.53,
+     "total_fees": 20.25,
+     "per_year": {
+      "2023": {
+       "pnl": -117.47,
+       "n": 18,
+       "win_rate": 0.1111
+      },
+      "2024": {
+       "pnl": 171.51,
+       "n": 13,
+       "win_rate": 0.3846
+      },
+      "2025": {
+       "pnl": 2.61,
+       "n": 10,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -2.75,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8137,
+      "filter": 463,
+      "slots": 100,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 26
+     }
+    }
+   },
+   "taker_noslip": {
+    "ADAUSDT": {
+     "n": 64,
+     "n_legs": 64,
+     "pnl": 245.4066,
+     "expectancy": 3.8345,
+     "win_rate": 0.3906,
+     "profit_factor": 1.6567,
+     "return_pct": 24.54,
+     "max_drawdown_pct": -6.33,
+     "total_fees": 20.21,
+     "per_year": {
+      "2022": {
+       "pnl": 10.59,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 23.93,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2024": {
+       "pnl": 13.77,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 77.6,
+       "n": 11,
+       "win_rate": 0.5455
+      },
+      "2026": {
+       "pnl": 119.51,
+       "n": 13,
+       "win_rate": 0.4615
+      }
+     },
+     "positive_years": 5,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8080,
+      "filter": 442,
+      "slots": 163,
+      "cooldown": 8,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 34,
+      "stop_loss": 30
+     }
+    },
+    "APTUSDT": {
+     "n": 61,
+     "n_legs": 61,
+     "pnl": 131.0921,
+     "expectancy": 2.1491,
+     "win_rate": 0.4098,
+     "profit_factor": 1.3464,
+     "return_pct": 13.11,
+     "max_drawdown_pct": -10.29,
+     "total_fees": 16.14,
+     "per_year": {
+      "2022": {
+       "pnl": 6.19,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 123.17,
+       "n": 8,
+       "win_rate": 0.625
+      },
+      "2024": {
+       "pnl": 58.58,
+       "n": 22,
+       "win_rate": 0.4545
+      },
+      "2025": {
+       "pnl": -58.94,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2026": {
+       "pnl": 2.09,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 4,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8068,
+      "filter": 478,
+      "slots": 142,
+      "circuit_breaker": 8,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 32,
+      "stop_loss": 29
+     }
+    },
+    "ARBUSDT": {
+     "n": 73,
+     "n_legs": 73,
+     "pnl": 123.5919,
+     "expectancy": 1.693,
+     "win_rate": 0.3699,
+     "profit_factor": 1.2513,
+     "return_pct": 12.36,
+     "max_drawdown_pct": -9.28,
+     "total_fees": 20.53,
+     "per_year": {
+      "2023": {
+       "pnl": -16.03,
+       "n": 10,
+       "win_rate": 0.4
+      },
+      "2024": {
+       "pnl": 213.78,
+       "n": 19,
+       "win_rate": 0.4737
+      },
+      "2025": {
+       "pnl": -99.7,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2026": {
+       "pnl": 25.54,
+       "n": 19,
+       "win_rate": 0.3684
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7279,
+      "filter": 386,
+      "slots": 161,
+      "cooldown": 7,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 31
+     }
+    },
+    "ATOMUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -60.8416,
+     "expectancy": -0.7701,
+     "win_rate": 0.3291,
+     "profit_factor": 0.8793,
+     "return_pct": -6.08,
+     "max_drawdown_pct": -16.14,
+     "total_fees": 24.9,
+     "per_year": {
+      "2023": {
+       "pnl": -59.37,
+       "n": 27,
+       "win_rate": 0.2593
+      },
+      "2024": {
+       "pnl": 77.66,
+       "n": 19,
+       "win_rate": 0.5789
+      },
+      "2025": {
+       "pnl": -33.92,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -45.21,
+       "n": 17,
+       "win_rate": 0.1176
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8107,
+      "filter": 415,
+      "slots": 150,
+      "circuit_breaker": 6,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 31
+     }
+    },
+    "AVAXUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": 37.6179,
+     "expectancy": 0.4478,
+     "win_rate": 0.3214,
+     "profit_factor": 1.0717,
+     "return_pct": 3.76,
+     "max_drawdown_pct": -11.71,
+     "total_fees": 24.23,
+     "per_year": {
+      "2023": {
+       "pnl": -5.98,
+       "n": 30,
+       "win_rate": 0.3
+      },
+      "2024": {
+       "pnl": -67.05,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 82.89,
+       "n": 18,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": 27.75,
+       "n": 19,
+       "win_rate": 0.2105
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8074,
+      "filter": 426,
+      "slots": 166,
+      "cooldown": 8,
+      "circuit_breaker": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 36
+     }
+    },
+    "BCHUSDT": {
+     "n": 76,
+     "n_legs": 76,
+     "pnl": -148.5239,
+     "expectancy": -1.9543,
+     "win_rate": 0.2105,
+     "profit_factor": 0.721,
+     "return_pct": -14.85,
+     "max_drawdown_pct": -23.83,
+     "total_fees": 22.13,
+     "per_year": {
+      "2023": {
+       "pnl": -77.68,
+       "n": 21,
+       "win_rate": 0.0952
+      },
+      "2024": {
+       "pnl": -9.0,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2025": {
+       "pnl": -94.37,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2026": {
+       "pnl": 32.53,
+       "n": 16,
+       "win_rate": 0.1875
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8072,
+      "filter": 457,
+      "slots": 138,
+      "cooldown": 11,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "stop_trail": 22
+     }
+    },
+    "BNBUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": -12.1228,
+     "expectancy": -0.1757,
+     "win_rate": 0.2464,
+     "profit_factor": 0.9749,
+     "return_pct": -1.21,
+     "max_drawdown_pct": -16.26,
+     "total_fees": 30.58,
+     "per_year": {
+      "2023": {
+       "pnl": -120.11,
+       "n": 19,
+       "win_rate": 0.0526
+      },
+      "2024": {
+       "pnl": 53.05,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 84.25,
+       "n": 22,
+       "win_rate": 0.3636
+      },
+      "2026": {
+       "pnl": -29.31,
+       "n": 14,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8101,
+      "filter": 458,
+      "slots": 121,
+      "cooldown": 7,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 44,
+      "stop_trail": 25
+     }
+    },
+    "BTCUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": 436.9729,
+     "expectancy": 5.905,
+     "win_rate": 0.3378,
+     "profit_factor": 1.7617,
+     "return_pct": 43.7,
+     "max_drawdown_pct": -8.23,
+     "total_fees": 49.8,
+     "per_year": {
+      "2023": {
+       "pnl": 56.91,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 221.57,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2025": {
+       "pnl": 65.54,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 92.95,
+       "n": 18,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8040,
+      "filter": 488,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 32
+     }
+    },
+    "DOGEUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": -30.0894,
+     "expectancy": -0.3582,
+     "win_rate": 0.2976,
+     "profit_factor": 0.9434,
+     "return_pct": -3.01,
+     "max_drawdown_pct": -15.52,
+     "total_fees": 27.23,
+     "per_year": {
+      "2022": {
+       "pnl": -10.31,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": -118.37,
+       "n": 25,
+       "win_rate": 0.24
+      },
+      "2024": {
+       "pnl": 131.4,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 65.98,
+       "n": 18,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -98.79,
+       "n": 26,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 2,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8087,
+      "filter": 429,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 49,
+      "stop_trail": 34,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 70,
+     "n_legs": 70,
+     "pnl": -45.8651,
+     "expectancy": -0.6552,
+     "win_rate": 0.3,
+     "profit_factor": 0.8952,
+     "return_pct": -4.59,
+     "max_drawdown_pct": -11.5,
+     "total_fees": 20.31,
+     "per_year": {
+      "2023": {
+       "pnl": -88.59,
+       "n": 22,
+       "win_rate": 0.2273
+      },
+      "2024": {
+       "pnl": 67.8,
+       "n": 20,
+       "win_rate": 0.35
+      },
+      "2025": {
+       "pnl": -28.9,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": 3.83,
+       "n": 12,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8094,
+      "filter": 451,
+      "slots": 136,
+      "cooldown": 6,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 32
+     }
+    },
+    "ETHUSDT": {
+     "n": 92,
+     "n_legs": 92,
+     "pnl": 184.1492,
+     "expectancy": 2.0016,
+     "win_rate": 0.2935,
+     "profit_factor": 1.254,
+     "return_pct": 18.41,
+     "max_drawdown_pct": -9.78,
+     "total_fees": 42.12,
+     "per_year": {
+      "2023": {
+       "pnl": 111.67,
+       "n": 24,
+       "win_rate": 0.375
+      },
+      "2024": {
+       "pnl": -21.04,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2025": {
+       "pnl": 90.37,
+       "n": 25,
+       "win_rate": 0.36
+      },
+      "2026": {
+       "pnl": 3.14,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8034,
+      "filter": 434,
+      "slots": 185,
+      "cooldown": 9,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "stop_trail": 36
+     }
+    },
+    "LINKUSDT": {
+     "n": 67,
+     "n_legs": 67,
+     "pnl": 19.9931,
+     "expectancy": 0.2984,
+     "win_rate": 0.3284,
+     "profit_factor": 1.0454,
+     "return_pct": 2.0,
+     "max_drawdown_pct": -11.38,
+     "total_fees": 19.54,
+     "per_year": {
+      "2023": {
+       "pnl": 17.68,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2024": {
+       "pnl": -45.09,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -10.91,
+       "n": 14,
+       "win_rate": 0.3571
+      },
+      "2026": {
+       "pnl": 58.31,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8035,
+      "filter": 505,
+      "slots": 146,
+      "cooldown": 4,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 40,
+      "stop_trail": 27
+     }
+    },
+    "LTCUSDT": {
+     "n": 55,
+     "n_legs": 55,
+     "pnl": 63.2562,
+     "expectancy": 1.1501,
+     "win_rate": 0.2545,
+     "profit_factor": 1.1659,
+     "return_pct": 6.33,
+     "max_drawdown_pct": -9.62,
+     "total_fees": 18.67,
+     "per_year": {
+      "2023": {
+       "pnl": -40.06,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2024": {
+       "pnl": 43.12,
+       "n": 12,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -47.01,
+       "n": 11,
+       "win_rate": 0.2727
+      },
+      "2026": {
+       "pnl": 107.2,
+       "n": 18,
+       "win_rate": 0.2222
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8089,
+      "filter": 502,
+      "slots": 110,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 33,
+      "stop_trail": 21,
+      "end_of_data": 1
+     }
+    },
+    "NEARUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 262.6013,
+     "expectancy": 3.8058,
+     "win_rate": 0.2609,
+     "profit_factor": 1.5678,
+     "return_pct": 26.26,
+     "max_drawdown_pct": -10.15,
+     "total_fees": 16.72,
+     "per_year": {
+      "2023": {
+       "pnl": 78.43,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": -53.08,
+       "n": 12,
+       "win_rate": 0.25
+      },
+      "2025": {
+       "pnl": -9.18,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2026": {
+       "pnl": 246.42,
+       "n": 16,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8084,
+      "filter": 453,
+      "slots": 148,
+      "circuit_breaker": 6,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 31
+     }
+    },
+    "OPUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -166.8373,
+     "expectancy": -2.1119,
+     "win_rate": 0.2152,
+     "profit_factor": 0.6882,
+     "return_pct": -16.68,
+     "max_drawdown_pct": -19.3,
+     "total_fees": 16.24,
+     "per_year": {
+      "2023": {
+       "pnl": -41.33,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2024": {
+       "pnl": -89.88,
+       "n": 23,
+       "win_rate": 0.1304
+      },
+      "2025": {
+       "pnl": -34.46,
+       "n": 19,
+       "win_rate": 0.2105
+      },
+      "2026": {
+       "pnl": -1.17,
+       "n": 13,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8048,
+      "filter": 478,
+      "slots": 138,
+      "cooldown": 10,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 26
+     }
+    },
+    "SOLUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -128.2051,
+     "expectancy": -1.5446,
+     "win_rate": 0.2048,
+     "profit_factor": 0.7878,
+     "return_pct": -12.82,
+     "max_drawdown_pct": -23.94,
+     "total_fees": 23.05,
+     "per_year": {
+      "2022": {
+       "pnl": -13.16,
+       "n": 2,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": 159.31,
+       "n": 23,
+       "win_rate": 0.3043
+      },
+      "2024": {
+       "pnl": -117.81,
+       "n": 14,
+       "win_rate": 0.1429
+      },
+      "2025": {
+       "pnl": -108.34,
+       "n": 26,
+       "win_rate": 0.2308
+      },
+      "2026": {
+       "pnl": -48.21,
+       "n": 18,
+       "win_rate": 0.1111
+      }
+     },
+     "positive_years": 1,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8070,
+      "filter": 452,
+      "slots": 135,
+      "cooldown": 13,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 30
+     }
+    },
+    "SUIUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": -180.8938,
+     "expectancy": -2.4445,
+     "win_rate": 0.2297,
+     "profit_factor": 0.6283,
+     "return_pct": -18.09,
+     "max_drawdown_pct": -18.09,
+     "total_fees": 14.74,
+     "per_year": {
+      "2023": {
+       "pnl": -78.98,
+       "n": 8,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": -29.13,
+       "n": 30,
+       "win_rate": 0.2667
+      },
+      "2025": {
+       "pnl": 10.59,
+       "n": 15,
+       "win_rate": 0.4
+      },
+      "2026": {
+       "pnl": -83.37,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7032,
+      "filter": 425,
+      "slots": 121,
+      "circuit_breaker": 5,
+      "cooldown": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 50,
+      "stop_trail": 24
+     }
+    },
+    "TONUSDT": {
+     "n": 46,
+     "n_legs": 46,
+     "pnl": 347.2864,
+     "expectancy": 7.5497,
+     "win_rate": 0.3043,
+     "profit_factor": 1.9646,
+     "return_pct": 34.73,
+     "max_drawdown_pct": -11.47,
+     "total_fees": 15.95,
+     "per_year": {
+      "2023": {
+       "pnl": -4.61,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": 66.43,
+       "n": 13,
+       "win_rate": 0.3077
+      },
+      "2025": {
+       "pnl": 300.14,
+       "n": 25,
+       "win_rate": 0.32
+      },
+      "2026": {
+       "pnl": -14.68,
+       "n": 7,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5704,
+      "filter": 254,
+      "slots": 106,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 15,
+      "take_profit": 1
+     }
+    },
+    "TRXUSDT": {
+     "n": 63,
+     "n_legs": 63,
+     "pnl": 434.7144,
+     "expectancy": 6.9002,
+     "win_rate": 0.3016,
+     "profit_factor": 1.9305,
+     "return_pct": 43.47,
+     "max_drawdown_pct": -12.98,
+     "total_fees": 50.98,
+     "per_year": {
+      "2023": {
+       "pnl": -3.07,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 222.83,
+       "n": 22,
+       "win_rate": 0.1364
+      },
+      "2025": {
+       "pnl": 19.75,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 195.2,
+       "n": 9,
+       "win_rate": 0.5556
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8196,
+      "filter": 386,
+      "slots": 105,
+      "cooldown": 6,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 37,
+      "stop_trail": 25,
+      "take_profit": 1
+     }
+    },
+    "XRPUSDT": {
+     "n": 56,
+     "n_legs": 56,
+     "pnl": 59.6091,
+     "expectancy": 1.0644,
+     "win_rate": 0.3036,
+     "profit_factor": 1.1691,
+     "return_pct": 5.96,
+     "max_drawdown_pct": -13.3,
+     "total_fees": 20.3,
+     "per_year": {
+      "2023": {
+       "pnl": -115.75,
+       "n": 18,
+       "win_rate": 0.1111
+      },
+      "2024": {
+       "pnl": 173.2,
+       "n": 13,
+       "win_rate": 0.3846
+      },
+      "2025": {
+       "pnl": 3.46,
+       "n": 10,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -1.31,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8137,
+      "filter": 463,
+      "slots": 100,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 26
+     }
+    }
+   },
+   "maker_tp": {
+    "ADAUSDT": {
+     "n": 64,
+     "n_legs": 64,
+     "pnl": 238.8667,
+     "expectancy": 3.7323,
+     "win_rate": 0.3906,
+     "profit_factor": 1.6364,
+     "return_pct": 23.89,
+     "max_drawdown_pct": -6.37,
+     "total_fees": 20.16,
+     "per_year": {
+      "2022": {
+       "pnl": 10.4,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 21.96,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2024": {
+       "pnl": 12.39,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 76.41,
+       "n": 11,
+       "win_rate": 0.5455
+      },
+      "2026": {
+       "pnl": 117.71,
+       "n": 13,
+       "win_rate": 0.4615
+      }
+     },
+     "positive_years": 5,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8080,
+      "filter": 442,
+      "slots": 163,
+      "cooldown": 8,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 33,
+      "stop_loss": 31
+     }
+    },
+    "APTUSDT": {
+     "n": 61,
+     "n_legs": 61,
+     "pnl": 126.7393,
+     "expectancy": 2.0777,
+     "win_rate": 0.4098,
+     "profit_factor": 1.3338,
+     "return_pct": 12.67,
+     "max_drawdown_pct": -10.4,
+     "total_fees": 16.1,
+     "per_year": {
+      "2022": {
+       "pnl": 6.06,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 122.52,
+       "n": 8,
+       "win_rate": 0.625
+      },
+      "2024": {
+       "pnl": 57.05,
+       "n": 22,
+       "win_rate": 0.4545
+      },
+      "2025": {
+       "pnl": -59.69,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2026": {
+       "pnl": 0.8,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 4,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8068,
+      "filter": 478,
+      "slots": 142,
+      "circuit_breaker": 8,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 32,
+      "stop_loss": 29
+     }
+    },
+    "ARBUSDT": {
+     "n": 73,
+     "n_legs": 73,
+     "pnl": 118.1004,
+     "expectancy": 1.6178,
+     "win_rate": 0.3699,
+     "profit_factor": 1.2396,
+     "return_pct": 11.81,
+     "max_drawdown_pct": -9.4,
+     "total_fees": 20.48,
+     "per_year": {
+      "2023": {
+       "pnl": -16.99,
+       "n": 10,
+       "win_rate": 0.4
+      },
+      "2024": {
+       "pnl": 211.88,
+       "n": 19,
+       "win_rate": 0.4737
+      },
+      "2025": {
+       "pnl": -100.91,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2026": {
+       "pnl": 24.12,
+       "n": 19,
+       "win_rate": 0.3684
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7279,
+      "filter": 386,
+      "slots": 161,
+      "cooldown": 7,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 31
+     }
+    },
+    "ATOMUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -66.8462,
+     "expectancy": -0.8462,
+     "win_rate": 0.3291,
+     "profit_factor": 0.8678,
+     "return_pct": -6.68,
+     "max_drawdown_pct": -16.62,
+     "total_fees": 24.82,
+     "per_year": {
+      "2023": {
+       "pnl": -61.6,
+       "n": 27,
+       "win_rate": 0.2593
+      },
+      "2024": {
+       "pnl": 75.83,
+       "n": 19,
+       "win_rate": 0.5789
+      },
+      "2025": {
+       "pnl": -34.86,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -46.21,
+       "n": 17,
+       "win_rate": 0.1176
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8107,
+      "filter": 415,
+      "slots": 150,
+      "circuit_breaker": 6,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 31
+     }
+    },
+    "AVAXUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": 47.2654,
+     "expectancy": 0.5627,
+     "win_rate": 0.3214,
+     "profit_factor": 1.0888,
+     "return_pct": 4.73,
+     "max_drawdown_pct": -11.77,
+     "total_fees": 24.41,
+     "per_year": {
+      "2023": {
+       "pnl": 7.31,
+       "n": 30,
+       "win_rate": 0.3
+      },
+      "2024": {
+       "pnl": -68.95,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 82.66,
+       "n": 18,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": 26.24,
+       "n": 19,
+       "win_rate": 0.2105
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8074,
+      "filter": 426,
+      "slots": 167,
+      "cooldown": 7,
+      "circuit_breaker": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 36
+     }
+    },
+    "BCHUSDT": {
+     "n": 76,
+     "n_legs": 76,
+     "pnl": -153.4341,
+     "expectancy": -2.0189,
+     "win_rate": 0.2105,
+     "profit_factor": 0.7129,
+     "return_pct": -15.34,
+     "max_drawdown_pct": -24.12,
+     "total_fees": 22.07,
+     "per_year": {
+      "2023": {
+       "pnl": -79.26,
+       "n": 21,
+       "win_rate": 0.0952
+      },
+      "2024": {
+       "pnl": -10.18,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2025": {
+       "pnl": -95.41,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2026": {
+       "pnl": 31.41,
+       "n": 16,
+       "win_rate": 0.1875
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8072,
+      "filter": 457,
+      "slots": 138,
+      "cooldown": 11,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "stop_trail": 22
+     }
+    },
+    "BNBUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": -19.8604,
+     "expectancy": -0.2878,
+     "win_rate": 0.2464,
+     "profit_factor": 0.9591,
+     "return_pct": -1.99,
+     "max_drawdown_pct": -16.4,
+     "total_fees": 30.46,
+     "per_year": {
+      "2023": {
+       "pnl": -121.67,
+       "n": 19,
+       "win_rate": 0.0526
+      },
+      "2024": {
+       "pnl": 51.65,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 81.02,
+       "n": 22,
+       "win_rate": 0.3636
+      },
+      "2026": {
+       "pnl": -30.86,
+       "n": 14,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8101,
+      "filter": 458,
+      "slots": 121,
+      "cooldown": 7,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 44,
+      "stop_trail": 25
+     }
+    },
+    "BTCUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": 421.6515,
+     "expectancy": 5.698,
+     "win_rate": 0.3378,
+     "profit_factor": 1.7305,
+     "return_pct": 42.17,
+     "max_drawdown_pct": -8.39,
+     "total_fees": 49.51,
+     "per_year": {
+      "2023": {
+       "pnl": 53.16,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 218.2,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2025": {
+       "pnl": 61.8,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 88.5,
+       "n": 18,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8040,
+      "filter": 488,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 32
+     }
+    },
+    "DOGEUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -19.7794,
+     "expectancy": -0.2383,
+     "win_rate": 0.3012,
+     "profit_factor": 0.9624,
+     "return_pct": -1.98,
+     "max_drawdown_pct": -14.22,
+     "total_fees": 27.33,
+     "per_year": {
+      "2022": {
+       "pnl": -10.37,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": -104.8,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 132.44,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 65.42,
+       "n": 18,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -102.47,
+       "n": 26,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 2,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8087,
+      "filter": 429,
+      "slots": 156,
+      "circuit_breaker": 3,
+      "cooldown": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 47,
+      "stop_trail": 35,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 70,
+     "n_legs": 70,
+     "pnl": -56.3304,
+     "expectancy": -0.8047,
+     "win_rate": 0.2857,
+     "profit_factor": 0.8732,
+     "return_pct": -5.63,
+     "max_drawdown_pct": -11.7,
+     "total_fees": 20.23,
+     "per_year": {
+      "2023": {
+       "pnl": -90.52,
+       "n": 22,
+       "win_rate": 0.2273
+      },
+      "2024": {
+       "pnl": 66.13,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -34.91,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": 2.97,
+       "n": 12,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8094,
+      "filter": 451,
+      "slots": 136,
+      "cooldown": 6,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 39,
+      "stop_trail": 31
+     }
+    },
+    "ETHUSDT": {
+     "n": 93,
+     "n_legs": 93,
+     "pnl": 125.7184,
+     "expectancy": 1.3518,
+     "win_rate": 0.2903,
+     "profit_factor": 1.1755,
+     "return_pct": 12.57,
+     "max_drawdown_pct": -10.72,
+     "total_fees": 41.25,
+     "per_year": {
+      "2023": {
+       "pnl": 108.11,
+       "n": 24,
+       "win_rate": 0.375
+      },
+      "2024": {
+       "pnl": -66.87,
+       "n": 23,
+       "win_rate": 0.2609
+      },
+      "2025": {
+       "pnl": 83.87,
+       "n": 25,
+       "win_rate": 0.36
+      },
+      "2026": {
+       "pnl": 0.61,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8034,
+      "filter": 434,
+      "slots": 184,
+      "cooldown": 9,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "stop_trail": 36
+     }
+    },
+    "LINKUSDT": {
+     "n": 67,
+     "n_legs": 67,
+     "pnl": 14.7364,
+     "expectancy": 0.2199,
+     "win_rate": 0.3284,
+     "profit_factor": 1.0333,
+     "return_pct": 1.47,
+     "max_drawdown_pct": -11.57,
+     "total_fees": 19.49,
+     "per_year": {
+      "2023": {
+       "pnl": 15.96,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2024": {
+       "pnl": -46.32,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -11.68,
+       "n": 14,
+       "win_rate": 0.3571
+      },
+      "2026": {
+       "pnl": 56.78,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8035,
+      "filter": 505,
+      "slots": 146,
+      "cooldown": 4,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 40,
+      "stop_trail": 27
+     }
+    },
+    "LTCUSDT": {
+     "n": 55,
+     "n_legs": 55,
+     "pnl": 58.0909,
+     "expectancy": 1.0562,
+     "win_rate": 0.2545,
+     "profit_factor": 1.1515,
+     "return_pct": 5.81,
+     "max_drawdown_pct": -9.74,
+     "total_fees": 18.63,
+     "per_year": {
+      "2023": {
+       "pnl": -41.15,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2024": {
+       "pnl": 42.12,
+       "n": 12,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -47.69,
+       "n": 11,
+       "win_rate": 0.2727
+      },
+      "2026": {
+       "pnl": 104.81,
+       "n": 18,
+       "win_rate": 0.2222
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8089,
+      "filter": 502,
+      "slots": 110,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 33,
+      "stop_trail": 21,
+      "end_of_data": 1
+     }
+    },
+    "NEARUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 257.1283,
+     "expectancy": 3.7265,
+     "win_rate": 0.2609,
+     "profit_factor": 1.5538,
+     "return_pct": 25.71,
+     "max_drawdown_pct": -10.26,
+     "total_fees": 16.68,
+     "per_year": {
+      "2023": {
+       "pnl": 76.4,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": -53.53,
+       "n": 12,
+       "win_rate": 0.25
+      },
+      "2025": {
+       "pnl": -10.09,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2026": {
+       "pnl": 244.36,
+       "n": 16,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8084,
+      "filter": 453,
+      "slots": 148,
+      "circuit_breaker": 6,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 31
+     }
+    },
+    "OPUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -170.3032,
+     "expectancy": -2.1557,
+     "win_rate": 0.2152,
+     "profit_factor": 0.6826,
+     "return_pct": -17.03,
+     "max_drawdown_pct": -19.53,
+     "total_fees": 16.2,
+     "per_year": {
+      "2023": {
+       "pnl": -42.61,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2024": {
+       "pnl": -90.73,
+       "n": 23,
+       "win_rate": 0.1304
+      },
+      "2025": {
+       "pnl": -35.21,
+       "n": 19,
+       "win_rate": 0.2105
+      },
+      "2026": {
+       "pnl": -1.75,
+       "n": 13,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8048,
+      "filter": 478,
+      "slots": 138,
+      "cooldown": 10,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 26
+     }
+    },
+    "SOLUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -133.258,
+     "expectancy": -1.6055,
+     "win_rate": 0.1928,
+     "profit_factor": 0.7803,
+     "return_pct": -13.33,
+     "max_drawdown_pct": -24.25,
+     "total_fees": 22.99,
+     "per_year": {
+      "2022": {
+       "pnl": -13.3,
+       "n": 2,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": 157.5,
+       "n": 23,
+       "win_rate": 0.3043
+      },
+      "2024": {
+       "pnl": -118.49,
+       "n": 14,
+       "win_rate": 0.1429
+      },
+      "2025": {
+       "pnl": -109.78,
+       "n": 26,
+       "win_rate": 0.1923
+      },
+      "2026": {
+       "pnl": -49.19,
+       "n": 18,
+       "win_rate": 0.1111
+      }
+     },
+     "positive_years": 1,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8070,
+      "filter": 452,
+      "slots": 135,
+      "cooldown": 13,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 30
+     }
+    },
+    "SUIUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": -184.1126,
+     "expectancy": -2.488,
+     "win_rate": 0.2297,
+     "profit_factor": 0.6229,
+     "return_pct": -18.41,
+     "max_drawdown_pct": -18.41,
+     "total_fees": 14.71,
+     "per_year": {
+      "2023": {
+       "pnl": -79.31,
+       "n": 8,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": -30.44,
+       "n": 30,
+       "win_rate": 0.2667
+      },
+      "2025": {
+       "pnl": 9.74,
+       "n": 15,
+       "win_rate": 0.4
+      },
+      "2026": {
+       "pnl": -84.11,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7032,
+      "filter": 425,
+      "slots": 121,
+      "circuit_breaker": 5,
+      "cooldown": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 50,
+      "stop_trail": 24
+     }
+    },
+    "TONUSDT": {
+     "n": 46,
+     "n_legs": 46,
+     "pnl": 342.985,
+     "expectancy": 7.4562,
+     "win_rate": 0.3043,
+     "profit_factor": 1.9489,
+     "return_pct": 34.3,
+     "max_drawdown_pct": -11.61,
+     "total_fees": 15.76,
+     "per_year": {
+      "2023": {
+       "pnl": -4.71,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": 65.4,
+       "n": 13,
+       "win_rate": 0.3077
+      },
+      "2025": {
+       "pnl": 297.59,
+       "n": 25,
+       "win_rate": 0.32
+      },
+      "2026": {
+       "pnl": -15.3,
+       "n": 7,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5704,
+      "filter": 254,
+      "slots": 106,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 15,
+      "take_profit": 1
+     }
+    },
+    "TRXUSDT": {
+     "n": 63,
+     "n_legs": 63,
+     "pnl": 417.8437,
+     "expectancy": 6.6324,
+     "win_rate": 0.3016,
+     "profit_factor": 1.8856,
+     "return_pct": 41.78,
+     "max_drawdown_pct": -13.2,
+     "total_fees": 50.58,
+     "per_year": {
+      "2023": {
+       "pnl": -5.25,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 218.23,
+       "n": 22,
+       "win_rate": 0.1364
+      },
+      "2025": {
+       "pnl": 15.48,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 189.38,
+       "n": 9,
+       "win_rate": 0.5556
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8196,
+      "filter": 386,
+      "slots": 105,
+      "cooldown": 6,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 37,
+      "stop_trail": 25,
+      "take_profit": 1
+     }
+    },
+    "XRPUSDT": {
+     "n": 56,
+     "n_legs": 56,
+     "pnl": 53.9048,
+     "expectancy": 0.9626,
+     "win_rate": 0.3036,
+     "profit_factor": 1.1519,
+     "return_pct": 5.39,
+     "max_drawdown_pct": -13.53,
+     "total_fees": 20.25,
+     "per_year": {
+      "2023": {
+       "pnl": -117.47,
+       "n": 18,
+       "win_rate": 0.1111
+      },
+      "2024": {
+       "pnl": 171.51,
+       "n": 13,
+       "win_rate": 0.3846
+      },
+      "2025": {
+       "pnl": 2.61,
+       "n": 10,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -2.75,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8137,
+      "filter": 463,
+      "slots": 100,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 26
+     }
+    }
+   },
+   "all_maker": {
+    "ADAUSDT": {
+     "n": 64,
+     "n_legs": 64,
+     "pnl": 260.7076,
+     "expectancy": 4.0736,
+     "win_rate": 0.3906,
+     "profit_factor": 1.7078,
+     "return_pct": 26.07,
+     "max_drawdown_pct": -6.22,
+     "total_fees": 7.4,
+     "per_year": {
+      "2022": {
+       "pnl": 10.93,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 28.68,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2024": {
+       "pnl": 17.11,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 80.31,
+       "n": 11,
+       "win_rate": 0.5455
+      },
+      "2026": {
+       "pnl": 123.68,
+       "n": 13,
+       "win_rate": 0.4615
+      }
+     },
+     "positive_years": 5,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8080,
+      "filter": 442,
+      "slots": 163,
+      "cooldown": 8,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 34,
+      "stop_loss": 30
+     }
+    },
+    "APTUSDT": {
+     "n": 61,
+     "n_legs": 61,
+     "pnl": 141.2152,
+     "expectancy": 2.315,
+     "win_rate": 0.4098,
+     "profit_factor": 1.3773,
+     "return_pct": 14.12,
+     "max_drawdown_pct": -10.0,
+     "total_fees": 5.89,
+     "per_year": {
+      "2022": {
+       "pnl": 6.42,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 124.45,
+       "n": 8,
+       "win_rate": 0.625
+      },
+      "2024": {
+       "pnl": 62.29,
+       "n": 22,
+       "win_rate": 0.4545
+      },
+      "2025": {
+       "pnl": -57.03,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2026": {
+       "pnl": 5.1,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 4,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8068,
+      "filter": 478,
+      "slots": 142,
+      "circuit_breaker": 8,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 32,
+      "stop_loss": 29
+     }
+    },
+    "ARBUSDT": {
+     "n": 73,
+     "n_legs": 73,
+     "pnl": 137.1295,
+     "expectancy": 1.8785,
+     "win_rate": 0.3699,
+     "profit_factor": 1.2816,
+     "return_pct": 13.71,
+     "max_drawdown_pct": -8.94,
+     "total_fees": 7.51,
+     "per_year": {
+      "2023": {
+       "pnl": -13.88,
+       "n": 10,
+       "win_rate": 0.4
+      },
+      "2024": {
+       "pnl": 218.21,
+       "n": 19,
+       "win_rate": 0.4737
+      },
+      "2025": {
+       "pnl": -96.47,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2026": {
+       "pnl": 29.27,
+       "n": 19,
+       "win_rate": 0.3684
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7279,
+      "filter": 386,
+      "slots": 161,
+      "cooldown": 7,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 31
+     }
+    },
+    "ATOMUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -45.4541,
+     "expectancy": -0.5754,
+     "win_rate": 0.3291,
+     "profit_factor": 0.9087,
+     "return_pct": -4.55,
+     "max_drawdown_pct": -14.88,
+     "total_fees": 9.13,
+     "per_year": {
+      "2023": {
+       "pnl": -53.41,
+       "n": 27,
+       "win_rate": 0.2593
+      },
+      "2024": {
+       "pnl": 81.89,
+       "n": 19,
+       "win_rate": 0.5789
+      },
+      "2025": {
+       "pnl": -31.45,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -42.49,
+       "n": 17,
+       "win_rate": 0.1176
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8107,
+      "filter": 415,
+      "slots": 150,
+      "circuit_breaker": 6,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 31
+     }
+    },
+    "AVAXUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": 54.3222,
+     "expectancy": 0.6467,
+     "win_rate": 0.3214,
+     "profit_factor": 1.1048,
+     "return_pct": 5.43,
+     "max_drawdown_pct": -11.49,
+     "total_fees": 8.88,
+     "per_year": {
+      "2023": {
+       "pnl": 0.32,
+       "n": 30,
+       "win_rate": 0.3
+      },
+      "2024": {
+       "pnl": -65.1,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 86.61,
+       "n": 18,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": 32.49,
+       "n": 19,
+       "win_rate": 0.2105
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8074,
+      "filter": 426,
+      "slots": 166,
+      "cooldown": 8,
+      "circuit_breaker": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 36
+     }
+    },
+    "BCHUSDT": {
+     "n": 76,
+     "n_legs": 76,
+     "pnl": -135.1918,
+     "expectancy": -1.7788,
+     "win_rate": 0.2105,
+     "profit_factor": 0.7427,
+     "return_pct": -13.52,
+     "max_drawdown_pct": -23.03,
+     "total_fees": 8.11,
+     "per_year": {
+      "2023": {
+       "pnl": -73.16,
+       "n": 21,
+       "win_rate": 0.0952
+      },
+      "2024": {
+       "pnl": -6.06,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2025": {
+       "pnl": -91.76,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2026": {
+       "pnl": 35.78,
+       "n": 16,
+       "win_rate": 0.1875
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8072,
+      "filter": 457,
+      "slots": 138,
+      "cooldown": 11,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "stop_trail": 22
+     }
+    },
+    "BNBUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 8.1022,
+     "expectancy": 0.1174,
+     "win_rate": 0.2464,
+     "profit_factor": 1.0171,
+     "return_pct": 0.81,
+     "max_drawdown_pct": -15.82,
+     "total_fees": 11.23,
+     "per_year": {
+      "2023": {
+       "pnl": -115.26,
+       "n": 19,
+       "win_rate": 0.0526
+      },
+      "2024": {
+       "pnl": 56.55,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 91.6,
+       "n": 22,
+       "win_rate": 0.3636
+      },
+      "2026": {
+       "pnl": -24.78,
+       "n": 14,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8101,
+      "filter": 458,
+      "slots": 121,
+      "cooldown": 7,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 44,
+      "stop_trail": 25
+     }
+    },
+    "BTCUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": 474.8379,
+     "expectancy": 6.4167,
+     "win_rate": 0.3378,
+     "profit_factor": 1.8473,
+     "return_pct": 47.48,
+     "max_drawdown_pct": -7.81,
+     "total_fees": 18.36,
+     "per_year": {
+      "2023": {
+       "pnl": 66.07,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 228.84,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2025": {
+       "pnl": 75.25,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 104.68,
+       "n": 18,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8040,
+      "filter": 488,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 32
+     }
+    },
+    "DOGEUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": -12.7222,
+     "expectancy": -0.1515,
+     "win_rate": 0.2976,
+     "profit_factor": 0.9757,
+     "return_pct": -1.27,
+     "max_drawdown_pct": -14.99,
+     "total_fees": 9.99,
+     "per_year": {
+      "2022": {
+       "pnl": -10.11,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": -113.56,
+       "n": 25,
+       "win_rate": 0.24
+      },
+      "2024": {
+       "pnl": 134.53,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 69.84,
+       "n": 18,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -93.41,
+       "n": 26,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 2,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8087,
+      "filter": 429,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 49,
+      "stop_trail": 34,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 70,
+     "n_legs": 70,
+     "pnl": -32.9282,
+     "expectancy": -0.4704,
+     "win_rate": 0.3,
+     "profit_factor": 0.9238,
+     "return_pct": -3.29,
+     "max_drawdown_pct": -11.01,
+     "total_fees": 7.44,
+     "per_year": {
+      "2023": {
+       "pnl": -84.03,
+       "n": 22,
+       "win_rate": 0.2273
+      },
+      "2024": {
+       "pnl": 71.67,
+       "n": 20,
+       "win_rate": 0.35
+      },
+      "2025": {
+       "pnl": -26.73,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": 6.17,
+       "n": 12,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8094,
+      "filter": 451,
+      "slots": 136,
+      "cooldown": 6,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 32
+     }
+    },
+    "ETHUSDT": {
+     "n": 92,
+     "n_legs": 92,
+     "pnl": 212.253,
+     "expectancy": 2.3071,
+     "win_rate": 0.2935,
+     "profit_factor": 1.2964,
+     "return_pct": 21.23,
+     "max_drawdown_pct": -9.31,
+     "total_fees": 15.5,
+     "per_year": {
+      "2023": {
+       "pnl": 120.32,
+       "n": 24,
+       "win_rate": 0.375
+      },
+      "2024": {
+       "pnl": -15.66,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2025": {
+       "pnl": 97.63,
+       "n": 25,
+       "win_rate": 0.36
+      },
+      "2026": {
+       "pnl": 9.97,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8034,
+      "filter": 434,
+      "slots": 185,
+      "cooldown": 9,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "stop_trail": 36
+     }
+    },
+    "LINKUSDT": {
+     "n": 67,
+     "n_legs": 67,
+     "pnl": 32.8868,
+     "expectancy": 0.4908,
+     "win_rate": 0.3284,
+     "profit_factor": 1.0755,
+     "return_pct": 3.29,
+     "max_drawdown_pct": -10.92,
+     "total_fees": 7.15,
+     "per_year": {
+      "2023": {
+       "pnl": 21.61,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2024": {
+       "pnl": -41.87,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -8.95,
+       "n": 14,
+       "win_rate": 0.3571
+      },
+      "2026": {
+       "pnl": 62.1,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8035,
+      "filter": 505,
+      "slots": 146,
+      "cooldown": 4,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 40,
+      "stop_trail": 27
+     }
+    },
+    "LTCUSDT": {
+     "n": 55,
+     "n_legs": 55,
+     "pnl": 76.1827,
+     "expectancy": 1.3851,
+     "win_rate": 0.2545,
+     "profit_factor": 1.2033,
+     "return_pct": 7.62,
+     "max_drawdown_pct": -9.28,
+     "total_fees": 6.83,
+     "per_year": {
+      "2023": {
+       "pnl": -37.2,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2024": {
+       "pnl": 45.73,
+       "n": 12,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -45.4,
+       "n": 11,
+       "win_rate": 0.2727
+      },
+      "2026": {
+       "pnl": 113.06,
+       "n": 18,
+       "win_rate": 0.2222
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8089,
+      "filter": 502,
+      "slots": 110,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 33,
+      "stop_trail": 21,
+      "end_of_data": 1
+     }
+    },
+    "NEARUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 275.7854,
+     "expectancy": 3.9969,
+     "win_rate": 0.2609,
+     "profit_factor": 1.6034,
+     "return_pct": 27.58,
+     "max_drawdown_pct": -9.86,
+     "total_fees": 6.11,
+     "per_year": {
+      "2023": {
+       "pnl": 83.14,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": -51.93,
+       "n": 12,
+       "win_rate": 0.25
+      },
+      "2025": {
+       "pnl": -6.92,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2026": {
+       "pnl": 251.5,
+       "n": 16,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8084,
+      "filter": 453,
+      "slots": 148,
+      "circuit_breaker": 6,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 31
+     }
+    },
+    "OPUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -157.3941,
+     "expectancy": -1.9923,
+     "win_rate": 0.2152,
+     "profit_factor": 0.7029,
+     "return_pct": -15.74,
+     "max_drawdown_pct": -18.65,
+     "total_fees": 5.94,
+     "per_year": {
+      "2023": {
+       "pnl": -37.88,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2024": {
+       "pnl": -87.5,
+       "n": 23,
+       "win_rate": 0.1304
+      },
+      "2025": {
+       "pnl": -32.51,
+       "n": 19,
+       "win_rate": 0.2105
+      },
+      "2026": {
+       "pnl": 0.5,
+       "n": 13,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8048,
+      "filter": 478,
+      "slots": 138,
+      "cooldown": 10,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 26
+     }
+    },
+    "SOLUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -115.0731,
+     "expectancy": -1.3864,
+     "win_rate": 0.2048,
+     "profit_factor": 0.8072,
+     "return_pct": -11.51,
+     "max_drawdown_pct": -23.1,
+     "total_fees": 8.44,
+     "per_year": {
+      "2022": {
+       "pnl": -12.8,
+       "n": 2,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": 163.62,
+       "n": 23,
+       "win_rate": 0.3043
+      },
+      "2024": {
+       "pnl": -116.06,
+       "n": 14,
+       "win_rate": 0.1429
+      },
+      "2025": {
+       "pnl": -104.65,
+       "n": 26,
+       "win_rate": 0.2308
+      },
+      "2026": {
+       "pnl": -45.19,
+       "n": 18,
+       "win_rate": 0.1111
+      }
+     },
+     "positive_years": 1,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8070,
+      "filter": 452,
+      "slots": 135,
+      "cooldown": 13,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 30
+     }
+    },
+    "SUIUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": -172.2175,
+     "expectancy": -2.3273,
+     "win_rate": 0.2297,
+     "profit_factor": 0.6424,
+     "return_pct": -17.22,
+     "max_drawdown_pct": -17.22,
+     "total_fees": 5.39,
+     "per_year": {
+      "2023": {
+       "pnl": -77.88,
+       "n": 8,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": -25.79,
+       "n": 30,
+       "win_rate": 0.2667
+      },
+      "2025": {
+       "pnl": 12.46,
+       "n": 15,
+       "win_rate": 0.4
+      },
+      "2026": {
+       "pnl": -81.0,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7032,
+      "filter": 425,
+      "slots": 121,
+      "circuit_breaker": 5,
+      "cooldown": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 50,
+      "stop_trail": 24
+     }
+    },
+    "TONUSDT": {
+     "n": 46,
+     "n_legs": 46,
+     "pnl": 359.3816,
+     "expectancy": 7.8126,
+     "win_rate": 0.3043,
+     "profit_factor": 2.0128,
+     "return_pct": 35.94,
+     "max_drawdown_pct": -11.03,
+     "total_fees": 5.83,
+     "per_year": {
+      "2023": {
+       "pnl": -4.42,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": 68.98,
+       "n": 13,
+       "win_rate": 0.3077
+      },
+      "2025": {
+       "pnl": 307.91,
+       "n": 25,
+       "win_rate": 0.32
+      },
+      "2026": {
+       "pnl": -13.09,
+       "n": 7,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5704,
+      "filter": 254,
+      "slots": 106,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 15,
+      "take_profit": 1
+     }
+    },
+    "TRXUSDT": {
+     "n": 63,
+     "n_legs": 63,
+     "pnl": 476.8432,
+     "expectancy": 7.5689,
+     "win_rate": 0.3175,
+     "profit_factor": 2.055,
+     "return_pct": 47.68,
+     "max_drawdown_pct": -12.35,
+     "total_fees": 18.82,
+     "per_year": {
+      "2023": {
+       "pnl": 2.51,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 235.48,
+       "n": 22,
+       "win_rate": 0.1818
+      },
+      "2025": {
+       "pnl": 30.31,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 208.55,
+       "n": 9,
+       "win_rate": 0.5556
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8196,
+      "filter": 386,
+      "slots": 105,
+      "cooldown": 9,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 37,
+      "stop_trail": 25,
+      "take_profit": 1
+     }
+    },
+    "XRPUSDT": {
+     "n": 56,
+     "n_legs": 56,
+     "pnl": 73.6623,
+     "expectancy": 1.3154,
+     "win_rate": 0.3036,
+     "profit_factor": 1.2132,
+     "return_pct": 7.37,
+     "max_drawdown_pct": -12.73,
+     "total_fees": 7.43,
+     "per_year": {
+      "2023": {
+       "pnl": -111.37,
+       "n": 18,
+       "win_rate": 0.1111
+      },
+      "2024": {
+       "pnl": 177.12,
+       "n": 13,
+       "win_rate": 0.3846
+      },
+      "2025": {
+       "pnl": 5.38,
+       "n": 10,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": 2.54,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8137,
+      "filter": 463,
+      "slots": 100,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 26
+     }
+    }
+   },
+   "zero": {
+    "ADAUSDT": {
+     "n": 64,
+     "n_legs": 64,
+     "pnl": 269.5343,
+     "expectancy": 4.2115,
+     "win_rate": 0.3906,
+     "profit_factor": 1.738,
+     "return_pct": 26.95,
+     "max_drawdown_pct": -6.15,
+     "total_fees": 0.0,
+     "per_year": {
+      "2022": {
+       "pnl": 11.13,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 31.4,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2024": {
+       "pnl": 19.03,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 81.88,
+       "n": 11,
+       "win_rate": 0.5455
+      },
+      "2026": {
+       "pnl": 126.09,
+       "n": 13,
+       "win_rate": 0.4615
+      }
+     },
+     "positive_years": 5,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8080,
+      "filter": 442,
+      "slots": 163,
+      "cooldown": 8,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 34,
+      "stop_loss": 30
+     }
+    },
+    "APTUSDT": {
+     "n": 61,
+     "n_legs": 61,
+     "pnl": 147.0397,
+     "expectancy": 2.4105,
+     "win_rate": 0.4262,
+     "profit_factor": 1.3955,
+     "return_pct": 14.7,
+     "max_drawdown_pct": -9.84,
+     "total_fees": 0.0,
+     "per_year": {
+      "2022": {
+       "pnl": 6.55,
+       "n": 1,
+       "win_rate": 1.0
+      },
+      "2023": {
+       "pnl": 125.18,
+       "n": 8,
+       "win_rate": 0.625
+      },
+      "2024": {
+       "pnl": 64.41,
+       "n": 22,
+       "win_rate": 0.4545
+      },
+      "2025": {
+       "pnl": -55.94,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2026": {
+       "pnl": 6.83,
+       "n": 16,
+       "win_rate": 0.4375
+      }
+     },
+     "positive_years": 4,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8068,
+      "filter": 478,
+      "slots": 142,
+      "circuit_breaker": 8,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_trail": 32,
+      "stop_loss": 29
+     }
+    },
+    "ARBUSDT": {
+     "n": 73,
+     "n_legs": 73,
+     "pnl": 144.9375,
+     "expectancy": 1.9854,
+     "win_rate": 0.3836,
+     "profit_factor": 1.2993,
+     "return_pct": 14.49,
+     "max_drawdown_pct": -8.75,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -12.65,
+       "n": 10,
+       "win_rate": 0.4
+      },
+      "2024": {
+       "pnl": 220.75,
+       "n": 19,
+       "win_rate": 0.5263
+      },
+      "2025": {
+       "pnl": -94.6,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2026": {
+       "pnl": 31.43,
+       "n": 19,
+       "win_rate": 0.3684
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7279,
+      "filter": 386,
+      "slots": 161,
+      "cooldown": 7,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 31
+     }
+    },
+    "ATOMUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -36.5504,
+     "expectancy": -0.4627,
+     "win_rate": 0.3418,
+     "profit_factor": 0.926,
+     "return_pct": -3.65,
+     "max_drawdown_pct": -14.15,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -49.99,
+       "n": 27,
+       "win_rate": 0.2593
+      },
+      "2024": {
+       "pnl": 84.34,
+       "n": 19,
+       "win_rate": 0.5789
+      },
+      "2025": {
+       "pnl": -30.0,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -40.9,
+       "n": 17,
+       "win_rate": 0.1765
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8107,
+      "filter": 415,
+      "slots": 150,
+      "circuit_breaker": 6,
+      "cooldown": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 31
+     }
+    },
+    "AVAXUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": 63.9871,
+     "expectancy": 0.7618,
+     "win_rate": 0.3214,
+     "profit_factor": 1.1243,
+     "return_pct": 6.4,
+     "max_drawdown_pct": -11.36,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 3.94,
+       "n": 30,
+       "win_rate": 0.3
+      },
+      "2024": {
+       "pnl": -63.97,
+       "n": 17,
+       "win_rate": 0.3529
+      },
+      "2025": {
+       "pnl": 88.76,
+       "n": 18,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": 35.25,
+       "n": 19,
+       "win_rate": 0.2105
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8074,
+      "filter": 426,
+      "slots": 166,
+      "cooldown": 8,
+      "circuit_breaker": 2
+     },
+     "exit_reasons": {
+      "stop_loss": 48,
+      "stop_trail": 36
+     }
+    },
+    "BCHUSDT": {
+     "n": 76,
+     "n_legs": 76,
+     "pnl": -127.4814,
+     "expectancy": -1.6774,
+     "win_rate": 0.2105,
+     "profit_factor": 0.7554,
+     "return_pct": -12.75,
+     "max_drawdown_pct": -22.56,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -70.56,
+       "n": 21,
+       "win_rate": 0.0952
+      },
+      "2024": {
+       "pnl": -4.36,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2025": {
+       "pnl": -90.23,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2026": {
+       "pnl": 37.67,
+       "n": 16,
+       "win_rate": 0.1875
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8072,
+      "filter": 457,
+      "slots": 138,
+      "cooldown": 11,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "stop_trail": 22
+     }
+    },
+    "BNBUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 19.8414,
+     "expectancy": 0.2876,
+     "win_rate": 0.2609,
+     "profit_factor": 1.0424,
+     "return_pct": 1.98,
+     "max_drawdown_pct": -15.57,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -112.48,
+       "n": 19,
+       "win_rate": 0.0526
+      },
+      "2024": {
+       "pnl": 58.56,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 95.87,
+       "n": 22,
+       "win_rate": 0.4091
+      },
+      "2026": {
+       "pnl": -22.12,
+       "n": 14,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8101,
+      "filter": 458,
+      "slots": 121,
+      "cooldown": 7,
+      "circuit_breaker": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 44,
+      "stop_trail": 25
+     }
+    },
+    "BTCUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": 496.915,
+     "expectancy": 6.7151,
+     "win_rate": 0.3514,
+     "profit_factor": 1.8989,
+     "return_pct": 49.69,
+     "max_drawdown_pct": -7.56,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 71.33,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2024": {
+       "pnl": 233.06,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2025": {
+       "pnl": 80.93,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 111.6,
+       "n": 18,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8040,
+      "filter": 488,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 42,
+      "stop_trail": 32
+     }
+    },
+    "DOGEUSDT": {
+     "n": 84,
+     "n_legs": 84,
+     "pnl": -2.6611,
+     "expectancy": -0.0317,
+     "win_rate": 0.2976,
+     "profit_factor": 0.9949,
+     "return_pct": -0.27,
+     "max_drawdown_pct": -14.69,
+     "total_fees": 0.0,
+     "per_year": {
+      "2022": {
+       "pnl": -10.0,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": -110.8,
+       "n": 25,
+       "win_rate": 0.24
+      },
+      "2024": {
+       "pnl": 136.33,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2025": {
+       "pnl": 72.07,
+       "n": 18,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": -90.26,
+       "n": 26,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 2,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8087,
+      "filter": 429,
+      "slots": 154,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 49,
+      "stop_trail": 34,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 70,
+     "n_legs": 70,
+     "pnl": -25.4578,
+     "expectancy": -0.3637,
+     "win_rate": 0.3,
+     "profit_factor": 0.9406,
+     "return_pct": -2.55,
+     "max_drawdown_pct": -10.72,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -81.42,
+       "n": 22,
+       "win_rate": 0.2273
+      },
+      "2024": {
+       "pnl": 73.9,
+       "n": 20,
+       "win_rate": 0.35
+      },
+      "2025": {
+       "pnl": -25.47,
+       "n": 16,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": 7.53,
+       "n": 12,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8094,
+      "filter": 451,
+      "slots": 136,
+      "cooldown": 6,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 32
+     }
+    },
+    "ETHUSDT": {
+     "n": 92,
+     "n_legs": 92,
+     "pnl": 228.6066,
+     "expectancy": 2.4849,
+     "win_rate": 0.2935,
+     "profit_factor": 1.3217,
+     "return_pct": 22.86,
+     "max_drawdown_pct": -9.05,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 125.28,
+       "n": 24,
+       "win_rate": 0.375
+      },
+      "2024": {
+       "pnl": -12.54,
+       "n": 22,
+       "win_rate": 0.2727
+      },
+      "2025": {
+       "pnl": 101.86,
+       "n": 25,
+       "win_rate": 0.36
+      },
+      "2026": {
+       "pnl": 14.0,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8034,
+      "filter": 434,
+      "slots": 185,
+      "cooldown": 9,
+      "circuit_breaker": 6
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "stop_trail": 36
+     }
+    },
+    "LINKUSDT": {
+     "n": 67,
+     "n_legs": 67,
+     "pnl": 40.3261,
+     "expectancy": 0.6019,
+     "win_rate": 0.3284,
+     "profit_factor": 1.0933,
+     "return_pct": 4.03,
+     "max_drawdown_pct": -10.65,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 23.87,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2024": {
+       "pnl": -40.02,
+       "n": 20,
+       "win_rate": 0.3
+      },
+      "2025": {
+       "pnl": -7.82,
+       "n": 14,
+       "win_rate": 0.3571
+      },
+      "2026": {
+       "pnl": 64.3,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8035,
+      "filter": 505,
+      "slots": 146,
+      "cooldown": 4,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 40,
+      "stop_trail": 27
+     }
+    },
+    "LTCUSDT": {
+     "n": 55,
+     "n_legs": 55,
+     "pnl": 83.6376,
+     "expectancy": 1.5207,
+     "win_rate": 0.2545,
+     "profit_factor": 1.2254,
+     "return_pct": 8.36,
+     "max_drawdown_pct": -9.08,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -35.56,
+       "n": 14,
+       "win_rate": 0.2143
+      },
+      "2024": {
+       "pnl": 47.22,
+       "n": 12,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -44.47,
+       "n": 11,
+       "win_rate": 0.2727
+      },
+      "2026": {
+       "pnl": 116.45,
+       "n": 18,
+       "win_rate": 0.2222
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8089,
+      "filter": 502,
+      "slots": 110,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 33,
+      "stop_trail": 21,
+      "end_of_data": 1
+     }
+    },
+    "NEARUSDT": {
+     "n": 69,
+     "n_legs": 69,
+     "pnl": 283.3802,
+     "expectancy": 4.107,
+     "win_rate": 0.2609,
+     "profit_factor": 1.6243,
+     "return_pct": 28.34,
+     "max_drawdown_pct": -9.7,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 85.84,
+       "n": 24,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": -51.27,
+       "n": 12,
+       "win_rate": 0.25
+      },
+      "2025": {
+       "pnl": -5.62,
+       "n": 17,
+       "win_rate": 0.2941
+      },
+      "2026": {
+       "pnl": 254.43,
+       "n": 16,
+       "win_rate": 0.25
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8084,
+      "filter": 453,
+      "slots": 148,
+      "circuit_breaker": 6,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 38,
+      "stop_trail": 31
+     }
+    },
+    "OPUSDT": {
+     "n": 79,
+     "n_legs": 79,
+     "pnl": -151.9498,
+     "expectancy": -1.9234,
+     "win_rate": 0.2152,
+     "profit_factor": 0.7115,
+     "return_pct": -15.2,
+     "max_drawdown_pct": -18.27,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -35.91,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2024": {
+       "pnl": -86.12,
+       "n": 23,
+       "win_rate": 0.1304
+      },
+      "2025": {
+       "pnl": -31.38,
+       "n": 19,
+       "win_rate": 0.2105
+      },
+      "2026": {
+       "pnl": 1.47,
+       "n": 13,
+       "win_rate": 0.2308
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8048,
+      "filter": 478,
+      "slots": 138,
+      "cooldown": 10,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 26
+     }
+    },
+    "SOLUSDT": {
+     "n": 83,
+     "n_legs": 83,
+     "pnl": -107.4818,
+     "expectancy": -1.295,
+     "win_rate": 0.2048,
+     "profit_factor": 0.8186,
+     "return_pct": -10.75,
+     "max_drawdown_pct": -22.63,
+     "total_fees": 0.0,
+     "per_year": {
+      "2022": {
+       "pnl": -12.59,
+       "n": 2,
+       "win_rate": 0.0
+      },
+      "2023": {
+       "pnl": 166.1,
+       "n": 23,
+       "win_rate": 0.3043
+      },
+      "2024": {
+       "pnl": -115.04,
+       "n": 14,
+       "win_rate": 0.1429
+      },
+      "2025": {
+       "pnl": -102.52,
+       "n": 26,
+       "win_rate": 0.2308
+      },
+      "2026": {
+       "pnl": -43.42,
+       "n": 18,
+       "win_rate": 0.1111
+      }
+     },
+     "positive_years": 1,
+     "years_n": 5,
+     "veto_top": {
+      "trigger": 8070,
+      "filter": 452,
+      "slots": 135,
+      "cooldown": 13,
+      "circuit_breaker": 7
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "stop_trail": 30
+     }
+    },
+    "SUIUSDT": {
+     "n": 74,
+     "n_legs": 74,
+     "pnl": -167.2196,
+     "expectancy": -2.2597,
+     "win_rate": 0.2297,
+     "profit_factor": 0.6507,
+     "return_pct": -16.72,
+     "max_drawdown_pct": -16.72,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -77.26,
+       "n": 8,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": -23.88,
+       "n": 30,
+       "win_rate": 0.2667
+      },
+      "2025": {
+       "pnl": 13.54,
+       "n": 15,
+       "win_rate": 0.4
+      },
+      "2026": {
+       "pnl": -79.63,
+       "n": 21,
+       "win_rate": 0.1429
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 7032,
+      "filter": 425,
+      "slots": 121,
+      "circuit_breaker": 5,
+      "cooldown": 4
+     },
+     "exit_reasons": {
+      "stop_loss": 50,
+      "stop_trail": 24
+     }
+    },
+    "TONUSDT": {
+     "n": 46,
+     "n_legs": 46,
+     "pnl": 366.3407,
+     "expectancy": 7.9639,
+     "win_rate": 0.3043,
+     "profit_factor": 2.0412,
+     "return_pct": 36.63,
+     "max_drawdown_pct": -10.78,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -4.31,
+       "n": 1,
+       "win_rate": 0.0
+      },
+      "2024": {
+       "pnl": 70.44,
+       "n": 13,
+       "win_rate": 0.3077
+      },
+      "2025": {
+       "pnl": 312.39,
+       "n": 25,
+       "win_rate": 0.32
+      },
+      "2026": {
+       "pnl": -12.17,
+       "n": 7,
+       "win_rate": 0.2857
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5704,
+      "filter": 254,
+      "slots": 106,
+      "cooldown": 3,
+      "circuit_breaker": 3
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 15,
+      "take_profit": 1
+     }
+    },
+    "TRXUSDT": {
+     "n": 63,
+     "n_legs": 63,
+     "pnl": 501.4591,
+     "expectancy": 7.9597,
+     "win_rate": 0.3175,
+     "profit_factor": 2.131,
+     "return_pct": 50.15,
+     "max_drawdown_pct": -11.98,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 5.71,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 242.82,
+       "n": 22,
+       "win_rate": 0.1818
+      },
+      "2025": {
+       "pnl": 36.51,
+       "n": 18,
+       "win_rate": 0.3889
+      },
+      "2026": {
+       "pnl": 216.42,
+       "n": 9,
+       "win_rate": 0.5556
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8196,
+      "filter": 386,
+      "slots": 105,
+      "cooldown": 9,
+      "circuit_breaker": 1
+     },
+     "exit_reasons": {
+      "stop_loss": 37,
+      "stop_trail": 25,
+      "take_profit": 1
+     }
+    },
+    "XRPUSDT": {
+     "n": 56,
+     "n_legs": 56,
+     "pnl": 81.7741,
+     "expectancy": 1.4603,
+     "win_rate": 0.3036,
+     "profit_factor": 1.2395,
+     "return_pct": 8.18,
+     "max_drawdown_pct": -12.41,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -108.86,
+       "n": 18,
+       "win_rate": 0.1111
+      },
+      "2024": {
+       "pnl": 179.38,
+       "n": 13,
+       "win_rate": 0.3846
+      },
+      "2025": {
+       "pnl": 6.49,
+       "n": 10,
+       "win_rate": 0.5
+      },
+      "2026": {
+       "pnl": 4.77,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 8137,
+      "filter": 463,
+      "slots": 100,
+      "cooldown": 4,
+      "bias": 0
+     },
+     "exit_reasons": {
+      "stop_loss": 30,
+      "stop_trail": 26
+     }
+    }
+   }
+  },
+  "base": {
+   "taker": {
+    "ADAUSDT": {
+     "n": 117,
+     "n_legs": 117,
+     "pnl": 78.3895,
+     "expectancy": 0.67,
+     "win_rate": 0.3932,
+     "profit_factor": 1.1054,
+     "return_pct": 7.84,
+     "max_drawdown_pct": -20.39,
+     "total_fees": 30.56,
+     "per_year": {
+      "2023": {
+       "pnl": 75.39,
+       "n": 38,
+       "win_rate": 0.4474
+      },
+      "2024": {
+       "pnl": 6.01,
+       "n": 23,
+       "win_rate": 0.3913
+      },
+      "2025": {
+       "pnl": -78.58,
+       "n": 32,
+       "win_rate": 0.2812
+      },
+      "2026": {
+       "pnl": 75.57,
+       "n": 24,
+       "win_rate": 0.4583
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4909,
+      "bias": 2810,
+      "slots": 400,
+      "filter": 393,
+      "cooldown": 88
+     },
+     "exit_reasons": {
+      "stop_loss": 67,
+      "take_profit": 39,
+      "stop_trail": 11
+     }
+    },
+    "APTUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 34.7638,
+     "expectancy": 0.3476,
+     "win_rate": 0.37,
+     "profit_factor": 1.0563,
+     "return_pct": 3.48,
+     "max_drawdown_pct": -10.61,
+     "total_fees": 22.48,
+     "per_year": {
+      "2023": {
+       "pnl": -17.11,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 104.58,
+       "n": 51,
+       "win_rate": 0.451
+      },
+      "2025": {
+       "pnl": -51.48,
+       "n": 20,
+       "win_rate": 0.25
+      },
+      "2026": {
+       "pnl": -1.23,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4891,
+      "bias": 3006,
+      "slots": 407,
+      "filter": 270,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "take_profit": 31,
+      "stop_trail": 12
+     }
+    },
+    "ARBUSDT": {
+     "n": 110,
+     "n_legs": 110,
+     "pnl": -5.8262,
+     "expectancy": -0.053,
+     "win_rate": 0.3727,
+     "profit_factor": 0.9912,
+     "return_pct": -0.58,
+     "max_drawdown_pct": -11.63,
+     "total_fees": 22.73,
+     "per_year": {
+      "2023": {
+       "pnl": -33.35,
+       "n": 6,
+       "win_rate": 0.1667
+      },
+      "2024": {
+       "pnl": 41.23,
+       "n": 38,
+       "win_rate": 0.4211
+      },
+      "2025": {
+       "pnl": -80.75,
+       "n": 38,
+       "win_rate": 0.2895
+      },
+      "2026": {
+       "pnl": 67.04,
+       "n": 28,
+       "win_rate": 0.4643
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4479,
+      "bias": 2586,
+      "filter": 334,
+      "slots": 328,
+      "circuit_breaker": 36
+     },
+     "exit_reasons": {
+      "stop_loss": 64,
+      "take_profit": 33,
+      "stop_trail": 13
+     }
+    },
+    "ATOMUSDT": {
+     "n": 104,
+     "n_legs": 104,
+     "pnl": 2.4317,
+     "expectancy": 0.0234,
+     "win_rate": 0.3654,
+     "profit_factor": 1.0039,
+     "return_pct": 0.24,
+     "max_drawdown_pct": -11.06,
+     "total_fees": 30.83,
+     "per_year": {
+      "2023": {
+       "pnl": -10.34,
+       "n": 37,
+       "win_rate": 0.3784
+      },
+      "2024": {
+       "pnl": 15.33,
+       "n": 32,
+       "win_rate": 0.3438
+      },
+      "2025": {
+       "pnl": -26.79,
+       "n": 21,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": 24.23,
+       "n": 14,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5081,
+      "bias": 3036,
+      "slots": 264,
+      "filter": 191,
+      "cooldown": 54
+     },
+     "exit_reasons": {
+      "stop_loss": 60,
+      "take_profit": 32,
+      "stop_trail": 12
+     }
+    },
+    "AVAXUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 104.4328,
+     "expectancy": 0.7568,
+     "win_rate": 0.413,
+     "profit_factor": 1.1192,
+     "return_pct": 10.44,
+     "max_drawdown_pct": -11.81,
+     "total_fees": 36.77,
+     "per_year": {
+      "2023": {
+       "pnl": 126.47,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2024": {
+       "pnl": -29.61,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2025": {
+       "pnl": 29.45,
+       "n": 35,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -21.88,
+       "n": 29,
+       "win_rate": 0.3793
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5004,
+      "bias": 2775,
+      "slots": 411,
+      "filter": 355,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 76,
+      "take_profit": 44,
+      "stop_trail": 17,
+      "end_of_data": 1
+     }
+    },
+    "BCHUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": -145.7034,
+     "expectancy": -1.0334,
+     "win_rate": 0.3404,
+     "profit_factor": 0.8302,
+     "return_pct": -14.57,
+     "max_drawdown_pct": -19.27,
+     "total_fees": 36.27,
+     "per_year": {
+      "2023": {
+       "pnl": -56.08,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -9.04,
+       "n": 47,
+       "win_rate": 0.3617
+      },
+      "2025": {
+       "pnl": -47.62,
+       "n": 45,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": -32.96,
+       "n": 19,
+       "win_rate": 0.2632
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4669,
+      "bias": 2469,
+      "slots": 716,
+      "filter": 566,
+      "cooldown": 118
+     },
+     "exit_reasons": {
+      "stop_loss": 88,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "BNBUSDT": {
+     "n": 133,
+     "n_legs": 133,
+     "pnl": 56.2903,
+     "expectancy": 0.4232,
+     "win_rate": 0.3985,
+     "profit_factor": 1.0721,
+     "return_pct": 5.63,
+     "max_drawdown_pct": -10.4,
+     "total_fees": 57.35,
+     "per_year": {
+      "2023": {
+       "pnl": -49.59,
+       "n": 16,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 21.12,
+       "n": 40,
+       "win_rate": 0.45
+      },
+      "2025": {
+       "pnl": 121.89,
+       "n": 54,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": -37.13,
+       "n": 23,
+       "win_rate": 0.3043
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 2473,
+      "slots": 697,
+      "filter": 618,
+      "cooldown": 100
+     },
+     "exit_reasons": {
+      "stop_loss": 71,
+      "take_profit": 41,
+      "stop_trail": 21
+     }
+    },
+    "BTCUSDT": {
+     "n": 149,
+     "n_legs": 149,
+     "pnl": -79.8145,
+     "expectancy": -0.5357,
+     "win_rate": 0.3691,
+     "profit_factor": 0.9132,
+     "return_pct": -7.98,
+     "max_drawdown_pct": -18.41,
+     "total_fees": 74.51,
+     "per_year": {
+      "2023": {
+       "pnl": 12.87,
+       "n": 40,
+       "win_rate": 0.45
+      },
+      "2024": {
+       "pnl": -78.68,
+       "n": 49,
+       "win_rate": 0.3061
+      },
+      "2025": {
+       "pnl": -49.61,
+       "n": 28,
+       "win_rate": 0.2857
+      },
+      "2026": {
+       "pnl": 35.6,
+       "n": 32,
+       "win_rate": 0.4375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4826,
+      "bias": 2401,
+      "slots": 748,
+      "filter": 445,
+      "cooldown": 115
+     },
+     "exit_reasons": {
+      "stop_loss": 87,
+      "take_profit": 43,
+      "stop_trail": 19
+     }
+    },
+    "DOGEUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": -26.4417,
+     "expectancy": -0.1875,
+     "win_rate": 0.3404,
+     "profit_factor": 0.9711,
+     "return_pct": -2.64,
+     "max_drawdown_pct": -8.92,
+     "total_fees": 39.29,
+     "per_year": {
+      "2023": {
+       "pnl": 5.78,
+       "n": 34,
+       "win_rate": 0.3824
+      },
+      "2024": {
+       "pnl": -14.94,
+       "n": 41,
+       "win_rate": 0.3171
+      },
+      "2025": {
+       "pnl": 29.51,
+       "n": 40,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -46.8,
+       "n": 26,
+       "win_rate": 0.2692
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4611,
+      "bias": 2952,
+      "slots": 488,
+      "filter": 430,
+      "cooldown": 80
+     },
+     "exit_reasons": {
+      "stop_loss": 86,
+      "take_profit": 44,
+      "stop_trail": 10,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": -90.4024,
+     "expectancy": -0.9132,
+     "win_rate": 0.3434,
+     "profit_factor": 0.8571,
+     "return_pct": -9.04,
+     "max_drawdown_pct": -13.49,
+     "total_fees": 25.68,
+     "per_year": {
+      "2023": {
+       "pnl": -23.76,
+       "n": 28,
+       "win_rate": 0.3214
+      },
+      "2024": {
+       "pnl": -46.71,
+       "n": 36,
+       "win_rate": 0.3611
+      },
+      "2025": {
+       "pnl": -31.81,
+       "n": 19,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 11.88,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5068,
+      "bias": 3019,
+      "filter": 267,
+      "slots": 252,
+      "cooldown": 28
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 28,
+      "stop_trail": 8
+     }
+    },
+    "ETHUSDT": {
+     "n": 163,
+     "n_legs": 163,
+     "pnl": 193.3028,
+     "expectancy": 1.1859,
+     "win_rate": 0.4356,
+     "profit_factor": 1.2002,
+     "return_pct": 19.33,
+     "max_drawdown_pct": -13.08,
+     "total_fees": 63.55,
+     "per_year": {
+      "2023": {
+       "pnl": 9.59,
+       "n": 31,
+       "win_rate": 0.4516
+      },
+      "2024": {
+       "pnl": -17.04,
+       "n": 44,
+       "win_rate": 0.3864
+      },
+      "2025": {
+       "pnl": 110.97,
+       "n": 55,
+       "win_rate": 0.4545
+      },
+      "2026": {
+       "pnl": 89.78,
+       "n": 33,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4681,
+      "bias": 2633,
+      "slots": 709,
+      "filter": 422,
+      "cooldown": 102
+     },
+     "exit_reasons": {
+      "stop_loss": 86,
+      "take_profit": 54,
+      "stop_trail": 23
+     }
+    },
+    "LINKUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 73.2487,
+     "expectancy": 0.5308,
+     "win_rate": 0.3841,
+     "profit_factor": 1.0839,
+     "return_pct": 7.32,
+     "max_drawdown_pct": -10.33,
+     "total_fees": 38.2,
+     "per_year": {
+      "2023": {
+       "pnl": 65.76,
+       "n": 33,
+       "win_rate": 0.4242
+      },
+      "2024": {
+       "pnl": 29.2,
+       "n": 50,
+       "win_rate": 0.38
+      },
+      "2025": {
+       "pnl": -47.42,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2026": {
+       "pnl": 25.71,
+       "n": 26,
+       "win_rate": 0.4231
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4929,
+      "bias": 2492,
+      "slots": 638,
+      "filter": 401,
+      "cooldown": 116
+     },
+     "exit_reasons": {
+      "stop_loss": 77,
+      "take_profit": 44,
+      "stop_trail": 17
+     }
+    },
+    "LTCUSDT": {
+     "n": 98,
+     "n_legs": 98,
+     "pnl": 103.5696,
+     "expectancy": 1.0568,
+     "win_rate": 0.4082,
+     "profit_factor": 1.1731,
+     "return_pct": 10.36,
+     "max_drawdown_pct": -8.06,
+     "total_fees": 31.59,
+     "per_year": {
+      "2023": {
+       "pnl": 12.07,
+       "n": 11,
+       "win_rate": 0.3636
+      },
+      "2024": {
+       "pnl": 63.33,
+       "n": 32,
+       "win_rate": 0.4375
+      },
+      "2025": {
+       "pnl": 51.19,
+       "n": 24,
+       "win_rate": 0.4583
+      },
+      "2026": {
+       "pnl": -23.02,
+       "n": 31,
+       "win_rate": 0.3548
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 3122,
+      "filter": 469,
+      "slots": 349,
+      "cooldown": 40
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "take_profit": 33,
+      "stop_trail": 12
+     }
+    },
+    "NEARUSDT": {
+     "n": 137,
+     "n_legs": 137,
+     "pnl": -63.1647,
+     "expectancy": -0.4611,
+     "win_rate": 0.3577,
+     "profit_factor": 0.9187,
+     "return_pct": -6.32,
+     "max_drawdown_pct": -19.51,
+     "total_fees": 24.75,
+     "per_year": {
+      "2023": {
+       "pnl": 17.18,
+       "n": 34,
+       "win_rate": 0.3529
+      },
+      "2024": {
+       "pnl": -130.77,
+       "n": 36,
+       "win_rate": 0.2778
+      },
+      "2025": {
+       "pnl": -42.19,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2026": {
+       "pnl": 92.62,
+       "n": 43,
+       "win_rate": 0.4651
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5016,
+      "bias": 2578,
+      "slots": 601,
+      "filter": 260,
+      "cooldown": 108
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 37,
+      "stop_trail": 22
+     }
+    },
+    "OPUSDT": {
+     "n": 103,
+     "n_legs": 103,
+     "pnl": -72.6738,
+     "expectancy": -0.7056,
+     "win_rate": 0.3398,
+     "profit_factor": 0.8829,
+     "return_pct": -7.27,
+     "max_drawdown_pct": -14.49,
+     "total_fees": 20.61,
+     "per_year": {
+      "2023": {
+       "pnl": 10.2,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -57.1,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2025": {
+       "pnl": -43.76,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2026": {
+       "pnl": 17.99,
+       "n": 11,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4981,
+      "bias": 3121,
+      "slots": 326,
+      "filter": 128,
+      "cooldown": 52
+     },
+     "exit_reasons": {
+      "stop_loss": 61,
+      "take_profit": 28,
+      "stop_trail": 14
+     }
+    },
+    "SOLUSDT": {
+     "n": 154,
+     "n_legs": 154,
+     "pnl": 36.1898,
+     "expectancy": 0.235,
+     "win_rate": 0.4026,
+     "profit_factor": 1.0358,
+     "return_pct": 3.62,
+     "max_drawdown_pct": -24.19,
+     "total_fees": 42.78,
+     "per_year": {
+      "2023": {
+       "pnl": 228.32,
+       "n": 52,
+       "win_rate": 0.5
+      },
+      "2024": {
+       "pnl": -117.26,
+       "n": 31,
+       "win_rate": 0.3226
+      },
+      "2025": {
+       "pnl": -99.93,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2026": {
+       "pnl": 25.06,
+       "n": 28,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4955,
+      "bias": 2334,
+      "slots": 728,
+      "filter": 398,
+      "cooldown": 126
+     },
+     "exit_reasons": {
+      "stop_loss": 89,
+      "take_profit": 47,
+      "stop_trail": 18
+     }
+    },
+    "SUIUSDT": {
+     "n": 127,
+     "n_legs": 127,
+     "pnl": -19.3455,
+     "expectancy": -0.1523,
+     "win_rate": 0.3622,
+     "profit_factor": 0.9747,
+     "return_pct": -1.93,
+     "max_drawdown_pct": -11.85,
+     "total_fees": 24.5,
+     "per_year": {
+      "2024": {
+       "pnl": -11.52,
+       "n": 69,
+       "win_rate": 0.3478
+      },
+      "2025": {
+       "pnl": -32.1,
+       "n": 35,
+       "win_rate": 0.3714
+      },
+      "2026": {
+       "pnl": 24.27,
+       "n": 23,
+       "win_rate": 0.3913
+      }
+     },
+     "positive_years": 1,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 4324,
+      "bias": 2298,
+      "slots": 466,
+      "filter": 291,
+      "cooldown": 104
+     },
+     "exit_reasons": {
+      "stop_loss": 75,
+      "take_profit": 38,
+      "stop_trail": 14
+     }
+    },
+    "TONUSDT": {
+     "n": 72,
+     "n_legs": 72,
+     "pnl": -9.4814,
+     "expectancy": -0.1317,
+     "win_rate": 0.3333,
+     "profit_factor": 0.9781,
+     "return_pct": -0.95,
+     "max_drawdown_pct": -17.38,
+     "total_fees": 18.06,
+     "per_year": {
+      "2024": {
+       "pnl": -62.74,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2025": {
+       "pnl": 28.23,
+       "n": 31,
+       "win_rate": 0.3871
+      },
+      "2026": {
+       "pnl": 25.03,
+       "n": 16,
+       "win_rate": 0.3125
+      }
+     },
+     "positive_years": 2,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 3515,
+      "bias": 2019,
+      "filter": 261,
+      "slots": 197,
+      "cooldown": 33
+     },
+     "exit_reasons": {
+      "stop_loss": 41,
+      "take_profit": 22,
+      "stop_trail": 9
+     }
+    },
+    "TRXUSDT": {
+     "n": 164,
+     "n_legs": 164,
+     "pnl": 171.2671,
+     "expectancy": 1.0443,
+     "win_rate": 0.4207,
+     "profit_factor": 1.1959,
+     "return_pct": 17.13,
+     "max_drawdown_pct": -17.85,
+     "total_fees": 116.17,
+     "per_year": {
+      "2023": {
+       "pnl": -94.01,
+       "n": 34,
+       "win_rate": 0.2647
+      },
+      "2024": {
+       "pnl": -47.49,
+       "n": 54,
+       "win_rate": 0.3519
+      },
+      "2025": {
+       "pnl": 125.74,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2026": {
+       "pnl": 187.02,
+       "n": 31,
+       "win_rate": 0.6129
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5283,
+      "bias": 1668,
+      "slots": 763,
+      "filter": 671,
+      "cooldown": 160
+     },
+     "exit_reasons": {
+      "stop_loss": 84,
+      "take_profit": 56,
+      "stop_trail": 24
+     }
+    },
+    "XRPUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 106.9796,
+     "expectancy": 1.0698,
+     "win_rate": 0.39,
+     "profit_factor": 1.1624,
+     "return_pct": 10.7,
+     "max_drawdown_pct": -11.3,
+     "total_fees": 30.49,
+     "per_year": {
+      "2023": {
+       "pnl": -2.95,
+       "n": 24,
+       "win_rate": 0.3333
+      },
+      "2024": {
+       "pnl": 151.16,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2025": {
+       "pnl": 17.98,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -59.21,
+       "n": 22,
+       "win_rate": 0.2727
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4492,
+      "bias": 2926,
+      "filter": 680,
+      "slots": 469,
+      "cooldown": 73
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "take_profit": 35,
+      "stop_trail": 9
+     }
+    }
+   },
+   "taker_noslip": {
+    "ADAUSDT": {
+     "n": 117,
+     "n_legs": 117,
+     "pnl": 84.5841,
+     "expectancy": 0.7229,
+     "win_rate": 0.3932,
+     "profit_factor": 1.1139,
+     "return_pct": 8.46,
+     "max_drawdown_pct": -20.21,
+     "total_fees": 30.65,
+     "per_year": {
+      "2023": {
+       "pnl": 77.68,
+       "n": 38,
+       "win_rate": 0.4474
+      },
+      "2024": {
+       "pnl": 7.09,
+       "n": 23,
+       "win_rate": 0.3913
+      },
+      "2025": {
+       "pnl": -77.4,
+       "n": 32,
+       "win_rate": 0.2812
+      },
+      "2026": {
+       "pnl": 77.22,
+       "n": 24,
+       "win_rate": 0.4583
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4909,
+      "bias": 2810,
+      "slots": 400,
+      "filter": 393,
+      "cooldown": 88
+     },
+     "exit_reasons": {
+      "stop_loss": 67,
+      "take_profit": 39,
+      "stop_trail": 11
+     }
+    },
+    "APTUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 39.1904,
+     "expectancy": 0.3919,
+     "win_rate": 0.37,
+     "profit_factor": 1.0636,
+     "return_pct": 3.92,
+     "max_drawdown_pct": -10.53,
+     "total_fees": 22.56,
+     "per_year": {
+      "2023": {
+       "pnl": -16.47,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 106.8,
+       "n": 51,
+       "win_rate": 0.451
+      },
+      "2025": {
+       "pnl": -50.78,
+       "n": 20,
+       "win_rate": 0.25
+      },
+      "2026": {
+       "pnl": -0.36,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4891,
+      "bias": 3006,
+      "slots": 407,
+      "filter": 270,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "take_profit": 31,
+      "stop_trail": 12
+     }
+    },
+    "ARBUSDT": {
+     "n": 110,
+     "n_legs": 110,
+     "pnl": 29.0938,
+     "expectancy": 0.2645,
+     "win_rate": 0.3818,
+     "profit_factor": 1.0443,
+     "return_pct": 2.91,
+     "max_drawdown_pct": -8.75,
+     "total_fees": 23.02,
+     "per_year": {
+      "2023": {
+       "pnl": -32.93,
+       "n": 6,
+       "win_rate": 0.1667
+      },
+      "2024": {
+       "pnl": 42.88,
+       "n": 38,
+       "win_rate": 0.4211
+      },
+      "2025": {
+       "pnl": -51.3,
+       "n": 38,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 70.45,
+       "n": 28,
+       "win_rate": 0.4643
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4479,
+      "bias": 2586,
+      "filter": 334,
+      "slots": 329,
+      "circuit_breaker": 35
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 34,
+      "stop_trail": 13
+     }
+    },
+    "ATOMUSDT": {
+     "n": 104,
+     "n_legs": 104,
+     "pnl": 8.6843,
+     "expectancy": 0.0835,
+     "win_rate": 0.3654,
+     "profit_factor": 1.0138,
+     "return_pct": 0.87,
+     "max_drawdown_pct": -10.98,
+     "total_fees": 30.92,
+     "per_year": {
+      "2023": {
+       "pnl": -8.0,
+       "n": 37,
+       "win_rate": 0.3784
+      },
+      "2024": {
+       "pnl": 17.12,
+       "n": 32,
+       "win_rate": 0.3438
+      },
+      "2025": {
+       "pnl": -25.88,
+       "n": 21,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": 25.44,
+       "n": 14,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5081,
+      "bias": 3036,
+      "slots": 264,
+      "filter": 191,
+      "cooldown": 54
+     },
+     "exit_reasons": {
+      "stop_loss": 60,
+      "take_profit": 32,
+      "stop_trail": 12
+     }
+    },
+    "AVAXUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 112.0246,
+     "expectancy": 0.8118,
+     "win_rate": 0.413,
+     "profit_factor": 1.128,
+     "return_pct": 11.2,
+     "max_drawdown_pct": -11.71,
+     "total_fees": 36.9,
+     "per_year": {
+      "2023": {
+       "pnl": 129.15,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2024": {
+       "pnl": -28.36,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2025": {
+       "pnl": 31.53,
+       "n": 35,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -20.3,
+       "n": 29,
+       "win_rate": 0.3793
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5004,
+      "bias": 2775,
+      "slots": 411,
+      "filter": 355,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 76,
+      "take_profit": 44,
+      "stop_trail": 17,
+      "end_of_data": 1
+     }
+    },
+    "BCHUSDT": {
+     "n": 142,
+     "n_legs": 142,
+     "pnl": -147.9476,
+     "expectancy": -1.0419,
+     "win_rate": 0.3451,
+     "profit_factor": 0.8289,
+     "return_pct": -14.79,
+     "max_drawdown_pct": -18.88,
+     "total_fees": 36.65,
+     "per_year": {
+      "2023": {
+       "pnl": -54.49,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -7.02,
+       "n": 47,
+       "win_rate": 0.3617
+      },
+      "2025": {
+       "pnl": -45.28,
+       "n": 45,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": -41.16,
+       "n": 20,
+       "win_rate": 0.3
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4669,
+      "bias": 2469,
+      "slots": 718,
+      "filter": 566,
+      "cooldown": 117
+     },
+     "exit_reasons": {
+      "stop_loss": 89,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "BNBUSDT": {
+     "n": 134,
+     "n_legs": 134,
+     "pnl": 95.0087,
+     "expectancy": 0.709,
+     "win_rate": 0.3955,
+     "profit_factor": 1.1193,
+     "return_pct": 9.5,
+     "max_drawdown_pct": -10.28,
+     "total_fees": 58.7,
+     "per_year": {
+      "2023": {
+       "pnl": -48.33,
+       "n": 16,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 27.68,
+       "n": 41,
+       "win_rate": 0.439
+      },
+      "2025": {
+       "pnl": 151.36,
+       "n": 54,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": -35.7,
+       "n": 23,
+       "win_rate": 0.3043
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 2473,
+      "slots": 695,
+      "filter": 618,
+      "cooldown": 103
+     },
+     "exit_reasons": {
+      "stop_loss": 72,
+      "take_profit": 43,
+      "stop_trail": 19
+     }
+    },
+    "BTCUSDT": {
+     "n": 147,
+     "n_legs": 147,
+     "pnl": 4.4712,
+     "expectancy": 0.0304,
+     "win_rate": 0.381,
+     "profit_factor": 1.0049,
+     "return_pct": 0.45,
+     "max_drawdown_pct": -15.63,
+     "total_fees": 77.42,
+     "per_year": {
+      "2023": {
+       "pnl": 47.7,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2024": {
+       "pnl": -77.27,
+       "n": 49,
+       "win_rate": 0.3061
+      },
+      "2025": {
+       "pnl": -23.63,
+       "n": 26,
+       "win_rate": 0.2692
+      },
+      "2026": {
+       "pnl": 57.67,
+       "n": 32,
+       "win_rate": 0.4688
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4826,
+      "bias": 2401,
+      "slots": 751,
+      "filter": 445,
+      "cooldown": 111
+     },
+     "exit_reasons": {
+      "stop_loss": 83,
+      "take_profit": 45,
+      "stop_trail": 19
+     }
+    },
+    "DOGEUSDT": {
+     "n": 142,
+     "n_legs": 142,
+     "pnl": 3.5853,
+     "expectancy": 0.0252,
+     "win_rate": 0.3451,
+     "profit_factor": 1.0038,
+     "return_pct": 0.36,
+     "max_drawdown_pct": -8.86,
+     "total_fees": 40.21,
+     "per_year": {
+      "2023": {
+       "pnl": 20.43,
+       "n": 34,
+       "win_rate": 0.3824
+      },
+      "2024": {
+       "pnl": -13.58,
+       "n": 41,
+       "win_rate": 0.3171
+      },
+      "2025": {
+       "pnl": 43.13,
+       "n": 41,
+       "win_rate": 0.3902
+      },
+      "2026": {
+       "pnl": -46.4,
+       "n": 26,
+       "win_rate": 0.2692
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4611,
+      "bias": 2952,
+      "slots": 485,
+      "filter": 430,
+      "cooldown": 82
+     },
+     "exit_reasons": {
+      "stop_loss": 87,
+      "take_profit": 46,
+      "stop_trail": 8,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": -85.6607,
+     "expectancy": -0.8653,
+     "win_rate": 0.3434,
+     "profit_factor": 0.8643,
+     "return_pct": -8.57,
+     "max_drawdown_pct": -13.32,
+     "total_fees": 25.75,
+     "per_year": {
+      "2023": {
+       "pnl": -22.05,
+       "n": 28,
+       "win_rate": 0.3214
+      },
+      "2024": {
+       "pnl": -45.12,
+       "n": 36,
+       "win_rate": 0.3611
+      },
+      "2025": {
+       "pnl": -31.14,
+       "n": 19,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 12.65,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5068,
+      "bias": 3019,
+      "filter": 267,
+      "slots": 252,
+      "cooldown": 28
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 28,
+      "stop_trail": 8
+     }
+    },
+    "ETHUSDT": {
+     "n": 162,
+     "n_legs": 162,
+     "pnl": 258.1339,
+     "expectancy": 1.5934,
+     "win_rate": 0.4444,
+     "profit_factor": 1.2658,
+     "return_pct": 25.81,
+     "max_drawdown_pct": -12.92,
+     "total_fees": 65.3,
+     "per_year": {
+      "2023": {
+       "pnl": 43.62,
+       "n": 31,
+       "win_rate": 0.4839
+      },
+      "2024": {
+       "pnl": -14.24,
+       "n": 44,
+       "win_rate": 0.3864
+      },
+      "2025": {
+       "pnl": 119.11,
+       "n": 55,
+       "win_rate": 0.4545
+      },
+      "2026": {
+       "pnl": 109.65,
+       "n": 32,
+       "win_rate": 0.4688
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4681,
+      "bias": 2633,
+      "slots": 714,
+      "filter": 422,
+      "cooldown": 98
+     },
+     "exit_reasons": {
+      "stop_loss": 84,
+      "take_profit": 55,
+      "stop_trail": 23
+     }
+    },
+    "LINKUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": 132.9461,
+     "expectancy": 0.9429,
+     "win_rate": 0.3972,
+     "profit_factor": 1.1501,
+     "return_pct": 13.29,
+     "max_drawdown_pct": -10.21,
+     "total_fees": 39.79,
+     "per_year": {
+      "2023": {
+       "pnl": 76.35,
+       "n": 34,
+       "win_rate": 0.4118
+      },
+      "2024": {
+       "pnl": 20.71,
+       "n": 51,
+       "win_rate": 0.3922
+      },
+      "2025": {
+       "pnl": -46.12,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2026": {
+       "pnl": 82.01,
+       "n": 27,
+       "win_rate": 0.4815
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4929,
+      "bias": 2492,
+      "slots": 640,
+      "filter": 401,
+      "cooldown": 114
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 47,
+      "stop_trail": 16
+     }
+    },
+    "LTCUSDT": {
+     "n": 98,
+     "n_legs": 98,
+     "pnl": 110.1205,
+     "expectancy": 1.1237,
+     "win_rate": 0.4082,
+     "profit_factor": 1.1847,
+     "return_pct": 11.01,
+     "max_drawdown_pct": -7.97,
+     "total_fees": 31.68,
+     "per_year": {
+      "2023": {
+       "pnl": 12.83,
+       "n": 11,
+       "win_rate": 0.3636
+      },
+      "2024": {
+       "pnl": 65.05,
+       "n": 32,
+       "win_rate": 0.4375
+      },
+      "2025": {
+       "pnl": 52.75,
+       "n": 24,
+       "win_rate": 0.4583
+      },
+      "2026": {
+       "pnl": -20.52,
+       "n": 31,
+       "win_rate": 0.3548
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 3122,
+      "filter": 469,
+      "slots": 349,
+      "cooldown": 40
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "take_profit": 33,
+      "stop_trail": 12
+     }
+    },
+    "NEARUSDT": {
+     "n": 137,
+     "n_legs": 137,
+     "pnl": -29.7493,
+     "expectancy": -0.2171,
+     "win_rate": 0.3577,
+     "profit_factor": 0.962,
+     "return_pct": -2.97,
+     "max_drawdown_pct": -18.35,
+     "total_fees": 25.04,
+     "per_year": {
+      "2023": {
+       "pnl": 18.88,
+       "n": 34,
+       "win_rate": 0.3529
+      },
+      "2024": {
+       "pnl": -119.1,
+       "n": 36,
+       "win_rate": 0.2778
+      },
+      "2025": {
+       "pnl": -42.04,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2026": {
+       "pnl": 112.51,
+       "n": 43,
+       "win_rate": 0.4651
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5016,
+      "bias": 2578,
+      "slots": 601,
+      "filter": 260,
+      "cooldown": 108
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 39,
+      "stop_trail": 20
+     }
+    },
+    "OPUSDT": {
+     "n": 103,
+     "n_legs": 103,
+     "pnl": -68.6636,
+     "expectancy": -0.6666,
+     "win_rate": 0.3398,
+     "profit_factor": 0.8891,
+     "return_pct": -6.87,
+     "max_drawdown_pct": -14.26,
+     "total_fees": 20.65,
+     "per_year": {
+      "2023": {
+       "pnl": 11.54,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -55.5,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2025": {
+       "pnl": -43.19,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2026": {
+       "pnl": 18.49,
+       "n": 11,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4981,
+      "bias": 3121,
+      "slots": 326,
+      "filter": 128,
+      "cooldown": 52
+     },
+     "exit_reasons": {
+      "stop_loss": 61,
+      "take_profit": 28,
+      "stop_trail": 14
+     }
+    },
+    "SOLUSDT": {
+     "n": 153,
+     "n_legs": 153,
+     "pnl": -17.4399,
+     "expectancy": -0.114,
+     "win_rate": 0.3856,
+     "profit_factor": 0.982,
+     "return_pct": -1.74,
+     "max_drawdown_pct": -23.2,
+     "total_fees": 40.39,
+     "per_year": {
+      "2023": {
+       "pnl": 146.29,
+       "n": 52,
+       "win_rate": 0.4423
+      },
+      "2024": {
+       "pnl": -97.28,
+       "n": 30,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -91.93,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2026": {
+       "pnl": 25.48,
+       "n": 28,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4955,
+      "bias": 2334,
+      "slots": 722,
+      "filter": 398,
+      "cooldown": 120
+     },
+     "exit_reasons": {
+      "stop_loss": 91,
+      "take_profit": 45,
+      "stop_trail": 17
+     }
+    },
+    "SUIUSDT": {
+     "n": 127,
+     "n_legs": 127,
+     "pnl": -6.7977,
+     "expectancy": -0.0535,
+     "win_rate": 0.3622,
+     "profit_factor": 0.991,
+     "return_pct": -0.68,
+     "max_drawdown_pct": -11.78,
+     "total_fees": 24.63,
+     "per_year": {
+      "2024": {
+       "pnl": -9.02,
+       "n": 69,
+       "win_rate": 0.3478
+      },
+      "2025": {
+       "pnl": -23.38,
+       "n": 35,
+       "win_rate": 0.3714
+      },
+      "2026": {
+       "pnl": 25.59,
+       "n": 23,
+       "win_rate": 0.3913
+      }
+     },
+     "positive_years": 1,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 4324,
+      "bias": 2298,
+      "slots": 466,
+      "filter": 291,
+      "cooldown": 104
+     },
+     "exit_reasons": {
+      "stop_loss": 74,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "TONUSDT": {
+     "n": 72,
+     "n_legs": 72,
+     "pnl": -5.7545,
+     "expectancy": -0.0799,
+     "win_rate": 0.3333,
+     "profit_factor": 0.9866,
+     "return_pct": -0.58,
+     "max_drawdown_pct": -17.24,
+     "total_fees": 18.1,
+     "per_year": {
+      "2024": {
+       "pnl": -61.78,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2025": {
+       "pnl": 30.0,
+       "n": 31,
+       "win_rate": 0.3871
+      },
+      "2026": {
+       "pnl": 26.03,
+       "n": 16,
+       "win_rate": 0.3125
+      }
+     },
+     "positive_years": 2,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 3515,
+      "bias": 2019,
+      "filter": 261,
+      "slots": 197,
+      "cooldown": 33
+     },
+     "exit_reasons": {
+      "stop_loss": 41,
+      "take_profit": 22,
+      "stop_trail": 9
+     }
+    },
+    "TRXUSDT": {
+     "n": 164,
+     "n_legs": 164,
+     "pnl": 249.1893,
+     "expectancy": 1.5194,
+     "win_rate": 0.4329,
+     "profit_factor": 1.2823,
+     "return_pct": 24.92,
+     "max_drawdown_pct": -14.4,
+     "total_fees": 121.08,
+     "per_year": {
+      "2023": {
+       "pnl": -89.46,
+       "n": 34,
+       "win_rate": 0.2647
+      },
+      "2024": {
+       "pnl": -6.48,
+       "n": 54,
+       "win_rate": 0.3704
+      },
+      "2025": {
+       "pnl": 138.59,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2026": {
+       "pnl": 206.55,
+       "n": 31,
+       "win_rate": 0.6452
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5283,
+      "bias": 1668,
+      "slots": 772,
+      "filter": 671,
+      "cooldown": 160
+     },
+     "exit_reasons": {
+      "stop_loss": 83,
+      "take_profit": 58,
+      "stop_trail": 23
+     }
+    },
+    "XRPUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 113.0194,
+     "expectancy": 1.1302,
+     "win_rate": 0.39,
+     "profit_factor": 1.172,
+     "return_pct": 11.3,
+     "max_drawdown_pct": -11.08,
+     "total_fees": 30.58,
+     "per_year": {
+      "2023": {
+       "pnl": -1.54,
+       "n": 24,
+       "win_rate": 0.3333
+      },
+      "2024": {
+       "pnl": 153.6,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2025": {
+       "pnl": 18.88,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -57.92,
+       "n": 22,
+       "win_rate": 0.2727
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4492,
+      "bias": 2926,
+      "filter": 680,
+      "slots": 469,
+      "cooldown": 73
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "take_profit": 35,
+      "stop_trail": 9
+     }
+    }
+   },
+   "maker_tp": {
+    "ADAUSDT": {
+     "n": 117,
+     "n_legs": 117,
+     "pnl": 83.6933,
+     "expectancy": 0.7153,
+     "win_rate": 0.3932,
+     "profit_factor": 1.1122,
+     "return_pct": 8.37,
+     "max_drawdown_pct": -20.33,
+     "total_fees": 27.32,
+     "per_year": {
+      "2023": {
+       "pnl": 77.52,
+       "n": 38,
+       "win_rate": 0.4474
+      },
+      "2024": {
+       "pnl": 6.67,
+       "n": 23,
+       "win_rate": 0.3913
+      },
+      "2025": {
+       "pnl": -77.78,
+       "n": 32,
+       "win_rate": 0.2812
+      },
+      "2026": {
+       "pnl": 77.28,
+       "n": 24,
+       "win_rate": 0.4583
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4909,
+      "bias": 2810,
+      "slots": 400,
+      "filter": 393,
+      "cooldown": 88
+     },
+     "exit_reasons": {
+      "stop_loss": 67,
+      "take_profit": 39,
+      "stop_trail": 11
+     }
+    },
+    "APTUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 38.2955,
+     "expectancy": 0.383,
+     "win_rate": 0.37,
+     "profit_factor": 1.0619,
+     "return_pct": 3.83,
+     "max_drawdown_pct": -10.59,
+     "total_fees": 20.24,
+     "per_year": {
+      "2023": {
+       "pnl": -16.5,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 106.63,
+       "n": 51,
+       "win_rate": 0.451
+      },
+      "2025": {
+       "pnl": -51.09,
+       "n": 20,
+       "win_rate": 0.25
+      },
+      "2026": {
+       "pnl": -0.74,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4891,
+      "bias": 3006,
+      "slots": 407,
+      "filter": 270,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "take_profit": 31,
+      "stop_trail": 12
+     }
+    },
+    "ARBUSDT": {
+     "n": 110,
+     "n_legs": 110,
+     "pnl": -2.3957,
+     "expectancy": -0.0218,
+     "win_rate": 0.3727,
+     "profit_factor": 0.9964,
+     "return_pct": -0.24,
+     "max_drawdown_pct": -11.53,
+     "total_fees": 20.54,
+     "per_year": {
+      "2023": {
+       "pnl": -33.35,
+       "n": 6,
+       "win_rate": 0.1667
+      },
+      "2024": {
+       "pnl": 42.72,
+       "n": 38,
+       "win_rate": 0.4211
+      },
+      "2025": {
+       "pnl": -80.03,
+       "n": 38,
+       "win_rate": 0.2895
+      },
+      "2026": {
+       "pnl": 68.26,
+       "n": 28,
+       "win_rate": 0.4643
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4479,
+      "bias": 2586,
+      "filter": 334,
+      "slots": 328,
+      "circuit_breaker": 36
+     },
+     "exit_reasons": {
+      "stop_loss": 64,
+      "take_profit": 33,
+      "stop_trail": 13
+     }
+    },
+    "ATOMUSDT": {
+     "n": 104,
+     "n_legs": 104,
+     "pnl": 7.4404,
+     "expectancy": 0.0715,
+     "win_rate": 0.3654,
+     "profit_factor": 1.0118,
+     "return_pct": 0.74,
+     "max_drawdown_pct": -11.05,
+     "total_fees": 27.68,
+     "per_year": {
+      "2023": {
+       "pnl": -8.46,
+       "n": 37,
+       "win_rate": 0.3784
+      },
+      "2024": {
+       "pnl": 16.73,
+       "n": 32,
+       "win_rate": 0.3438
+      },
+      "2025": {
+       "pnl": -26.11,
+       "n": 21,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": 25.28,
+       "n": 14,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5081,
+      "bias": 3036,
+      "slots": 264,
+      "filter": 191,
+      "cooldown": 54
+     },
+     "exit_reasons": {
+      "stop_loss": 60,
+      "take_profit": 32,
+      "stop_trail": 12
+     }
+    },
+    "AVAXUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 110.3162,
+     "expectancy": 0.7994,
+     "win_rate": 0.413,
+     "profit_factor": 1.1255,
+     "return_pct": 11.03,
+     "max_drawdown_pct": -11.78,
+     "total_fees": 33.17,
+     "per_year": {
+      "2023": {
+       "pnl": 129.18,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2024": {
+       "pnl": -28.82,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2025": {
+       "pnl": 31.01,
+       "n": 35,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -21.05,
+       "n": 29,
+       "win_rate": 0.3793
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5004,
+      "bias": 2775,
+      "slots": 411,
+      "filter": 355,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 76,
+      "take_profit": 44,
+      "stop_trail": 17,
+      "end_of_data": 1
+     }
+    },
+    "BCHUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": -141.1662,
+     "expectancy": -1.0012,
+     "win_rate": 0.3404,
+     "profit_factor": 0.8359,
+     "return_pct": -14.12,
+     "max_drawdown_pct": -19.05,
+     "total_fees": 33.25,
+     "per_year": {
+      "2023": {
+       "pnl": -55.12,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -7.77,
+       "n": 47,
+       "win_rate": 0.3617
+      },
+      "2025": {
+       "pnl": -45.66,
+       "n": 45,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": -32.62,
+       "n": 19,
+       "win_rate": 0.2632
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4669,
+      "bias": 2469,
+      "slots": 716,
+      "filter": 566,
+      "cooldown": 118
+     },
+     "exit_reasons": {
+      "stop_loss": 88,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "BNBUSDT": {
+     "n": 133,
+     "n_legs": 133,
+     "pnl": 66.455,
+     "expectancy": 0.4997,
+     "win_rate": 0.3985,
+     "profit_factor": 1.0847,
+     "return_pct": 6.65,
+     "max_drawdown_pct": -10.37,
+     "total_fees": 51.4,
+     "per_year": {
+      "2023": {
+       "pnl": -49.03,
+       "n": 16,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 23.08,
+       "n": 40,
+       "win_rate": 0.45
+      },
+      "2025": {
+       "pnl": 128.32,
+       "n": 54,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": -35.91,
+       "n": 23,
+       "win_rate": 0.3043
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 2473,
+      "slots": 697,
+      "filter": 618,
+      "cooldown": 100
+     },
+     "exit_reasons": {
+      "stop_loss": 71,
+      "take_profit": 41,
+      "stop_trail": 21
+     }
+    },
+    "BTCUSDT": {
+     "n": 149,
+     "n_legs": 149,
+     "pnl": -70.4692,
+     "expectancy": -0.4729,
+     "win_rate": 0.3691,
+     "profit_factor": 0.9238,
+     "return_pct": -7.05,
+     "max_drawdown_pct": -18.19,
+     "total_fees": 68.55,
+     "per_year": {
+      "2023": {
+       "pnl": 16.21,
+       "n": 40,
+       "win_rate": 0.45
+      },
+      "2024": {
+       "pnl": -76.35,
+       "n": 49,
+       "win_rate": 0.3061
+      },
+      "2025": {
+       "pnl": -48.44,
+       "n": 28,
+       "win_rate": 0.2857
+      },
+      "2026": {
+       "pnl": 38.11,
+       "n": 32,
+       "win_rate": 0.4375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4826,
+      "bias": 2401,
+      "slots": 748,
+      "filter": 445,
+      "cooldown": 115
+     },
+     "exit_reasons": {
+      "stop_loss": 87,
+      "take_profit": 43,
+      "stop_trail": 19
+     }
+    },
+    "DOGEUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": -20.0813,
+     "expectancy": -0.1424,
+     "win_rate": 0.3404,
+     "profit_factor": 0.9781,
+     "return_pct": -2.01,
+     "max_drawdown_pct": -8.9,
+     "total_fees": 35.15,
+     "per_year": {
+      "2023": {
+       "pnl": 8.09,
+       "n": 34,
+       "win_rate": 0.3824
+      },
+      "2024": {
+       "pnl": -13.51,
+       "n": 41,
+       "win_rate": 0.3171
+      },
+      "2025": {
+       "pnl": 31.36,
+       "n": 40,
+       "win_rate": 0.375
+      },
+      "2026": {
+       "pnl": -46.03,
+       "n": 26,
+       "win_rate": 0.2692
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4611,
+      "bias": 2952,
+      "slots": 488,
+      "filter": 430,
+      "cooldown": 80
+     },
+     "exit_reasons": {
+      "stop_loss": 86,
+      "take_profit": 44,
+      "stop_trail": 10,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": -86.8969,
+     "expectancy": -0.8777,
+     "win_rate": 0.3434,
+     "profit_factor": 0.8629,
+     "return_pct": -8.69,
+     "max_drawdown_pct": -13.41,
+     "total_fees": 23.32,
+     "per_year": {
+      "2023": {
+       "pnl": -22.47,
+       "n": 28,
+       "win_rate": 0.3214
+      },
+      "2024": {
+       "pnl": -45.6,
+       "n": 36,
+       "win_rate": 0.3611
+      },
+      "2025": {
+       "pnl": -31.38,
+       "n": 19,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 12.55,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5068,
+      "bias": 3019,
+      "filter": 267,
+      "slots": 252,
+      "cooldown": 28
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 28,
+      "stop_trail": 8
+     }
+    },
+    "ETHUSDT": {
+     "n": 163,
+     "n_legs": 163,
+     "pnl": 205.5731,
+     "expectancy": 1.2612,
+     "win_rate": 0.4356,
+     "profit_factor": 1.2117,
+     "return_pct": 20.56,
+     "max_drawdown_pct": -13.03,
+     "total_fees": 56.93,
+     "per_year": {
+      "2023": {
+       "pnl": 12.28,
+       "n": 31,
+       "win_rate": 0.4516
+      },
+      "2024": {
+       "pnl": -15.14,
+       "n": 44,
+       "win_rate": 0.3864
+      },
+      "2025": {
+       "pnl": 115.3,
+       "n": 55,
+       "win_rate": 0.4545
+      },
+      "2026": {
+       "pnl": 93.13,
+       "n": 33,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4681,
+      "bias": 2633,
+      "slots": 709,
+      "filter": 422,
+      "cooldown": 102
+     },
+     "exit_reasons": {
+      "stop_loss": 86,
+      "take_profit": 54,
+      "stop_trail": 23
+     }
+    },
+    "LINKUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 79.3597,
+     "expectancy": 0.5751,
+     "win_rate": 0.3841,
+     "profit_factor": 1.0906,
+     "return_pct": 7.94,
+     "max_drawdown_pct": -10.27,
+     "total_fees": 34.47,
+     "per_year": {
+      "2023": {
+       "pnl": 67.54,
+       "n": 33,
+       "win_rate": 0.4242
+      },
+      "2024": {
+       "pnl": 31.36,
+       "n": 50,
+       "win_rate": 0.38
+      },
+      "2025": {
+       "pnl": -46.76,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2026": {
+       "pnl": 27.22,
+       "n": 26,
+       "win_rate": 0.4231
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4929,
+      "bias": 2492,
+      "slots": 638,
+      "filter": 401,
+      "cooldown": 116
+     },
+     "exit_reasons": {
+      "stop_loss": 77,
+      "take_profit": 44,
+      "stop_trail": 17
+     }
+    },
+    "LTCUSDT": {
+     "n": 98,
+     "n_legs": 98,
+     "pnl": 109.5708,
+     "expectancy": 1.1181,
+     "win_rate": 0.4082,
+     "profit_factor": 1.1826,
+     "return_pct": 10.96,
+     "max_drawdown_pct": -8.06,
+     "total_fees": 27.94,
+     "per_year": {
+      "2023": {
+       "pnl": 12.92,
+       "n": 11,
+       "win_rate": 0.3636
+      },
+      "2024": {
+       "pnl": 65.27,
+       "n": 32,
+       "win_rate": 0.4375
+      },
+      "2025": {
+       "pnl": 52.85,
+       "n": 24,
+       "win_rate": 0.4583
+      },
+      "2026": {
+       "pnl": -21.47,
+       "n": 31,
+       "win_rate": 0.3548
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 3122,
+      "filter": 469,
+      "slots": 349,
+      "cooldown": 40
+     },
+     "exit_reasons": {
+      "stop_loss": 53,
+      "take_profit": 33,
+      "stop_trail": 12
+     }
+    },
+    "NEARUSDT": {
+     "n": 137,
+     "n_legs": 137,
+     "pnl": -60.0424,
+     "expectancy": -0.4383,
+     "win_rate": 0.3577,
+     "profit_factor": 0.9229,
+     "return_pct": -6.0,
+     "max_drawdown_pct": -19.43,
+     "total_fees": 22.83,
+     "per_year": {
+      "2023": {
+       "pnl": 18.18,
+       "n": 34,
+       "win_rate": 0.3529
+      },
+      "2024": {
+       "pnl": -130.57,
+       "n": 36,
+       "win_rate": 0.2778
+      },
+      "2025": {
+       "pnl": -41.76,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2026": {
+       "pnl": 94.11,
+       "n": 43,
+       "win_rate": 0.4651
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5016,
+      "bias": 2578,
+      "slots": 601,
+      "filter": 260,
+      "cooldown": 108
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 37,
+      "stop_trail": 22
+     }
+    },
+    "OPUSDT": {
+     "n": 103,
+     "n_legs": 103,
+     "pnl": -69.839,
+     "expectancy": -0.678,
+     "win_rate": 0.3398,
+     "profit_factor": 0.8876,
+     "return_pct": -6.98,
+     "max_drawdown_pct": -14.37,
+     "total_fees": 18.72,
+     "per_year": {
+      "2023": {
+       "pnl": 11.45,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -56.14,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2025": {
+       "pnl": -43.55,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2026": {
+       "pnl": 18.4,
+       "n": 11,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4981,
+      "bias": 3121,
+      "slots": 326,
+      "filter": 128,
+      "cooldown": 52
+     },
+     "exit_reasons": {
+      "stop_loss": 61,
+      "take_profit": 28,
+      "stop_trail": 14
+     }
+    },
+    "SOLUSDT": {
+     "n": 154,
+     "n_legs": 154,
+     "pnl": 42.6734,
+     "expectancy": 0.2771,
+     "win_rate": 0.4026,
+     "profit_factor": 1.042,
+     "return_pct": 4.27,
+     "max_drawdown_pct": -24.13,
+     "total_fees": 38.69,
+     "per_year": {
+      "2023": {
+       "pnl": 231.98,
+       "n": 52,
+       "win_rate": 0.5
+      },
+      "2024": {
+       "pnl": -116.9,
+       "n": 31,
+       "win_rate": 0.3226
+      },
+      "2025": {
+       "pnl": -98.83,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2026": {
+       "pnl": 26.42,
+       "n": 28,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4955,
+      "bias": 2334,
+      "slots": 728,
+      "filter": 398,
+      "cooldown": 126
+     },
+     "exit_reasons": {
+      "stop_loss": 89,
+      "take_profit": 47,
+      "stop_trail": 18
+     }
+    },
+    "SUIUSDT": {
+     "n": 127,
+     "n_legs": 127,
+     "pnl": -15.6935,
+     "expectancy": -0.1236,
+     "win_rate": 0.3622,
+     "profit_factor": 0.9795,
+     "return_pct": -1.57,
+     "max_drawdown_pct": -11.84,
+     "total_fees": 22.23,
+     "per_year": {
+      "2024": {
+       "pnl": -9.59,
+       "n": 69,
+       "win_rate": 0.3478
+      },
+      "2025": {
+       "pnl": -31.24,
+       "n": 35,
+       "win_rate": 0.3714
+      },
+      "2026": {
+       "pnl": 25.13,
+       "n": 23,
+       "win_rate": 0.3913
+      }
+     },
+     "positive_years": 1,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 4324,
+      "bias": 2298,
+      "slots": 466,
+      "filter": 291,
+      "cooldown": 104
+     },
+     "exit_reasons": {
+      "stop_loss": 75,
+      "take_profit": 38,
+      "stop_trail": 14
+     }
+    },
+    "TONUSDT": {
+     "n": 72,
+     "n_legs": 72,
+     "pnl": -6.4892,
+     "expectancy": -0.0901,
+     "win_rate": 0.3333,
+     "profit_factor": 0.985,
+     "return_pct": -0.65,
+     "max_drawdown_pct": -17.33,
+     "total_fees": 16.19,
+     "per_year": {
+      "2024": {
+       "pnl": -62.17,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2025": {
+       "pnl": 29.85,
+       "n": 31,
+       "win_rate": 0.3871
+      },
+      "2026": {
+       "pnl": 25.83,
+       "n": 16,
+       "win_rate": 0.3125
+      }
+     },
+     "positive_years": 2,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 3515,
+      "bias": 2019,
+      "filter": 261,
+      "slots": 197,
+      "cooldown": 33
+     },
+     "exit_reasons": {
+      "stop_loss": 41,
+      "take_profit": 22,
+      "stop_trail": 9
+     }
+    },
+    "TRXUSDT": {
+     "n": 164,
+     "n_legs": 164,
+     "pnl": 198.1763,
+     "expectancy": 1.2084,
+     "win_rate": 0.4207,
+     "profit_factor": 1.2249,
+     "return_pct": 19.82,
+     "max_drawdown_pct": -17.27,
+     "total_fees": 103.06,
+     "per_year": {
+      "2023": {
+       "pnl": -90.99,
+       "n": 34,
+       "win_rate": 0.2647
+      },
+      "2024": {
+       "pnl": -43.88,
+       "n": 54,
+       "win_rate": 0.3519
+      },
+      "2025": {
+       "pnl": 133.41,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2026": {
+       "pnl": 199.65,
+       "n": 31,
+       "win_rate": 0.6129
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5283,
+      "bias": 1668,
+      "slots": 763,
+      "filter": 671,
+      "cooldown": 160
+     },
+     "exit_reasons": {
+      "stop_loss": 84,
+      "take_profit": 56,
+      "stop_trail": 24
+     }
+    },
+    "XRPUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 112.3974,
+     "expectancy": 1.124,
+     "win_rate": 0.39,
+     "profit_factor": 1.17,
+     "return_pct": 11.24,
+     "max_drawdown_pct": -11.18,
+     "total_fees": 27.2,
+     "per_year": {
+      "2023": {
+       "pnl": -1.65,
+       "n": 24,
+       "win_rate": 0.3333
+      },
+      "2024": {
+       "pnl": 153.91,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2025": {
+       "pnl": 18.82,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -58.68,
+       "n": 22,
+       "win_rate": 0.2727
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4492,
+      "bias": 2926,
+      "filter": 680,
+      "slots": 469,
+      "cooldown": 73
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "take_profit": 35,
+      "stop_trail": 9
+     }
+    }
+   },
+   "all_maker": {
+    "ADAUSDT": {
+     "n": 117,
+     "n_legs": 117,
+     "pnl": 104.8238,
+     "expectancy": 0.8959,
+     "win_rate": 0.3932,
+     "profit_factor": 1.1421,
+     "return_pct": 10.48,
+     "max_drawdown_pct": -19.62,
+     "total_fees": 11.25,
+     "per_year": {
+      "2023": {
+       "pnl": 84.86,
+       "n": 38,
+       "win_rate": 0.4474
+      },
+      "2024": {
+       "pnl": 10.45,
+       "n": 23,
+       "win_rate": 0.3913
+      },
+      "2025": {
+       "pnl": -73.21,
+       "n": 32,
+       "win_rate": 0.2812
+      },
+      "2026": {
+       "pnl": 82.72,
+       "n": 24,
+       "win_rate": 0.4583
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4909,
+      "bias": 2810,
+      "slots": 400,
+      "filter": 393,
+      "cooldown": 88
+     },
+     "exit_reasons": {
+      "stop_loss": 67,
+      "take_profit": 39,
+      "stop_trail": 11
+     }
+    },
+    "APTUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 53.6305,
+     "expectancy": 0.5363,
+     "win_rate": 0.37,
+     "profit_factor": 1.0877,
+     "return_pct": 5.36,
+     "max_drawdown_pct": -10.26,
+     "total_fees": 8.26,
+     "per_year": {
+      "2023": {
+       "pnl": -14.32,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 114.04,
+       "n": 51,
+       "win_rate": 0.451
+      },
+      "2025": {
+       "pnl": -48.4,
+       "n": 20,
+       "win_rate": 0.25
+      },
+      "2026": {
+       "pnl": 2.31,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4891,
+      "bias": 3006,
+      "slots": 407,
+      "filter": 270,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "take_profit": 31,
+      "stop_trail": 12
+     }
+    },
+    "ARBUSDT": {
+     "n": 110,
+     "n_legs": 110,
+     "pnl": 44.2521,
+     "expectancy": 0.4023,
+     "win_rate": 0.3818,
+     "profit_factor": 1.0678,
+     "return_pct": 4.43,
+     "max_drawdown_pct": -8.17,
+     "total_fees": 8.43,
+     "per_year": {
+      "2023": {
+       "pnl": -32.01,
+       "n": 6,
+       "win_rate": 0.1667
+      },
+      "2024": {
+       "pnl": 48.2,
+       "n": 38,
+       "win_rate": 0.4211
+      },
+      "2025": {
+       "pnl": -46.86,
+       "n": 38,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 74.92,
+       "n": 28,
+       "win_rate": 0.4643
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4479,
+      "bias": 2586,
+      "filter": 334,
+      "slots": 329,
+      "circuit_breaker": 35
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 34,
+      "stop_trail": 13
+     }
+    },
+    "ATOMUSDT": {
+     "n": 104,
+     "n_legs": 104,
+     "pnl": 28.7907,
+     "expectancy": 0.2768,
+     "win_rate": 0.3654,
+     "profit_factor": 1.0462,
+     "return_pct": 2.88,
+     "max_drawdown_pct": -10.74,
+     "total_fees": 11.36,
+     "per_year": {
+      "2023": {
+       "pnl": -0.39,
+       "n": 37,
+       "win_rate": 0.3784
+      },
+      "2024": {
+       "pnl": 22.73,
+       "n": 32,
+       "win_rate": 0.3438
+      },
+      "2025": {
+       "pnl": -22.74,
+       "n": 21,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": 29.19,
+       "n": 14,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5081,
+      "bias": 3036,
+      "slots": 264,
+      "filter": 191,
+      "cooldown": 54
+     },
+     "exit_reasons": {
+      "stop_loss": 60,
+      "take_profit": 32,
+      "stop_trail": 12
+     }
+    },
+    "AVAXUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 136.1809,
+     "expectancy": 0.9868,
+     "win_rate": 0.413,
+     "profit_factor": 1.1564,
+     "return_pct": 13.62,
+     "max_drawdown_pct": -11.39,
+     "total_fees": 13.57,
+     "per_year": {
+      "2023": {
+       "pnl": 137.75,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2024": {
+       "pnl": -24.35,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2025": {
+       "pnl": 38.01,
+       "n": 35,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -15.22,
+       "n": 29,
+       "win_rate": 0.3793
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5004,
+      "bias": 2775,
+      "slots": 411,
+      "filter": 355,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 76,
+      "take_profit": 44,
+      "stop_trail": 17,
+      "end_of_data": 1
+     }
+    },
+    "BCHUSDT": {
+     "n": 142,
+     "n_legs": 142,
+     "pnl": -126.2283,
+     "expectancy": -0.8889,
+     "win_rate": 0.3451,
+     "profit_factor": 0.8531,
+     "return_pct": -12.62,
+     "max_drawdown_pct": -17.65,
+     "total_fees": 13.49,
+     "per_year": {
+      "2023": {
+       "pnl": -49.44,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -0.85,
+       "n": 47,
+       "win_rate": 0.3617
+      },
+      "2025": {
+       "pnl": -37.17,
+       "n": 45,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": -38.77,
+       "n": 20,
+       "win_rate": 0.3
+      }
+     },
+     "positive_years": 0,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4669,
+      "bias": 2469,
+      "slots": 718,
+      "filter": 566,
+      "cooldown": 117
+     },
+     "exit_reasons": {
+      "stop_loss": 89,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "BNBUSDT": {
+     "n": 134,
+     "n_legs": 134,
+     "pnl": 135.1469,
+     "expectancy": 1.0086,
+     "win_rate": 0.3955,
+     "profit_factor": 1.1716,
+     "return_pct": 13.51,
+     "max_drawdown_pct": -9.91,
+     "total_fees": 21.75,
+     "per_year": {
+      "2023": {
+       "pnl": -44.61,
+       "n": 16,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 36.1,
+       "n": 41,
+       "win_rate": 0.439
+      },
+      "2025": {
+       "pnl": 171.92,
+       "n": 54,
+       "win_rate": 0.4444
+      },
+      "2026": {
+       "pnl": -28.26,
+       "n": 23,
+       "win_rate": 0.3043
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 2473,
+      "slots": 695,
+      "filter": 618,
+      "cooldown": 103
+     },
+     "exit_reasons": {
+      "stop_loss": 72,
+      "take_profit": 43,
+      "stop_trail": 19
+     }
+    },
+    "BTCUSDT": {
+     "n": 147,
+     "n_legs": 147,
+     "pnl": 54.324,
+     "expectancy": 0.3696,
+     "win_rate": 0.381,
+     "profit_factor": 1.0602,
+     "return_pct": 5.43,
+     "max_drawdown_pct": -14.01,
+     "total_fees": 28.84,
+     "per_year": {
+      "2023": {
+       "pnl": 62.91,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2024": {
+       "pnl": -64.73,
+       "n": 49,
+       "win_rate": 0.3061
+      },
+      "2025": {
+       "pnl": -14.82,
+       "n": 26,
+       "win_rate": 0.2692
+      },
+      "2026": {
+       "pnl": 70.97,
+       "n": 32,
+       "win_rate": 0.4688
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4826,
+      "bias": 2401,
+      "slots": 751,
+      "filter": 445,
+      "cooldown": 111
+     },
+     "exit_reasons": {
+      "stop_loss": 83,
+      "take_profit": 45,
+      "stop_trail": 19
+     }
+    },
+    "DOGEUSDT": {
+     "n": 143,
+     "n_legs": 143,
+     "pnl": 18.4108,
+     "expectancy": 0.1287,
+     "win_rate": 0.3497,
+     "profit_factor": 1.0196,
+     "return_pct": 1.84,
+     "max_drawdown_pct": -8.72,
+     "total_fees": 14.83,
+     "per_year": {
+      "2023": {
+       "pnl": 27.85,
+       "n": 34,
+       "win_rate": 0.3824
+      },
+      "2024": {
+       "pnl": -8.27,
+       "n": 41,
+       "win_rate": 0.3171
+      },
+      "2025": {
+       "pnl": 39.8,
+       "n": 42,
+       "win_rate": 0.4048
+      },
+      "2026": {
+       "pnl": -40.97,
+       "n": 26,
+       "win_rate": 0.2692
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4611,
+      "bias": 2952,
+      "slots": 487,
+      "filter": 430,
+      "cooldown": 83
+     },
+     "exit_reasons": {
+      "stop_loss": 88,
+      "take_profit": 46,
+      "stop_trail": 8,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": -70.0688,
+     "expectancy": -0.7078,
+     "win_rate": 0.3434,
+     "profit_factor": 0.8881,
+     "return_pct": -7.01,
+     "max_drawdown_pct": -12.77,
+     "total_fees": 9.44,
+     "per_year": {
+      "2023": {
+       "pnl": -16.62,
+       "n": 28,
+       "win_rate": 0.3214
+      },
+      "2024": {
+       "pnl": -40.05,
+       "n": 36,
+       "win_rate": 0.3611
+      },
+      "2025": {
+       "pnl": -28.82,
+       "n": 19,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 15.42,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5068,
+      "bias": 3019,
+      "filter": 267,
+      "slots": 252,
+      "cooldown": 28
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 28,
+      "stop_trail": 8
+     }
+    },
+    "ETHUSDT": {
+     "n": 162,
+     "n_legs": 162,
+     "pnl": 306.9162,
+     "expectancy": 1.8945,
+     "win_rate": 0.4444,
+     "profit_factor": 1.317,
+     "return_pct": 30.69,
+     "max_drawdown_pct": -12.4,
+     "total_fees": 24.22,
+     "per_year": {
+      "2023": {
+       "pnl": 53.87,
+       "n": 31,
+       "win_rate": 0.4839
+      },
+      "2024": {
+       "pnl": -4.0,
+       "n": 44,
+       "win_rate": 0.3864
+      },
+      "2025": {
+       "pnl": 134.38,
+       "n": 55,
+       "win_rate": 0.4545
+      },
+      "2026": {
+       "pnl": 122.67,
+       "n": 32,
+       "win_rate": 0.4688
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4681,
+      "bias": 2633,
+      "slots": 714,
+      "filter": 422,
+      "cooldown": 98
+     },
+     "exit_reasons": {
+      "stop_loss": 84,
+      "take_profit": 55,
+      "stop_trail": 23
+     }
+    },
+    "LINKUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": 159.9345,
+     "expectancy": 1.1343,
+     "win_rate": 0.3972,
+     "profit_factor": 1.1815,
+     "return_pct": 15.99,
+     "max_drawdown_pct": -9.85,
+     "total_fees": 14.64,
+     "per_year": {
+      "2023": {
+       "pnl": 83.17,
+       "n": 34,
+       "win_rate": 0.4118
+      },
+      "2024": {
+       "pnl": 29.8,
+       "n": 51,
+       "win_rate": 0.3922
+      },
+      "2025": {
+       "pnl": -42.38,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2026": {
+       "pnl": 89.35,
+       "n": 27,
+       "win_rate": 0.4815
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4929,
+      "bias": 2492,
+      "slots": 640,
+      "filter": 401,
+      "cooldown": 114
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 47,
+      "stop_trail": 16
+     }
+    },
+    "LTCUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": 119.5549,
+     "expectancy": 1.2076,
+     "win_rate": 0.4141,
+     "profit_factor": 1.1991,
+     "return_pct": 11.96,
+     "max_drawdown_pct": -7.73,
+     "total_fees": 11.75,
+     "per_year": {
+      "2023": {
+       "pnl": 15.22,
+       "n": 11,
+       "win_rate": 0.3636
+      },
+      "2024": {
+       "pnl": 70.81,
+       "n": 32,
+       "win_rate": 0.4375
+      },
+      "2025": {
+       "pnl": 57.9,
+       "n": 24,
+       "win_rate": 0.4583
+      },
+      "2026": {
+       "pnl": -24.37,
+       "n": 32,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 3122,
+      "filter": 469,
+      "slots": 350,
+      "cooldown": 41
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "take_profit": 33,
+      "stop_trail": 12
+     }
+    },
+    "NEARUSDT": {
+     "n": 137,
+     "n_legs": 137,
+     "pnl": -13.3562,
+     "expectancy": -0.0975,
+     "win_rate": 0.3577,
+     "profit_factor": 0.9829,
+     "return_pct": -1.34,
+     "max_drawdown_pct": -17.77,
+     "total_fees": 9.18,
+     "per_year": {
+      "2023": {
+       "pnl": 24.05,
+       "n": 34,
+       "win_rate": 0.3529
+      },
+      "2024": {
+       "pnl": -116.26,
+       "n": 36,
+       "win_rate": 0.2778
+      },
+      "2025": {
+       "pnl": -39.79,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2026": {
+       "pnl": 118.64,
+       "n": 43,
+       "win_rate": 0.4651
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5016,
+      "bias": 2578,
+      "slots": 601,
+      "filter": 260,
+      "cooldown": 108
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 39,
+      "stop_trail": 20
+     }
+    },
+    "OPUSDT": {
+     "n": 103,
+     "n_legs": 103,
+     "pnl": -48.6614,
+     "expectancy": -0.4724,
+     "win_rate": 0.3495,
+     "profit_factor": 0.9202,
+     "return_pct": -4.87,
+     "max_drawdown_pct": -12.88,
+     "total_fees": 7.59,
+     "per_year": {
+      "2023": {
+       "pnl": 15.96,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -43.16,
+       "n": 43,
+       "win_rate": 0.3488
+      },
+      "2025": {
+       "pnl": -41.77,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2026": {
+       "pnl": 20.31,
+       "n": 11,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4981,
+      "bias": 3121,
+      "slots": 334,
+      "filter": 128,
+      "cooldown": 52
+     },
+     "exit_reasons": {
+      "stop_loss": 60,
+      "take_profit": 28,
+      "stop_trail": 15
+     }
+    },
+    "SOLUSDT": {
+     "n": 153,
+     "n_legs": 153,
+     "pnl": 7.6955,
+     "expectancy": 0.0503,
+     "win_rate": 0.3856,
+     "profit_factor": 1.008,
+     "return_pct": 0.77,
+     "max_drawdown_pct": -22.53,
+     "total_fees": 14.87,
+     "per_year": {
+      "2023": {
+       "pnl": 155.0,
+       "n": 52,
+       "win_rate": 0.4423
+      },
+      "2024": {
+       "pnl": -93.28,
+       "n": 30,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -85.61,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2026": {
+       "pnl": 31.58,
+       "n": 28,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4955,
+      "bias": 2334,
+      "slots": 722,
+      "filter": 398,
+      "cooldown": 120
+     },
+     "exit_reasons": {
+      "stop_loss": 91,
+      "take_profit": 45,
+      "stop_trail": 17
+     }
+    },
+    "SUIUSDT": {
+     "n": 127,
+     "n_legs": 127,
+     "pnl": 9.2286,
+     "expectancy": 0.0727,
+     "win_rate": 0.3622,
+     "profit_factor": 1.0122,
+     "return_pct": 0.92,
+     "max_drawdown_pct": -11.55,
+     "total_fees": 9.03,
+     "per_year": {
+      "2024": {
+       "pnl": -0.99,
+       "n": 69,
+       "win_rate": 0.3478
+      },
+      "2025": {
+       "pnl": -19.12,
+       "n": 35,
+       "win_rate": 0.3714
+      },
+      "2026": {
+       "pnl": 29.34,
+       "n": 23,
+       "win_rate": 0.3913
+      }
+     },
+     "positive_years": 1,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 4324,
+      "bias": 2298,
+      "slots": 466,
+      "filter": 291,
+      "cooldown": 104
+     },
+     "exit_reasons": {
+      "stop_loss": 74,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "TONUSDT": {
+     "n": 72,
+     "n_legs": 72,
+     "pnl": 6.0793,
+     "expectancy": 0.0844,
+     "win_rate": 0.3472,
+     "profit_factor": 1.0143,
+     "return_pct": 0.61,
+     "max_drawdown_pct": -16.76,
+     "total_fees": 6.62,
+     "per_year": {
+      "2024": {
+       "pnl": -58.52,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2025": {
+       "pnl": 35.8,
+       "n": 31,
+       "win_rate": 0.3871
+      },
+      "2026": {
+       "pnl": 28.8,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 3515,
+      "bias": 2019,
+      "filter": 261,
+      "slots": 197,
+      "cooldown": 33
+     },
+     "exit_reasons": {
+      "stop_loss": 41,
+      "take_profit": 22,
+      "stop_trail": 9
+     }
+    },
+    "TRXUSDT": {
+     "n": 164,
+     "n_legs": 164,
+     "pnl": 349.7015,
+     "expectancy": 2.1323,
+     "win_rate": 0.439,
+     "profit_factor": 1.4018,
+     "return_pct": 34.97,
+     "max_drawdown_pct": -11.27,
+     "total_fees": 45.83,
+     "per_year": {
+      "2023": {
+       "pnl": -75.06,
+       "n": 34,
+       "win_rate": 0.2647
+      },
+      "2024": {
+       "pnl": 14.88,
+       "n": 54,
+       "win_rate": 0.3889
+      },
+      "2025": {
+       "pnl": 164.52,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2026": {
+       "pnl": 245.36,
+       "n": 31,
+       "win_rate": 0.6452
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5283,
+      "bias": 1668,
+      "slots": 777,
+      "filter": 671,
+      "cooldown": 155
+     },
+     "exit_reasons": {
+      "stop_loss": 83,
+      "take_profit": 58,
+      "stop_trail": 23
+     }
+    },
+    "XRPUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 132.8345,
+     "expectancy": 1.3283,
+     "win_rate": 0.39,
+     "profit_factor": 1.2039,
+     "return_pct": 13.28,
+     "max_drawdown_pct": -10.53,
+     "total_fees": 11.22,
+     "per_year": {
+      "2023": {
+       "pnl": 3.24,
+       "n": 24,
+       "win_rate": 0.3333
+      },
+      "2024": {
+       "pnl": 161.54,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2025": {
+       "pnl": 21.8,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -53.74,
+       "n": 22,
+       "win_rate": 0.2727
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4492,
+      "bias": 2926,
+      "filter": 680,
+      "slots": 469,
+      "cooldown": 73
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "take_profit": 35,
+      "stop_trail": 9
+     }
+    }
+   },
+   "zero": {
+    "ADAUSDT": {
+     "n": 117,
+     "n_legs": 117,
+     "pnl": 116.5577,
+     "expectancy": 0.9962,
+     "win_rate": 0.3932,
+     "profit_factor": 1.1586,
+     "return_pct": 11.66,
+     "max_drawdown_pct": -19.27,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 88.99,
+       "n": 38,
+       "win_rate": 0.4474
+      },
+      "2024": {
+       "pnl": 12.4,
+       "n": 23,
+       "win_rate": 0.3913
+      },
+      "2025": {
+       "pnl": -70.77,
+       "n": 32,
+       "win_rate": 0.2812
+      },
+      "2026": {
+       "pnl": 85.94,
+       "n": 24,
+       "win_rate": 0.4583
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4909,
+      "bias": 2810,
+      "slots": 400,
+      "filter": 393,
+      "cooldown": 88
+     },
+     "exit_reasons": {
+      "stop_loss": 67,
+      "take_profit": 39,
+      "stop_trail": 11
+     }
+    },
+    "APTUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 61.9708,
+     "expectancy": 0.6197,
+     "win_rate": 0.37,
+     "profit_factor": 1.1019,
+     "return_pct": 6.2,
+     "max_drawdown_pct": -10.11,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -13.09,
+       "n": 14,
+       "win_rate": 0.2857
+      },
+      "2024": {
+       "pnl": 118.22,
+       "n": 51,
+       "win_rate": 0.451
+      },
+      "2025": {
+       "pnl": -47.02,
+       "n": 20,
+       "win_rate": 0.25
+      },
+      "2026": {
+       "pnl": 3.86,
+       "n": 15,
+       "win_rate": 0.3333
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4891,
+      "bias": 3006,
+      "slots": 407,
+      "filter": 270,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 57,
+      "take_profit": 31,
+      "stop_trail": 12
+     }
+    },
+    "ARBUSDT": {
+     "n": 110,
+     "n_legs": 110,
+     "pnl": 53.0133,
+     "expectancy": 0.4819,
+     "win_rate": 0.3818,
+     "profit_factor": 1.0815,
+     "return_pct": 5.3,
+     "max_drawdown_pct": -7.97,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -31.48,
+       "n": 6,
+       "win_rate": 0.1667
+      },
+      "2024": {
+       "pnl": 51.25,
+       "n": 38,
+       "win_rate": 0.4211
+      },
+      "2025": {
+       "pnl": -44.28,
+       "n": 38,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 77.53,
+       "n": 28,
+       "win_rate": 0.4643
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4479,
+      "bias": 2586,
+      "filter": 334,
+      "slots": 329,
+      "circuit_breaker": 35
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 34,
+      "stop_trail": 13
+     }
+    },
+    "ATOMUSDT": {
+     "n": 104,
+     "n_legs": 104,
+     "pnl": 40.4565,
+     "expectancy": 0.389,
+     "win_rate": 0.3654,
+     "profit_factor": 1.0653,
+     "return_pct": 4.05,
+     "max_drawdown_pct": -10.6,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 3.99,
+       "n": 37,
+       "win_rate": 0.3784
+      },
+      "2024": {
+       "pnl": 25.98,
+       "n": 32,
+       "win_rate": 0.3438
+      },
+      "2025": {
+       "pnl": -20.91,
+       "n": 21,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": 31.4,
+       "n": 14,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5081,
+      "bias": 3036,
+      "slots": 264,
+      "filter": 191,
+      "cooldown": 54
+     },
+     "exit_reasons": {
+      "stop_loss": 60,
+      "take_profit": 32,
+      "stop_trail": 12
+     }
+    },
+    "AVAXUSDT": {
+     "n": 138,
+     "n_legs": 138,
+     "pnl": 150.2177,
+     "expectancy": 1.0885,
+     "win_rate": 0.413,
+     "profit_factor": 1.173,
+     "return_pct": 15.02,
+     "max_drawdown_pct": -11.21,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 142.69,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2024": {
+       "pnl": -22.03,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2025": {
+       "pnl": 41.78,
+       "n": 35,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -12.22,
+       "n": 29,
+       "win_rate": 0.3793
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5004,
+      "bias": 2775,
+      "slots": 411,
+      "filter": 355,
+      "cooldown": 68
+     },
+     "exit_reasons": {
+      "stop_loss": 76,
+      "take_profit": 44,
+      "stop_trail": 17,
+      "end_of_data": 1
+     }
+    },
+    "BCHUSDT": {
+     "n": 142,
+     "n_legs": 142,
+     "pnl": -113.5726,
+     "expectancy": -0.7998,
+     "win_rate": 0.3451,
+     "profit_factor": 0.8673,
+     "return_pct": -11.36,
+     "max_drawdown_pct": -16.93,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -46.55,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": 2.73,
+       "n": 47,
+       "win_rate": 0.3617
+      },
+      "2025": {
+       "pnl": -32.41,
+       "n": 45,
+       "win_rate": 0.3333
+      },
+      "2026": {
+       "pnl": -37.35,
+       "n": 20,
+       "win_rate": 0.3
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4669,
+      "bias": 2469,
+      "slots": 718,
+      "filter": 566,
+      "cooldown": 117
+     },
+     "exit_reasons": {
+      "stop_loss": 89,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "BNBUSDT": {
+     "n": 131,
+     "n_legs": 131,
+     "pnl": 159.0795,
+     "expectancy": 1.2143,
+     "win_rate": 0.4046,
+     "profit_factor": 1.209,
+     "return_pct": 15.91,
+     "max_drawdown_pct": -9.7,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -42.48,
+       "n": 16,
+       "win_rate": 0.25
+      },
+      "2024": {
+       "pnl": 40.98,
+       "n": 41,
+       "win_rate": 0.439
+      },
+      "2025": {
+       "pnl": 184.37,
+       "n": 51,
+       "win_rate": 0.4706
+      },
+      "2026": {
+       "pnl": -23.78,
+       "n": 23,
+       "win_rate": 0.3043
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 2473,
+      "slots": 714,
+      "filter": 618,
+      "cooldown": 96
+     },
+     "exit_reasons": {
+      "stop_loss": 70,
+      "take_profit": 42,
+      "stop_trail": 19
+     }
+    },
+    "BTCUSDT": {
+     "n": 147,
+     "n_legs": 147,
+     "pnl": 83.9059,
+     "expectancy": 0.5708,
+     "win_rate": 0.381,
+     "profit_factor": 1.0936,
+     "return_pct": 8.39,
+     "max_drawdown_pct": -13.07,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 71.7,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2024": {
+       "pnl": -57.32,
+       "n": 49,
+       "win_rate": 0.3061
+      },
+      "2025": {
+       "pnl": -9.52,
+       "n": 26,
+       "win_rate": 0.2692
+      },
+      "2026": {
+       "pnl": 79.04,
+       "n": 32,
+       "win_rate": 0.4688
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4826,
+      "bias": 2401,
+      "slots": 751,
+      "filter": 445,
+      "cooldown": 111
+     },
+     "exit_reasons": {
+      "stop_loss": 83,
+      "take_profit": 45,
+      "stop_trail": 19
+     }
+    },
+    "DOGEUSDT": {
+     "n": 143,
+     "n_legs": 143,
+     "pnl": 33.0034,
+     "expectancy": 0.2308,
+     "win_rate": 0.3497,
+     "profit_factor": 1.0353,
+     "return_pct": 3.3,
+     "max_drawdown_pct": -8.65,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 32.11,
+       "n": 34,
+       "win_rate": 0.3824
+      },
+      "2024": {
+       "pnl": -5.18,
+       "n": 41,
+       "win_rate": 0.3171
+      },
+      "2025": {
+       "pnl": 44.11,
+       "n": 42,
+       "win_rate": 0.4048
+      },
+      "2026": {
+       "pnl": -38.03,
+       "n": 26,
+       "win_rate": 0.2692
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4611,
+      "bias": 2952,
+      "slots": 487,
+      "filter": 430,
+      "cooldown": 83
+     },
+     "exit_reasons": {
+      "stop_loss": 88,
+      "take_profit": 46,
+      "stop_trail": 8,
+      "end_of_data": 1
+     }
+    },
+    "DOTUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": -61.0417,
+     "expectancy": -0.6166,
+     "win_rate": 0.3434,
+     "profit_factor": 0.902,
+     "return_pct": -6.1,
+     "max_drawdown_pct": -12.46,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -13.51,
+       "n": 28,
+       "win_rate": 0.3214
+      },
+      "2024": {
+       "pnl": -37.11,
+       "n": 36,
+       "win_rate": 0.3611
+      },
+      "2025": {
+       "pnl": -27.46,
+       "n": 19,
+       "win_rate": 0.3158
+      },
+      "2026": {
+       "pnl": 17.04,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 1,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5068,
+      "bias": 3019,
+      "filter": 267,
+      "slots": 252,
+      "cooldown": 28
+     },
+     "exit_reasons": {
+      "stop_loss": 63,
+      "take_profit": 28,
+      "stop_trail": 8
+     }
+    },
+    "ETHUSDT": {
+     "n": 162,
+     "n_legs": 162,
+     "pnl": 335.6303,
+     "expectancy": 2.0718,
+     "win_rate": 0.4444,
+     "profit_factor": 1.3474,
+     "return_pct": 33.56,
+     "max_drawdown_pct": -12.1,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 59.76,
+       "n": 31,
+       "win_rate": 0.4839
+      },
+      "2024": {
+       "pnl": 1.98,
+       "n": 44,
+       "win_rate": 0.3864
+      },
+      "2025": {
+       "pnl": 143.42,
+       "n": 55,
+       "win_rate": 0.4545
+      },
+      "2026": {
+       "pnl": 130.47,
+       "n": 32,
+       "win_rate": 0.4688
+      }
+     },
+     "positive_years": 4,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4681,
+      "bias": 2633,
+      "slots": 714,
+      "filter": 422,
+      "cooldown": 98
+     },
+     "exit_reasons": {
+      "stop_loss": 84,
+      "take_profit": 55,
+      "stop_trail": 23
+     }
+    },
+    "LINKUSDT": {
+     "n": 141,
+     "n_legs": 141,
+     "pnl": 175.6407,
+     "expectancy": 1.2457,
+     "win_rate": 0.3972,
+     "profit_factor": 1.2,
+     "return_pct": 17.56,
+     "max_drawdown_pct": -9.64,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 87.08,
+       "n": 34,
+       "win_rate": 0.4118
+      },
+      "2024": {
+       "pnl": 35.07,
+       "n": 51,
+       "win_rate": 0.3922
+      },
+      "2025": {
+       "pnl": -40.17,
+       "n": 29,
+       "win_rate": 0.3103
+      },
+      "2026": {
+       "pnl": 93.66,
+       "n": 27,
+       "win_rate": 0.4815
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4929,
+      "bias": 2492,
+      "slots": 640,
+      "filter": 401,
+      "cooldown": 114
+     },
+     "exit_reasons": {
+      "stop_loss": 78,
+      "take_profit": 47,
+      "stop_trail": 16
+     }
+    },
+    "LTCUSDT": {
+     "n": 99,
+     "n_legs": 99,
+     "pnl": 131.6924,
+     "expectancy": 1.3302,
+     "win_rate": 0.4141,
+     "profit_factor": 1.2206,
+     "return_pct": 13.17,
+     "max_drawdown_pct": -7.6,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 16.58,
+       "n": 11,
+       "win_rate": 0.3636
+      },
+      "2024": {
+       "pnl": 74.13,
+       "n": 32,
+       "win_rate": 0.4375
+      },
+      "2025": {
+       "pnl": 60.88,
+       "n": 24,
+       "win_rate": 0.4583
+      },
+      "2026": {
+       "pnl": -19.9,
+       "n": 32,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4655,
+      "bias": 3122,
+      "filter": 469,
+      "slots": 350,
+      "cooldown": 41
+     },
+     "exit_reasons": {
+      "stop_loss": 54,
+      "take_profit": 33,
+      "stop_trail": 12
+     }
+    },
+    "NEARUSDT": {
+     "n": 137,
+     "n_legs": 137,
+     "pnl": 9.5151,
+     "expectancy": 0.0695,
+     "win_rate": 0.3723,
+     "profit_factor": 1.0122,
+     "return_pct": 0.95,
+     "max_drawdown_pct": -17.43,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 40.8,
+       "n": 34,
+       "win_rate": 0.4118
+      },
+      "2024": {
+       "pnl": -116.15,
+       "n": 36,
+       "win_rate": 0.2778
+      },
+      "2025": {
+       "pnl": -39.0,
+       "n": 24,
+       "win_rate": 0.2917
+      },
+      "2026": {
+       "pnl": 123.86,
+       "n": 43,
+       "win_rate": 0.4651
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5016,
+      "bias": 2578,
+      "slots": 602,
+      "filter": 260,
+      "cooldown": 108
+     },
+     "exit_reasons": {
+      "stop_loss": 77,
+      "take_profit": 39,
+      "stop_trail": 21
+     }
+    },
+    "OPUSDT": {
+     "n": 104,
+     "n_legs": 104,
+     "pnl": -50.8662,
+     "expectancy": -0.4891,
+     "win_rate": 0.3558,
+     "profit_factor": 0.9171,
+     "return_pct": -5.09,
+     "max_drawdown_pct": -13.35,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 18.49,
+       "n": 30,
+       "win_rate": 0.3667
+      },
+      "2024": {
+       "pnl": -50.09,
+       "n": 44,
+       "win_rate": 0.3636
+      },
+      "2025": {
+       "pnl": -40.34,
+       "n": 19,
+       "win_rate": 0.2632
+      },
+      "2026": {
+       "pnl": 21.07,
+       "n": 11,
+       "win_rate": 0.4545
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4981,
+      "bias": 3121,
+      "slots": 334,
+      "filter": 128,
+      "cooldown": 51
+     },
+     "exit_reasons": {
+      "stop_loss": 61,
+      "take_profit": 28,
+      "stop_trail": 15
+     }
+    },
+    "SOLUSDT": {
+     "n": 153,
+     "n_legs": 153,
+     "pnl": 22.3439,
+     "expectancy": 0.146,
+     "win_rate": 0.3856,
+     "profit_factor": 1.0232,
+     "return_pct": 2.23,
+     "max_drawdown_pct": -22.15,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 160.01,
+       "n": 52,
+       "win_rate": 0.4423
+      },
+      "2024": {
+       "pnl": -90.95,
+       "n": 30,
+       "win_rate": 0.3333
+      },
+      "2025": {
+       "pnl": -81.9,
+       "n": 43,
+       "win_rate": 0.3256
+      },
+      "2026": {
+       "pnl": 35.18,
+       "n": 28,
+       "win_rate": 0.4286
+      }
+     },
+     "positive_years": 2,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4955,
+      "bias": 2334,
+      "slots": 722,
+      "filter": 398,
+      "cooldown": 120
+     },
+     "exit_reasons": {
+      "stop_loss": 91,
+      "take_profit": 45,
+      "stop_trail": 17
+     }
+    },
+    "SUIUSDT": {
+     "n": 127,
+     "n_legs": 127,
+     "pnl": 18.501,
+     "expectancy": 0.1457,
+     "win_rate": 0.3622,
+     "profit_factor": 1.0246,
+     "return_pct": 1.85,
+     "max_drawdown_pct": -11.42,
+     "total_fees": 0.0,
+     "per_year": {
+      "2024": {
+       "pnl": 3.62,
+       "n": 69,
+       "win_rate": 0.3478
+      },
+      "2025": {
+       "pnl": -16.64,
+       "n": 35,
+       "win_rate": 0.3714
+      },
+      "2026": {
+       "pnl": 31.52,
+       "n": 23,
+       "win_rate": 0.3913
+      }
+     },
+     "positive_years": 2,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 4324,
+      "bias": 2298,
+      "slots": 466,
+      "filter": 291,
+      "cooldown": 104
+     },
+     "exit_reasons": {
+      "stop_loss": 74,
+      "take_profit": 38,
+      "stop_trail": 15
+     }
+    },
+    "TONUSDT": {
+     "n": 72,
+     "n_legs": 72,
+     "pnl": 12.9032,
+     "expectancy": 0.1792,
+     "win_rate": 0.3472,
+     "profit_factor": 1.0305,
+     "return_pct": 1.29,
+     "max_drawdown_pct": -16.48,
+     "total_fees": 0.0,
+     "per_year": {
+      "2024": {
+       "pnl": -56.65,
+       "n": 25,
+       "win_rate": 0.28
+      },
+      "2025": {
+       "pnl": 39.15,
+       "n": 31,
+       "win_rate": 0.3871
+      },
+      "2026": {
+       "pnl": 30.4,
+       "n": 16,
+       "win_rate": 0.375
+      }
+     },
+     "positive_years": 2,
+     "years_n": 3,
+     "veto_top": {
+      "trigger": 3515,
+      "bias": 2019,
+      "filter": 261,
+      "slots": 197,
+      "cooldown": 33
+     },
+     "exit_reasons": {
+      "stop_loss": 41,
+      "take_profit": 22,
+      "stop_trail": 9
+     }
+    },
+    "TRXUSDT": {
+     "n": 164,
+     "n_legs": 164,
+     "pnl": 410.6497,
+     "expectancy": 2.504,
+     "win_rate": 0.439,
+     "profit_factor": 1.4762,
+     "return_pct": 41.06,
+     "max_drawdown_pct": -9.44,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": -66.72,
+       "n": 34,
+       "win_rate": 0.2647
+      },
+      "2024": {
+       "pnl": 27.58,
+       "n": 54,
+       "win_rate": 0.3889
+      },
+      "2025": {
+       "pnl": 180.32,
+       "n": 45,
+       "win_rate": 0.4889
+      },
+      "2026": {
+       "pnl": 269.48,
+       "n": 31,
+       "win_rate": 0.6452
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 5283,
+      "bias": 1668,
+      "slots": 777,
+      "filter": 671,
+      "cooldown": 155
+     },
+     "exit_reasons": {
+      "stop_loss": 83,
+      "take_profit": 58,
+      "stop_trail": 23
+     }
+    },
+    "XRPUSDT": {
+     "n": 100,
+     "n_legs": 100,
+     "pnl": 144.3129,
+     "expectancy": 1.4431,
+     "win_rate": 0.39,
+     "profit_factor": 1.2227,
+     "return_pct": 14.43,
+     "max_drawdown_pct": -10.4,
+     "total_fees": 0.0,
+     "per_year": {
+      "2023": {
+       "pnl": 5.98,
+       "n": 24,
+       "win_rate": 0.3333
+      },
+      "2024": {
+       "pnl": 166.13,
+       "n": 40,
+       "win_rate": 0.475
+      },
+      "2025": {
+       "pnl": 23.5,
+       "n": 14,
+       "win_rate": 0.4286
+      },
+      "2026": {
+       "pnl": -51.29,
+       "n": 22,
+       "win_rate": 0.2727
+      }
+     },
+     "positive_years": 3,
+     "years_n": 4,
+     "veto_top": {
+      "trigger": 4492,
+      "bias": 2926,
+      "filter": 680,
+      "slots": 469,
+      "cooldown": 73
+     },
+     "exit_reasons": {
+      "stop_loss": 56,
+      "take_profit": 35,
+      "stop_trail": 9
+     }
+    }
+   }
+  }
+ }
+}

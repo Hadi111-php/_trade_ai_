@@ -1,0 +1,4747 @@
+{
+ "version": "1.0",
+ "generated_at": "2026-10-31 08:36 UTC",
+ "elapsed_s": 268.8,
+ "settings": {
+  "symbols": [
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT",
+   "BNBUSDT",
+   "XRPUSDT",
+   "DOGEUSDT",
+   "ADAUSDT",
+   "AVAXUSDT",
+   "LINKUSDT",
+   "LTCUSDT",
+   "DOTUSDT",
+   "TRXUSDT",
+   "ATOMUSDT",
+   "NEARUSDT",
+   "APTUSDT",
+   "ARBUSDT",
+   "OPUSDT",
+   "SUIUSDT",
+   "TONUSDT",
+   "BCHUSDT"
+  ],
+  "days": 1460,
+  "tf_trigger": "4h",
+  "tf_filter": "1d",
+  "tf_bias": "1d",
+  "fee_bps": 5.5,
+  "slippage_pct": 0.02,
+  "risk_per_trade_pct": 1.0,
+  "max_concurrent": 1,
+  "initial_equity": 1000.0,
+  "base_url": "https://api.bybit.com",
+  "source": "bybit"
+ },
+ "gate": {
+  "min_symbols": 8,
+  "min_profitable_symbols_pct": 60.0,
+  "min_positive_years_pct": 60.0,
+  "min_median_pf": 1.05,
+  "min_sign_test_p": 0.1,
+  "min_trades": 100
+ },
+ "coverage": {
+  "BTCUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "f8479b59fdbbb6af",
+   "source": "کش JSON"
+  },
+  "ETHUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "22f4aeff4ccafad8",
+   "source": "کش JSON"
+  },
+  "SOLUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "d739aa9b71581ba5",
+   "source": "کش JSON"
+  },
+  "BNBUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "d9002f9d88f2f1db",
+   "source": "کش JSON"
+  },
+  "XRPUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "764a38345ee8ce8f",
+   "source": "کش JSON"
+  },
+  "DOGEUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "000fe1416d8c0775",
+   "source": "کش JSON"
+  },
+  "ADAUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "32bf42e64f8e3b0b",
+   "source": "کش JSON"
+  },
+  "AVAXUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "aa3aac96a3f526d3",
+   "source": "کش JSON"
+  },
+  "LINKUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "5e4650e17c5bc496",
+   "source": "کش JSON"
+  },
+  "LTCUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "2c937de41951f48c",
+   "source": "کش JSON"
+  },
+  "DOTUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "1a33e0ec415ef9db",
+   "source": "کش JSON"
+  },
+  "TRXUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "3e35f1416c8228a8",
+   "source": "کش JSON"
+  },
+  "ATOMUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "e749648c61d03b51",
+   "source": "کش JSON"
+  },
+  "NEARUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "dbd52a5ee7abaabb",
+   "source": "کش JSON"
+  },
+  "APTUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": true,
+   "fingerprint": "e98586bf16ca4e1c",
+   "source": "کش JSON"
+  },
+  "ARBUSDT": {
+   "n_trigger": 7907,
+   "years": 3.61,
+   "start": "2023-03-23",
+   "end": "2026-10-31",
+   "from_cache": false,
+   "fingerprint": "84a5ca92383a1b4c",
+   "source": "دانلود تازه"
+  },
+  "OPUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": false,
+   "fingerprint": "0847ae3735087a03",
+   "source": "دانلود تازه"
+  },
+  "SUIUSDT": {
+   "n_trigger": 7661,
+   "years": 3.5,
+   "start": "2023-05-03",
+   "end": "2026-10-31",
+   "from_cache": false,
+   "fingerprint": "64da5de89e044ba6",
+   "source": "دانلود تازه"
+  },
+  "TONUSDT": {
+   "n_trigger": 6116,
+   "years": 2.79,
+   "start": "2023-08-31",
+   "end": "2026-06-15",
+   "from_cache": false,
+   "fingerprint": "fb51814e224b0b94",
+   "source": "دانلود تازه"
+  },
+  "BCHUSDT": {
+   "n_trigger": 8760,
+   "years": 4.0,
+   "start": "2022-11-01",
+   "end": "2026-10-31",
+   "from_cache": false,
+   "fingerprint": "eceb4c0a511cadc4",
+   "source": "دانلود تازه"
+  }
+ },
+ "variants": [
+  {
+   "id": "base",
+   "label": "پایه (همان تایم‌فریم اسکن)"
+  },
+  {
+   "id": "trend",
+   "label": "روندکاوی: شکست + بدون TP + تریل باز"
+  },
+  {
+   "id": "trend_tp",
+   "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+  },
+  {
+   "id": "pullback",
+   "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+  },
+  {
+   "id": "climax",
+   "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+  }
+ ],
+ "per_symbol": {
+  "BTCUSDT": {
+   "base": {
+    "n": 149,
+    "n_legs": 149,
+    "pnl": -79.8145,
+    "expectancy": -0.5357,
+    "win_rate": 0.3691,
+    "profit_factor": 0.9132,
+    "return_pct": -7.98,
+    "max_drawdown_pct": -18.41,
+    "total_fees": 74.51,
+    "per_year": {
+     "2023": {
+      "pnl": 12.87,
+      "n": 40,
+      "win_rate": 0.45
+     },
+     "2024": {
+      "pnl": -78.68,
+      "n": 49,
+      "win_rate": 0.3061
+     },
+     "2025": {
+      "pnl": -49.61,
+      "n": 28,
+      "win_rate": 0.2857
+     },
+     "2026": {
+      "pnl": 35.6,
+      "n": 32,
+      "win_rate": 0.4375
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4826,
+     "bias": 2401,
+     "slots": 748,
+     "filter": 445,
+     "cooldown": 115
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 74,
+    "n_legs": 74,
+    "pnl": 421.6515,
+    "expectancy": 5.698,
+    "win_rate": 0.3378,
+    "profit_factor": 1.7305,
+    "return_pct": 42.17,
+    "max_drawdown_pct": -8.39,
+    "total_fees": 49.51,
+    "per_year": {
+     "2023": {
+      "pnl": 53.16,
+      "n": 24,
+      "win_rate": 0.25
+     },
+     "2024": {
+      "pnl": 218.2,
+      "n": 14,
+      "win_rate": 0.4286
+     },
+     "2025": {
+      "pnl": 61.8,
+      "n": 18,
+      "win_rate": 0.3889
+     },
+     "2026": {
+      "pnl": 88.5,
+      "n": 18,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 4,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8040,
+     "filter": 488,
+     "slots": 154,
+     "cooldown": 3,
+     "circuit_breaker": 1
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 94,
+    "n_legs": 94,
+    "pnl": 321.5484,
+    "expectancy": 3.4207,
+    "win_rate": 0.3511,
+    "profit_factor": 1.4808,
+    "return_pct": 32.15,
+    "max_drawdown_pct": -8.21,
+    "total_fees": 55.76,
+    "per_year": {
+     "2023": {
+      "pnl": 23.82,
+      "n": 30,
+      "win_rate": 0.2667
+     },
+     "2024": {
+      "pnl": 114.21,
+      "n": 19,
+      "win_rate": 0.4211
+     },
+     "2025": {
+      "pnl": 71.25,
+      "n": 23,
+      "win_rate": 0.3913
+     },
+     "2026": {
+      "pnl": 112.28,
+      "n": 22,
+      "win_rate": 0.3636
+     }
+    },
+    "positive_years": 4,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8040,
+     "filter": 488,
+     "slots": 134,
+     "cooldown": 4,
+     "bias": 0
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 98,
+    "n_legs": 98,
+    "pnl": -268.3061,
+    "expectancy": -2.7378,
+    "win_rate": 0.3061,
+    "profit_factor": 0.5667,
+    "return_pct": -26.83,
+    "max_drawdown_pct": -27.72,
+    "total_fees": 47.32,
+    "per_year": {
+     "2023": {
+      "pnl": -33.22,
+      "n": 29,
+      "win_rate": 0.4138
+     },
+     "2024": {
+      "pnl": -102.46,
+      "n": 42,
+      "win_rate": 0.3095
+     },
+     "2025": {
+      "pnl": -95.74,
+      "n": 17,
+      "win_rate": 0.1176
+     },
+     "2026": {
+      "pnl": -36.89,
+      "n": 10,
+      "win_rate": 0.3
+     }
+    },
+    "positive_years": 0,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5452,
+     "bias": 1990,
+     "slots": 703,
+     "filter": 372,
+     "cooldown": 93
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 91,
+    "n_legs": 91,
+    "pnl": -174.9734,
+    "expectancy": -1.9228,
+    "win_rate": 0.3736,
+    "profit_factor": 0.6898,
+    "return_pct": -17.5,
+    "max_drawdown_pct": -22.29,
+    "total_fees": 47.72,
+    "per_year": {
+     "2023": {
+      "pnl": 4.02,
+      "n": 27,
+      "win_rate": 0.5185
+     },
+     "2024": {
+      "pnl": -37.23,
+      "n": 34,
+      "win_rate": 0.3824
+     },
+     "2025": {
+      "pnl": -88.4,
+      "n": 18,
+      "win_rate": 0.1667
+     },
+     "2026": {
+      "pnl": -53.36,
+      "n": 12,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3282,
+     "trigger": 3090,
+     "bias": 1451,
+     "slots": 481,
+     "filter": 265
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "ETHUSDT": {
+   "base": {
+    "n": 163,
+    "n_legs": 163,
+    "pnl": 193.3028,
+    "expectancy": 1.1859,
+    "win_rate": 0.4356,
+    "profit_factor": 1.2002,
+    "return_pct": 19.33,
+    "max_drawdown_pct": -13.08,
+    "total_fees": 63.55,
+    "per_year": {
+     "2023": {
+      "pnl": 9.59,
+      "n": 31,
+      "win_rate": 0.4516
+     },
+     "2024": {
+      "pnl": -17.04,
+      "n": 44,
+      "win_rate": 0.3864
+     },
+     "2025": {
+      "pnl": 110.97,
+      "n": 55,
+      "win_rate": 0.4545
+     },
+     "2026": {
+      "pnl": 89.78,
+      "n": 33,
+      "win_rate": 0.4545
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4681,
+     "bias": 2633,
+     "slots": 709,
+     "filter": 422,
+     "cooldown": 102
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 93,
+    "n_legs": 93,
+    "pnl": 125.7184,
+    "expectancy": 1.3518,
+    "win_rate": 0.2903,
+    "profit_factor": 1.1755,
+    "return_pct": 12.57,
+    "max_drawdown_pct": -10.72,
+    "total_fees": 41.25,
+    "per_year": {
+     "2023": {
+      "pnl": 108.11,
+      "n": 24,
+      "win_rate": 0.375
+     },
+     "2024": {
+      "pnl": -66.87,
+      "n": 23,
+      "win_rate": 0.2609
+     },
+     "2025": {
+      "pnl": 83.87,
+      "n": 25,
+      "win_rate": 0.36
+     },
+     "2026": {
+      "pnl": 0.61,
+      "n": 21,
+      "win_rate": 0.1429
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8034,
+     "filter": 434,
+     "slots": 184,
+     "cooldown": 9,
+     "circuit_breaker": 6
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 115,
+    "n_legs": 115,
+    "pnl": 63.6173,
+    "expectancy": 0.5532,
+    "win_rate": 0.2957,
+    "profit_factor": 1.0754,
+    "return_pct": 6.36,
+    "max_drawdown_pct": -9.09,
+    "total_fees": 47.44,
+    "per_year": {
+     "2023": {
+      "pnl": 42.51,
+      "n": 32,
+      "win_rate": 0.3438
+     },
+     "2024": {
+      "pnl": -48.8,
+      "n": 26,
+      "win_rate": 0.2692
+     },
+     "2025": {
+      "pnl": 91.02,
+      "n": 32,
+      "win_rate": 0.3438
+     },
+     "2026": {
+      "pnl": -21.11,
+      "n": 25,
+      "win_rate": 0.2
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8034,
+     "filter": 434,
+     "slots": 159,
+     "cooldown": 9,
+     "circuit_breaker": 9
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 89,
+    "n_legs": 89,
+    "pnl": 125.782,
+    "expectancy": 1.4133,
+    "win_rate": 0.4494,
+    "profit_factor": 1.2365,
+    "return_pct": 12.58,
+    "max_drawdown_pct": -11.04,
+    "total_fees": 35.31,
+    "per_year": {
+     "2023": {
+      "pnl": 35.6,
+      "n": 21,
+      "win_rate": 0.4762
+     },
+     "2024": {
+      "pnl": 33.97,
+      "n": 29,
+      "win_rate": 0.4483
+     },
+     "2025": {
+      "pnl": 26.71,
+      "n": 29,
+      "win_rate": 0.4138
+     },
+     "2026": {
+      "pnl": 29.51,
+      "n": 10,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 4,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5309,
+     "bias": 2259,
+     "slots": 637,
+     "filter": 371,
+     "cooldown": 63
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 78,
+    "n_legs": 78,
+    "pnl": 108.8869,
+    "expectancy": 1.396,
+    "win_rate": 0.4359,
+    "profit_factor": 1.2399,
+    "return_pct": 10.89,
+    "max_drawdown_pct": -9.31,
+    "total_fees": 31.22,
+    "per_year": {
+     "2023": {
+      "pnl": 26.57,
+      "n": 22,
+      "win_rate": 0.4091
+     },
+     "2024": {
+      "pnl": 3.04,
+      "n": 25,
+      "win_rate": 0.44
+     },
+     "2025": {
+      "pnl": 73.65,
+      "n": 23,
+      "win_rate": 0.4783
+     },
+     "2026": {
+      "pnl": 5.63,
+      "n": 8,
+      "win_rate": 0.375
+     }
+    },
+    "positive_years": 4,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3289,
+     "trigger": 2993,
+     "bias": 1657,
+     "slots": 429,
+     "filter": 267
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "SOLUSDT": {
+   "base": {
+    "n": 154,
+    "n_legs": 154,
+    "pnl": 36.1898,
+    "expectancy": 0.235,
+    "win_rate": 0.4026,
+    "profit_factor": 1.0358,
+    "return_pct": 3.62,
+    "max_drawdown_pct": -24.19,
+    "total_fees": 42.78,
+    "per_year": {
+     "2023": {
+      "pnl": 228.32,
+      "n": 52,
+      "win_rate": 0.5
+     },
+     "2024": {
+      "pnl": -117.26,
+      "n": 31,
+      "win_rate": 0.3226
+     },
+     "2025": {
+      "pnl": -99.93,
+      "n": 43,
+      "win_rate": 0.3256
+     },
+     "2026": {
+      "pnl": 25.06,
+      "n": 28,
+      "win_rate": 0.4286
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4955,
+     "bias": 2334,
+     "slots": 728,
+     "filter": 398,
+     "cooldown": 126
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 83,
+    "n_legs": 83,
+    "pnl": -133.258,
+    "expectancy": -1.6055,
+    "win_rate": 0.1928,
+    "profit_factor": 0.7803,
+    "return_pct": -13.33,
+    "max_drawdown_pct": -24.25,
+    "total_fees": 22.99,
+    "per_year": {
+     "2022": {
+      "pnl": -13.3,
+      "n": 2,
+      "win_rate": 0.0
+     },
+     "2023": {
+      "pnl": 157.5,
+      "n": 23,
+      "win_rate": 0.3043
+     },
+     "2024": {
+      "pnl": -118.49,
+      "n": 14,
+      "win_rate": 0.1429
+     },
+     "2025": {
+      "pnl": -109.78,
+      "n": 26,
+      "win_rate": 0.1923
+     },
+     "2026": {
+      "pnl": -49.19,
+      "n": 18,
+      "win_rate": 0.1111
+     }
+    },
+    "positive_years": 1,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8070,
+     "filter": 452,
+     "slots": 135,
+     "cooldown": 13,
+     "circuit_breaker": 7
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 96,
+    "n_legs": 96,
+    "pnl": -190.4648,
+    "expectancy": -1.984,
+    "win_rate": 0.2188,
+    "profit_factor": 0.7129,
+    "return_pct": -19.05,
+    "max_drawdown_pct": -25.82,
+    "total_fees": 24.67,
+    "per_year": {
+     "2022": {
+      "pnl": -13.3,
+      "n": 2,
+      "win_rate": 0.0
+     },
+     "2023": {
+      "pnl": 82.42,
+      "n": 32,
+      "win_rate": 0.3125
+     },
+     "2024": {
+      "pnl": -110.71,
+      "n": 14,
+      "win_rate": 0.1429
+     },
+     "2025": {
+      "pnl": -79.31,
+      "n": 28,
+      "win_rate": 0.2143
+     },
+     "2026": {
+      "pnl": -69.56,
+      "n": 20,
+      "win_rate": 0.15
+     }
+    },
+    "positive_years": 1,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8070,
+     "filter": 452,
+     "slots": 121,
+     "cooldown": 11,
+     "circuit_breaker": 10
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 98,
+    "n_legs": 98,
+    "pnl": -48.396,
+    "expectancy": -0.4938,
+    "win_rate": 0.3776,
+    "profit_factor": 0.9206,
+    "return_pct": -4.84,
+    "max_drawdown_pct": -19.55,
+    "total_fees": 24.97,
+    "per_year": {
+     "2023": {
+      "pnl": 87.55,
+      "n": 32,
+      "win_rate": 0.4688
+     },
+     "2024": {
+      "pnl": -70.49,
+      "n": 24,
+      "win_rate": 0.2917
+     },
+     "2025": {
+      "pnl": -92.14,
+      "n": 30,
+      "win_rate": 0.3
+     },
+     "2026": {
+      "pnl": 26.69,
+      "n": 12,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5559,
+     "bias": 1987,
+     "slots": 678,
+     "filter": 310,
+     "cooldown": 89
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 96,
+    "n_legs": 96,
+    "pnl": -65.6748,
+    "expectancy": -0.6841,
+    "win_rate": 0.3854,
+    "profit_factor": 0.8877,
+    "return_pct": -6.57,
+    "max_drawdown_pct": -20.52,
+    "total_fees": 24.89,
+    "per_year": {
+     "2023": {
+      "pnl": 101.56,
+      "n": 29,
+      "win_rate": 0.5172
+     },
+     "2024": {
+      "pnl": -78.49,
+      "n": 25,
+      "win_rate": 0.32
+     },
+     "2025": {
+      "pnl": -122.38,
+      "n": 28,
+      "win_rate": 0.25
+     },
+     "2026": {
+      "pnl": 33.65,
+      "n": 14,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3309,
+     "trigger": 3159,
+     "bias": 1422,
+     "slots": 485,
+     "filter": 217
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "BNBUSDT": {
+   "base": {
+    "n": 133,
+    "n_legs": 133,
+    "pnl": 56.2903,
+    "expectancy": 0.4232,
+    "win_rate": 0.3985,
+    "profit_factor": 1.0721,
+    "return_pct": 5.63,
+    "max_drawdown_pct": -10.4,
+    "total_fees": 57.35,
+    "per_year": {
+     "2023": {
+      "pnl": -49.59,
+      "n": 16,
+      "win_rate": 0.25
+     },
+     "2024": {
+      "pnl": 21.12,
+      "n": 40,
+      "win_rate": 0.45
+     },
+     "2025": {
+      "pnl": 121.89,
+      "n": 54,
+      "win_rate": 0.4444
+     },
+     "2026": {
+      "pnl": -37.13,
+      "n": 23,
+      "win_rate": 0.3043
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4655,
+     "bias": 2473,
+     "slots": 697,
+     "filter": 618,
+     "cooldown": 100
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 69,
+    "n_legs": 69,
+    "pnl": -19.8604,
+    "expectancy": -0.2878,
+    "win_rate": 0.2464,
+    "profit_factor": 0.9591,
+    "return_pct": -1.99,
+    "max_drawdown_pct": -16.4,
+    "total_fees": 30.46,
+    "per_year": {
+     "2023": {
+      "pnl": -121.67,
+      "n": 19,
+      "win_rate": 0.0526
+     },
+     "2024": {
+      "pnl": 51.65,
+      "n": 14,
+      "win_rate": 0.2857
+     },
+     "2025": {
+      "pnl": 81.02,
+      "n": 22,
+      "win_rate": 0.3636
+     },
+     "2026": {
+      "pnl": -30.86,
+      "n": 14,
+      "win_rate": 0.2857
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8101,
+     "filter": 458,
+     "slots": 121,
+     "cooldown": 7,
+     "circuit_breaker": 4
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 86,
+    "n_legs": 86,
+    "pnl": -24.9562,
+    "expectancy": -0.2902,
+    "win_rate": 0.2442,
+    "profit_factor": 0.9586,
+    "return_pct": -2.5,
+    "max_drawdown_pct": -16.4,
+    "total_fees": 36.24,
+    "per_year": {
+     "2023": {
+      "pnl": -142.62,
+      "n": 21,
+      "win_rate": 0.0476
+     },
+     "2024": {
+      "pnl": 47.9,
+      "n": 19,
+      "win_rate": 0.2632
+     },
+     "2025": {
+      "pnl": 95.39,
+      "n": 30,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": -25.62,
+      "n": 16,
+      "win_rate": 0.3125
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8101,
+     "filter": 458,
+     "slots": 98,
+     "cooldown": 13,
+     "circuit_breaker": 4
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 92,
+    "n_legs": 92,
+    "pnl": 52.7399,
+    "expectancy": 0.5733,
+    "win_rate": 0.413,
+    "profit_factor": 1.1015,
+    "return_pct": 5.27,
+    "max_drawdown_pct": -10.15,
+    "total_fees": 39.36,
+    "per_year": {
+     "2023": {
+      "pnl": -53.5,
+      "n": 6,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 19.1,
+      "n": 34,
+      "win_rate": 0.4706
+     },
+     "2025": {
+      "pnl": 106.27,
+      "n": 37,
+      "win_rate": 0.4595
+     },
+     "2026": {
+      "pnl": -19.13,
+      "n": 15,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5230,
+     "bias": 2140,
+     "slots": 657,
+     "filter": 508,
+     "cooldown": 87
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 81,
+    "n_legs": 81,
+    "pnl": 2.3229,
+    "expectancy": 0.0287,
+    "win_rate": 0.4074,
+    "profit_factor": 1.005,
+    "return_pct": 0.23,
+    "max_drawdown_pct": -10.85,
+    "total_fees": 33.5,
+    "per_year": {
+     "2023": {
+      "pnl": -22.76,
+      "n": 6,
+      "win_rate": 0.1667
+     },
+     "2024": {
+      "pnl": -66.95,
+      "n": 29,
+      "win_rate": 0.3448
+     },
+     "2025": {
+      "pnl": 97.0,
+      "n": 32,
+      "win_rate": 0.5
+     },
+     "2026": {
+      "pnl": -4.96,
+      "n": 14,
+      "win_rate": 0.4286
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3261,
+     "trigger": 2922,
+     "bias": 1564,
+     "slots": 474,
+     "filter": 384
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "XRPUSDT": {
+   "base": {
+    "n": 100,
+    "n_legs": 100,
+    "pnl": 106.9796,
+    "expectancy": 1.0698,
+    "win_rate": 0.39,
+    "profit_factor": 1.1624,
+    "return_pct": 10.7,
+    "max_drawdown_pct": -11.3,
+    "total_fees": 30.49,
+    "per_year": {
+     "2023": {
+      "pnl": -2.95,
+      "n": 24,
+      "win_rate": 0.3333
+     },
+     "2024": {
+      "pnl": 151.16,
+      "n": 40,
+      "win_rate": 0.475
+     },
+     "2025": {
+      "pnl": 17.98,
+      "n": 14,
+      "win_rate": 0.4286
+     },
+     "2026": {
+      "pnl": -59.21,
+      "n": 22,
+      "win_rate": 0.2727
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4492,
+     "bias": 2926,
+     "filter": 680,
+     "slots": 469,
+     "cooldown": 73
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 56,
+    "n_legs": 56,
+    "pnl": 53.9048,
+    "expectancy": 0.9626,
+    "win_rate": 0.3036,
+    "profit_factor": 1.1519,
+    "return_pct": 5.39,
+    "max_drawdown_pct": -13.53,
+    "total_fees": 20.25,
+    "per_year": {
+     "2023": {
+      "pnl": -117.47,
+      "n": 18,
+      "win_rate": 0.1111
+     },
+     "2024": {
+      "pnl": 171.51,
+      "n": 13,
+      "win_rate": 0.3846
+     },
+     "2025": {
+      "pnl": 2.61,
+      "n": 10,
+      "win_rate": 0.5
+     },
+     "2026": {
+      "pnl": -2.75,
+      "n": 15,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8137,
+     "filter": 463,
+     "slots": 100,
+     "cooldown": 4,
+     "bias": 0
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 67,
+    "n_legs": 67,
+    "pnl": 32.9916,
+    "expectancy": 0.4924,
+    "win_rate": 0.3134,
+    "profit_factor": 1.0757,
+    "return_pct": 3.3,
+    "max_drawdown_pct": -12.41,
+    "total_fees": 23.29,
+    "per_year": {
+     "2023": {
+      "pnl": -70.67,
+      "n": 20,
+      "win_rate": 0.15
+     },
+     "2024": {
+      "pnl": 150.43,
+      "n": 19,
+      "win_rate": 0.4211
+     },
+     "2025": {
+      "pnl": 9.81,
+      "n": 11,
+      "win_rate": 0.4545
+     },
+     "2026": {
+      "pnl": -56.57,
+      "n": 17,
+      "win_rate": 0.2941
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8137,
+     "filter": 463,
+     "slots": 89,
+     "cooldown": 4,
+     "bias": 0
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 43,
+    "n_legs": 43,
+    "pnl": -70.7224,
+    "expectancy": -1.6447,
+    "win_rate": 0.3256,
+    "profit_factor": 0.7378,
+    "return_pct": -7.07,
+    "max_drawdown_pct": -10.1,
+    "total_fees": 9.65,
+    "per_year": {
+     "2023": {
+      "pnl": -8.23,
+      "n": 15,
+      "win_rate": 0.3333
+     },
+     "2024": {
+      "pnl": -30.92,
+      "n": 17,
+      "win_rate": 0.3529
+     },
+     "2025": {
+      "pnl": 26.54,
+      "n": 4,
+      "win_rate": 0.5
+     },
+     "2026": {
+      "pnl": -58.12,
+      "n": 7,
+      "win_rate": 0.1429
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5029,
+     "bias": 2618,
+     "filter": 569,
+     "slots": 435,
+     "cooldown": 43
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 41,
+    "n_legs": 41,
+    "pnl": -58.3109,
+    "expectancy": -1.4222,
+    "win_rate": 0.3415,
+    "profit_factor": 0.7737,
+    "return_pct": -5.83,
+    "max_drawdown_pct": -7.75,
+    "total_fees": 9.26,
+    "per_year": {
+     "2023": {
+      "pnl": -19.61,
+      "n": 15,
+      "win_rate": 0.3333
+     },
+     "2024": {
+      "pnl": 1.29,
+      "n": 14,
+      "win_rate": 0.4286
+     },
+     "2025": {
+      "pnl": 18.2,
+      "n": 4,
+      "win_rate": 0.5
+     },
+     "2026": {
+      "pnl": -58.2,
+      "n": 8,
+      "win_rate": 0.125
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3132,
+     "trigger": 2794,
+     "bias": 1986,
+     "filter": 414,
+     "slots": 357
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "DOGEUSDT": {
+   "base": {
+    "n": 141,
+    "n_legs": 141,
+    "pnl": -26.4417,
+    "expectancy": -0.1875,
+    "win_rate": 0.3404,
+    "profit_factor": 0.9711,
+    "return_pct": -2.64,
+    "max_drawdown_pct": -8.92,
+    "total_fees": 39.29,
+    "per_year": {
+     "2023": {
+      "pnl": 5.78,
+      "n": 34,
+      "win_rate": 0.3824
+     },
+     "2024": {
+      "pnl": -14.94,
+      "n": 41,
+      "win_rate": 0.3171
+     },
+     "2025": {
+      "pnl": 29.51,
+      "n": 40,
+      "win_rate": 0.375
+     },
+     "2026": {
+      "pnl": -46.8,
+      "n": 26,
+      "win_rate": 0.2692
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4611,
+     "bias": 2952,
+     "slots": 488,
+     "filter": 430,
+     "cooldown": 80
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 83,
+    "n_legs": 83,
+    "pnl": -19.7794,
+    "expectancy": -0.2383,
+    "win_rate": 0.3012,
+    "profit_factor": 0.9624,
+    "return_pct": -1.98,
+    "max_drawdown_pct": -14.22,
+    "total_fees": 27.33,
+    "per_year": {
+     "2022": {
+      "pnl": -10.37,
+      "n": 1,
+      "win_rate": 0.0
+     },
+     "2023": {
+      "pnl": -104.8,
+      "n": 24,
+      "win_rate": 0.25
+     },
+     "2024": {
+      "pnl": 132.44,
+      "n": 14,
+      "win_rate": 0.2857
+     },
+     "2025": {
+      "pnl": 65.42,
+      "n": 18,
+      "win_rate": 0.5
+     },
+     "2026": {
+      "pnl": -102.47,
+      "n": 26,
+      "win_rate": 0.2308
+     }
+    },
+    "positive_years": 2,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8087,
+     "filter": 429,
+     "slots": 156,
+     "circuit_breaker": 3,
+     "cooldown": 2
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 101,
+    "n_legs": 101,
+    "pnl": -6.8127,
+    "expectancy": -0.0675,
+    "win_rate": 0.2871,
+    "profit_factor": 0.9898,
+    "return_pct": -0.68,
+    "max_drawdown_pct": -13.29,
+    "total_fees": 31.43,
+    "per_year": {
+     "2022": {
+      "pnl": -10.37,
+      "n": 1,
+      "win_rate": 0.0
+     },
+     "2023": {
+      "pnl": -65.22,
+      "n": 26,
+      "win_rate": 0.2692
+     },
+     "2024": {
+      "pnl": 69.22,
+      "n": 22,
+      "win_rate": 0.2727
+     },
+     "2025": {
+      "pnl": 90.22,
+      "n": 21,
+      "win_rate": 0.4762
+     },
+     "2026": {
+      "pnl": -90.67,
+      "n": 31,
+      "win_rate": 0.1935
+     }
+    },
+    "positive_years": 2,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8087,
+     "filter": 429,
+     "slots": 133,
+     "cooldown": 6,
+     "circuit_breaker": 4
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 58,
+    "n_legs": 58,
+    "pnl": -40.1148,
+    "expectancy": -0.6916,
+    "win_rate": 0.3621,
+    "profit_factor": 0.8905,
+    "return_pct": -4.01,
+    "max_drawdown_pct": -12.79,
+    "total_fees": 12.35,
+    "per_year": {
+     "2023": {
+      "pnl": 54.57,
+      "n": 20,
+      "win_rate": 0.5
+     },
+     "2024": {
+      "pnl": -13.99,
+      "n": 26,
+      "win_rate": 0.3462
+     },
+     "2025": {
+      "pnl": -70.73,
+      "n": 11,
+      "win_rate": 0.1818
+     },
+     "2026": {
+      "pnl": -9.96,
+      "n": 1,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5204,
+     "bias": 2612,
+     "slots": 457,
+     "filter": 354,
+     "cooldown": 50
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 58,
+    "n_legs": 58,
+    "pnl": -68.3031,
+    "expectancy": -1.1776,
+    "win_rate": 0.3621,
+    "profit_factor": 0.819,
+    "return_pct": -6.83,
+    "max_drawdown_pct": -10.96,
+    "total_fees": 11.89,
+    "per_year": {
+     "2023": {
+      "pnl": 13.17,
+      "n": 16,
+      "win_rate": 0.4375
+     },
+     "2024": {
+      "pnl": -21.6,
+      "n": 26,
+      "win_rate": 0.3846
+     },
+     "2025": {
+      "pnl": -50.21,
+      "n": 15,
+      "win_rate": 0.2667
+     },
+     "2026": {
+      "pnl": -9.67,
+      "n": 1,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3123,
+     "trigger": 2935,
+     "bias": 1980,
+     "slots": 348,
+     "filter": 268
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "ADAUSDT": {
+   "base": {
+    "n": 117,
+    "n_legs": 117,
+    "pnl": 78.3895,
+    "expectancy": 0.67,
+    "win_rate": 0.3932,
+    "profit_factor": 1.1054,
+    "return_pct": 7.84,
+    "max_drawdown_pct": -20.39,
+    "total_fees": 30.56,
+    "per_year": {
+     "2023": {
+      "pnl": 75.39,
+      "n": 38,
+      "win_rate": 0.4474
+     },
+     "2024": {
+      "pnl": 6.01,
+      "n": 23,
+      "win_rate": 0.3913
+     },
+     "2025": {
+      "pnl": -78.58,
+      "n": 32,
+      "win_rate": 0.2812
+     },
+     "2026": {
+      "pnl": 75.57,
+      "n": 24,
+      "win_rate": 0.4583
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4909,
+     "bias": 2810,
+     "slots": 400,
+     "filter": 393,
+     "cooldown": 88
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 64,
+    "n_legs": 64,
+    "pnl": 238.8667,
+    "expectancy": 3.7323,
+    "win_rate": 0.3906,
+    "profit_factor": 1.6364,
+    "return_pct": 23.89,
+    "max_drawdown_pct": -6.37,
+    "total_fees": 20.16,
+    "per_year": {
+     "2022": {
+      "pnl": 10.4,
+      "n": 1,
+      "win_rate": 1.0
+     },
+     "2023": {
+      "pnl": 21.96,
+      "n": 22,
+      "win_rate": 0.2727
+     },
+     "2024": {
+      "pnl": 12.39,
+      "n": 17,
+      "win_rate": 0.3529
+     },
+     "2025": {
+      "pnl": 76.41,
+      "n": 11,
+      "win_rate": 0.5455
+     },
+     "2026": {
+      "pnl": 117.71,
+      "n": 13,
+      "win_rate": 0.4615
+     }
+    },
+    "positive_years": 5,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8080,
+     "filter": 442,
+     "slots": 163,
+     "cooldown": 8,
+     "circuit_breaker": 3
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 78,
+    "n_legs": 78,
+    "pnl": 237.462,
+    "expectancy": 3.0444,
+    "win_rate": 0.3846,
+    "profit_factor": 1.4811,
+    "return_pct": 23.75,
+    "max_drawdown_pct": -6.37,
+    "total_fees": 24.1,
+    "per_year": {
+     "2022": {
+      "pnl": 10.4,
+      "n": 1,
+      "win_rate": 1.0
+     },
+     "2023": {
+      "pnl": 62.92,
+      "n": 27,
+      "win_rate": 0.3333
+     },
+     "2024": {
+      "pnl": 13.22,
+      "n": 19,
+      "win_rate": 0.3684
+     },
+     "2025": {
+      "pnl": 80.64,
+      "n": 14,
+      "win_rate": 0.4286
+     },
+     "2026": {
+      "pnl": 70.29,
+      "n": 17,
+      "win_rate": 0.4118
+     }
+    },
+    "positive_years": 5,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8080,
+     "filter": 442,
+     "slots": 146,
+     "cooldown": 10,
+     "circuit_breaker": 4
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 57,
+    "n_legs": 57,
+    "pnl": -34.1188,
+    "expectancy": -0.5986,
+    "win_rate": 0.3509,
+    "profit_factor": 0.9106,
+    "return_pct": -3.41,
+    "max_drawdown_pct": -12.58,
+    "total_fees": 13.51,
+    "per_year": {
+     "2023": {
+      "pnl": 59.2,
+      "n": 22,
+      "win_rate": 0.5
+     },
+     "2024": {
+      "pnl": 15.4,
+      "n": 11,
+      "win_rate": 0.3636
+     },
+     "2025": {
+      "pnl": -86.47,
+      "n": 18,
+      "win_rate": 0.2222
+     },
+     "2026": {
+      "pnl": -22.25,
+      "n": 6,
+      "win_rate": 0.1667
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5498,
+     "bias": 2454,
+     "slots": 355,
+     "filter": 312,
+     "cooldown": 56
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 54,
+    "n_legs": 54,
+    "pnl": -12.4627,
+    "expectancy": -0.2308,
+    "win_rate": 0.3333,
+    "profit_factor": 0.9647,
+    "return_pct": -1.25,
+    "max_drawdown_pct": -10.4,
+    "total_fees": 12.22,
+    "per_year": {
+     "2023": {
+      "pnl": 13.94,
+      "n": 16,
+      "win_rate": 0.375
+     },
+     "2024": {
+      "pnl": 45.82,
+      "n": 11,
+      "win_rate": 0.4545
+     },
+     "2025": {
+      "pnl": -69.04,
+      "n": 20,
+      "win_rate": 0.25
+     },
+     "2026": {
+      "pnl": -3.19,
+      "n": 7,
+      "win_rate": 0.2857
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3283,
+     "trigger": 3135,
+     "bias": 1762,
+     "slots": 250,
+     "filter": 223
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "AVAXUSDT": {
+   "base": {
+    "n": 138,
+    "n_legs": 138,
+    "pnl": 104.4328,
+    "expectancy": 0.7568,
+    "win_rate": 0.413,
+    "profit_factor": 1.1192,
+    "return_pct": 10.44,
+    "max_drawdown_pct": -11.81,
+    "total_fees": 36.77,
+    "per_year": {
+     "2023": {
+      "pnl": 126.47,
+      "n": 45,
+      "win_rate": 0.4889
+     },
+     "2024": {
+      "pnl": -29.61,
+      "n": 29,
+      "win_rate": 0.3103
+     },
+     "2025": {
+      "pnl": 29.45,
+      "n": 35,
+      "win_rate": 0.4286
+     },
+     "2026": {
+      "pnl": -21.88,
+      "n": 29,
+      "win_rate": 0.3793
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5004,
+     "bias": 2775,
+     "slots": 411,
+     "filter": 355,
+     "cooldown": 68
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 84,
+    "n_legs": 84,
+    "pnl": 47.2654,
+    "expectancy": 0.5627,
+    "win_rate": 0.3214,
+    "profit_factor": 1.0888,
+    "return_pct": 4.73,
+    "max_drawdown_pct": -11.77,
+    "total_fees": 24.41,
+    "per_year": {
+     "2023": {
+      "pnl": 7.31,
+      "n": 30,
+      "win_rate": 0.3
+     },
+     "2024": {
+      "pnl": -68.95,
+      "n": 17,
+      "win_rate": 0.3529
+     },
+     "2025": {
+      "pnl": 82.66,
+      "n": 18,
+      "win_rate": 0.4444
+     },
+     "2026": {
+      "pnl": 26.24,
+      "n": 19,
+      "win_rate": 0.2105
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8074,
+     "filter": 426,
+     "slots": 167,
+     "cooldown": 7,
+     "circuit_breaker": 2
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 99,
+    "n_legs": 99,
+    "pnl": 50.2724,
+    "expectancy": 0.5078,
+    "win_rate": 0.3434,
+    "profit_factor": 1.0838,
+    "return_pct": 5.03,
+    "max_drawdown_pct": -11.79,
+    "total_fees": 26.6,
+    "per_year": {
+     "2023": {
+      "pnl": -48.17,
+      "n": 38,
+      "win_rate": 0.2895
+     },
+     "2024": {
+      "pnl": -50.7,
+      "n": 18,
+      "win_rate": 0.3333
+     },
+     "2025": {
+      "pnl": 73.59,
+      "n": 20,
+      "win_rate": 0.45
+     },
+     "2026": {
+      "pnl": 75.56,
+      "n": 23,
+      "win_rate": 0.3478
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8074,
+     "filter": 426,
+     "slots": 147,
+     "cooldown": 11,
+     "circuit_breaker": 3
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 47,
+    "n_legs": 47,
+    "pnl": 2.8941,
+    "expectancy": 0.0616,
+    "win_rate": 0.4468,
+    "profit_factor": 1.0107,
+    "return_pct": 0.29,
+    "max_drawdown_pct": -8.55,
+    "total_fees": 9.9,
+    "per_year": {
+     "2023": {
+      "pnl": 63.36,
+      "n": 14,
+      "win_rate": 0.5714
+     },
+     "2024": {
+      "pnl": 8.4,
+      "n": 14,
+      "win_rate": 0.4286
+     },
+     "2025": {
+      "pnl": -41.66,
+      "n": 10,
+      "win_rate": 0.3
+     },
+     "2026": {
+      "pnl": -27.21,
+      "n": 9,
+      "win_rate": 0.4444
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5618,
+     "bias": 2445,
+     "slots": 338,
+     "filter": 266,
+     "cooldown": 37
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 51,
+    "n_legs": 51,
+    "pnl": 45.6931,
+    "expectancy": 0.8959,
+    "win_rate": 0.3922,
+    "profit_factor": 1.1438,
+    "return_pct": 4.57,
+    "max_drawdown_pct": -8.42,
+    "total_fees": 11.78,
+    "per_year": {
+     "2023": {
+      "pnl": 79.8,
+      "n": 14,
+      "win_rate": 0.5714
+     },
+     "2024": {
+      "pnl": 50.42,
+      "n": 13,
+      "win_rate": 0.4615
+     },
+     "2025": {
+      "pnl": -74.58,
+      "n": 14,
+      "win_rate": 0.1429
+     },
+     "2026": {
+      "pnl": -9.95,
+      "n": 10,
+      "win_rate": 0.4
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3296,
+     "trigger": 3239,
+     "bias": 1720,
+     "slots": 225,
+     "filter": 200
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "LINKUSDT": {
+   "base": {
+    "n": 138,
+    "n_legs": 138,
+    "pnl": 73.2487,
+    "expectancy": 0.5308,
+    "win_rate": 0.3841,
+    "profit_factor": 1.0839,
+    "return_pct": 7.32,
+    "max_drawdown_pct": -10.33,
+    "total_fees": 38.2,
+    "per_year": {
+     "2023": {
+      "pnl": 65.76,
+      "n": 33,
+      "win_rate": 0.4242
+     },
+     "2024": {
+      "pnl": 29.2,
+      "n": 50,
+      "win_rate": 0.38
+     },
+     "2025": {
+      "pnl": -47.42,
+      "n": 29,
+      "win_rate": 0.3103
+     },
+     "2026": {
+      "pnl": 25.71,
+      "n": 26,
+      "win_rate": 0.4231
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4929,
+     "bias": 2492,
+     "slots": 638,
+     "filter": 401,
+     "cooldown": 116
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 67,
+    "n_legs": 67,
+    "pnl": 14.7364,
+    "expectancy": 0.2199,
+    "win_rate": 0.3284,
+    "profit_factor": 1.0333,
+    "return_pct": 1.47,
+    "max_drawdown_pct": -11.57,
+    "total_fees": 19.49,
+    "per_year": {
+     "2023": {
+      "pnl": 15.96,
+      "n": 17,
+      "win_rate": 0.2941
+     },
+     "2024": {
+      "pnl": -46.32,
+      "n": 20,
+      "win_rate": 0.3
+     },
+     "2025": {
+      "pnl": -11.68,
+      "n": 14,
+      "win_rate": 0.3571
+     },
+     "2026": {
+      "pnl": 56.78,
+      "n": 16,
+      "win_rate": 0.375
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8035,
+     "filter": 505,
+     "slots": 146,
+     "cooldown": 4,
+     "circuit_breaker": 3
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 81,
+    "n_legs": 81,
+    "pnl": 90.9804,
+    "expectancy": 1.1232,
+    "win_rate": 0.2963,
+    "profit_factor": 1.1614,
+    "return_pct": 9.1,
+    "max_drawdown_pct": -10.17,
+    "total_fees": 23.3,
+    "per_year": {
+     "2022": {
+      "pnl": 39.19,
+      "n": 1,
+      "win_rate": 1.0
+     },
+     "2023": {
+      "pnl": -44.27,
+      "n": 21,
+      "win_rate": 0.1905
+     },
+     "2024": {
+      "pnl": -16.31,
+      "n": 24,
+      "win_rate": 0.25
+     },
+     "2025": {
+      "pnl": -13.27,
+      "n": 15,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": 125.64,
+      "n": 20,
+      "win_rate": 0.4
+     }
+    },
+    "positive_years": 2,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8035,
+     "filter": 505,
+     "slots": 131,
+     "circuit_breaker": 5,
+     "cooldown": 3
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 80,
+    "n_legs": 80,
+    "pnl": 13.1966,
+    "expectancy": 0.165,
+    "win_rate": 0.375,
+    "profit_factor": 1.0262,
+    "return_pct": 1.32,
+    "max_drawdown_pct": -10.15,
+    "total_fees": 21.01,
+    "per_year": {
+     "2023": {
+      "pnl": 44.03,
+      "n": 24,
+      "win_rate": 0.4167
+     },
+     "2024": {
+      "pnl": 30.19,
+      "n": 30,
+      "win_rate": 0.4
+     },
+     "2025": {
+      "pnl": -3.59,
+      "n": 16,
+      "win_rate": 0.375
+     },
+     "2026": {
+      "pnl": -57.44,
+      "n": 10,
+      "win_rate": 0.2
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5560,
+     "bias": 2142,
+     "slots": 601,
+     "filter": 285,
+     "cooldown": 59
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 78,
+    "n_legs": 78,
+    "pnl": -68.6627,
+    "expectancy": -0.8803,
+    "win_rate": 0.359,
+    "profit_factor": 0.8644,
+    "return_pct": -6.87,
+    "max_drawdown_pct": -13.4,
+    "total_fees": 19.44,
+    "per_year": {
+     "2023": {
+      "pnl": 5.93,
+      "n": 22,
+      "win_rate": 0.4091
+     },
+     "2024": {
+      "pnl": 30.59,
+      "n": 26,
+      "win_rate": 0.4231
+     },
+     "2025": {
+      "pnl": -56.02,
+      "n": 21,
+      "win_rate": 0.2857
+     },
+     "2026": {
+      "pnl": -49.15,
+      "n": 9,
+      "win_rate": 0.2222
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3253,
+     "trigger": 3198,
+     "bias": 1525,
+     "slots": 443,
+     "filter": 216
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "LTCUSDT": {
+   "base": {
+    "n": 98,
+    "n_legs": 98,
+    "pnl": 103.5696,
+    "expectancy": 1.0568,
+    "win_rate": 0.4082,
+    "profit_factor": 1.1731,
+    "return_pct": 10.36,
+    "max_drawdown_pct": -8.06,
+    "total_fees": 31.59,
+    "per_year": {
+     "2023": {
+      "pnl": 12.07,
+      "n": 11,
+      "win_rate": 0.3636
+     },
+     "2024": {
+      "pnl": 63.33,
+      "n": 32,
+      "win_rate": 0.4375
+     },
+     "2025": {
+      "pnl": 51.19,
+      "n": 24,
+      "win_rate": 0.4583
+     },
+     "2026": {
+      "pnl": -23.02,
+      "n": 31,
+      "win_rate": 0.3548
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4655,
+     "bias": 3122,
+     "filter": 469,
+     "slots": 349,
+     "cooldown": 40
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 55,
+    "n_legs": 55,
+    "pnl": 58.0909,
+    "expectancy": 1.0562,
+    "win_rate": 0.2545,
+    "profit_factor": 1.1515,
+    "return_pct": 5.81,
+    "max_drawdown_pct": -9.74,
+    "total_fees": 18.63,
+    "per_year": {
+     "2023": {
+      "pnl": -41.15,
+      "n": 14,
+      "win_rate": 0.2143
+     },
+     "2024": {
+      "pnl": 42.12,
+      "n": 12,
+      "win_rate": 0.3333
+     },
+     "2025": {
+      "pnl": -47.69,
+      "n": 11,
+      "win_rate": 0.2727
+     },
+     "2026": {
+      "pnl": 104.81,
+      "n": 18,
+      "win_rate": 0.2222
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8089,
+     "filter": 502,
+     "slots": 110,
+     "cooldown": 4,
+     "bias": 0
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 68,
+    "n_legs": 68,
+    "pnl": 36.3915,
+    "expectancy": 0.5352,
+    "win_rate": 0.2794,
+    "profit_factor": 1.0769,
+    "return_pct": 3.64,
+    "max_drawdown_pct": -13.09,
+    "total_fees": 21.92,
+    "per_year": {
+     "2023": {
+      "pnl": -47.46,
+      "n": 15,
+      "win_rate": 0.2
+     },
+     "2024": {
+      "pnl": 69.5,
+      "n": 16,
+      "win_rate": 0.375
+     },
+     "2025": {
+      "pnl": -42.53,
+      "n": 12,
+      "win_rate": 0.25
+     },
+     "2026": {
+      "pnl": 56.88,
+      "n": 25,
+      "win_rate": 0.28
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8089,
+     "filter": 502,
+     "slots": 95,
+     "cooldown": 5,
+     "circuit_breaker": 1
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 42,
+    "n_legs": 42,
+    "pnl": -45.8848,
+    "expectancy": -1.0925,
+    "win_rate": 0.381,
+    "profit_factor": 0.8079,
+    "return_pct": -4.59,
+    "max_drawdown_pct": -9.01,
+    "total_fees": 10.36,
+    "per_year": {
+     "2023": {
+      "pnl": -40.57,
+      "n": 4,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 8.8,
+      "n": 14,
+      "win_rate": 0.4286
+     },
+     "2025": {
+      "pnl": -12.64,
+      "n": 15,
+      "win_rate": 0.4
+     },
+     "2026": {
+      "pnl": -1.48,
+      "n": 9,
+      "win_rate": 0.4444
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5239,
+     "bias": 2752,
+     "filter": 377,
+     "slots": 303,
+     "cooldown": 26
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 43,
+    "n_legs": 43,
+    "pnl": -135.4796,
+    "expectancy": -3.1507,
+    "win_rate": 0.2791,
+    "profit_factor": 0.4969,
+    "return_pct": -13.55,
+    "max_drawdown_pct": -13.55,
+    "total_fees": 10.41,
+    "per_year": {
+     "2023": {
+      "pnl": -40.57,
+      "n": 4,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": -26.93,
+      "n": 12,
+      "win_rate": 0.4167
+     },
+     "2025": {
+      "pnl": -29.14,
+      "n": 17,
+      "win_rate": 0.2941
+     },
+     "2026": {
+      "pnl": -38.85,
+      "n": 10,
+      "win_rate": 0.2
+     }
+    },
+    "positive_years": 0,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3205,
+     "trigger": 2984,
+     "bias": 2015,
+     "filter": 257,
+     "slots": 211
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "DOTUSDT": {
+   "base": {
+    "n": 99,
+    "n_legs": 99,
+    "pnl": -90.4024,
+    "expectancy": -0.9132,
+    "win_rate": 0.3434,
+    "profit_factor": 0.8571,
+    "return_pct": -9.04,
+    "max_drawdown_pct": -13.49,
+    "total_fees": 25.68,
+    "per_year": {
+     "2023": {
+      "pnl": -23.76,
+      "n": 28,
+      "win_rate": 0.3214
+     },
+     "2024": {
+      "pnl": -46.71,
+      "n": 36,
+      "win_rate": 0.3611
+     },
+     "2025": {
+      "pnl": -31.81,
+      "n": 19,
+      "win_rate": 0.3158
+     },
+     "2026": {
+      "pnl": 11.88,
+      "n": 16,
+      "win_rate": 0.375
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5068,
+     "bias": 3019,
+     "filter": 267,
+     "slots": 252,
+     "cooldown": 28
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 70,
+    "n_legs": 70,
+    "pnl": -56.3304,
+    "expectancy": -0.8047,
+    "win_rate": 0.2857,
+    "profit_factor": 0.8732,
+    "return_pct": -5.63,
+    "max_drawdown_pct": -11.7,
+    "total_fees": 20.23,
+    "per_year": {
+     "2023": {
+      "pnl": -90.52,
+      "n": 22,
+      "win_rate": 0.2273
+     },
+     "2024": {
+      "pnl": 66.13,
+      "n": 20,
+      "win_rate": 0.3
+     },
+     "2025": {
+      "pnl": -34.91,
+      "n": 16,
+      "win_rate": 0.375
+     },
+     "2026": {
+      "pnl": 2.97,
+      "n": 12,
+      "win_rate": 0.25
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8094,
+     "filter": 451,
+     "slots": 136,
+     "cooldown": 6,
+     "circuit_breaker": 3
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 87,
+    "n_legs": 87,
+    "pnl": -57.8289,
+    "expectancy": -0.6647,
+    "win_rate": 0.2529,
+    "profit_factor": 0.9025,
+    "return_pct": -5.78,
+    "max_drawdown_pct": -14.3,
+    "total_fees": 24.59,
+    "per_year": {
+     "2023": {
+      "pnl": -84.15,
+      "n": 27,
+      "win_rate": 0.1852
+     },
+     "2024": {
+      "pnl": 21.55,
+      "n": 28,
+      "win_rate": 0.25
+     },
+     "2025": {
+      "pnl": -3.56,
+      "n": 18,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": 8.34,
+      "n": 14,
+      "win_rate": 0.2857
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8094,
+     "filter": 451,
+     "slots": 116,
+     "cooldown": 10,
+     "circuit_breaker": 2
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 31,
+    "n_legs": 31,
+    "pnl": 39.1578,
+    "expectancy": 1.2632,
+    "win_rate": 0.4516,
+    "profit_factor": 1.2258,
+    "return_pct": 3.92,
+    "max_drawdown_pct": -5.8,
+    "total_fees": 6.23,
+    "per_year": {
+     "2023": {
+      "pnl": 15.34,
+      "n": 15,
+      "win_rate": 0.4
+     },
+     "2024": {
+      "pnl": 54.4,
+      "n": 12,
+      "win_rate": 0.5833
+     },
+     "2025": {
+      "pnl": -8.95,
+      "n": 2,
+      "win_rate": 0.5
+     },
+     "2026": {
+      "pnl": -21.63,
+      "n": 2,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5652,
+     "bias": 2680,
+     "slots": 184,
+     "filter": 176,
+     "cooldown": 22
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 32,
+    "n_legs": 32,
+    "pnl": -44.0383,
+    "expectancy": -1.3762,
+    "win_rate": 0.3438,
+    "profit_factor": 0.7932,
+    "return_pct": -4.4,
+    "max_drawdown_pct": -10.28,
+    "total_fees": 7.79,
+    "per_year": {
+     "2023": {
+      "pnl": 54.65,
+      "n": 14,
+      "win_rate": 0.5
+     },
+     "2024": {
+      "pnl": -26.74,
+      "n": 11,
+      "win_rate": 0.3636
+     },
+     "2025": {
+      "pnl": -41.67,
+      "n": 4,
+      "win_rate": 0.0
+     },
+     "2026": {
+      "pnl": -30.28,
+      "n": 3,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3285,
+     "trigger": 3253,
+     "bias": 1924,
+     "slots": 143,
+     "filter": 115
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "TRXUSDT": {
+   "base": {
+    "n": 164,
+    "n_legs": 164,
+    "pnl": 171.2671,
+    "expectancy": 1.0443,
+    "win_rate": 0.4207,
+    "profit_factor": 1.1959,
+    "return_pct": 17.13,
+    "max_drawdown_pct": -17.85,
+    "total_fees": 116.17,
+    "per_year": {
+     "2023": {
+      "pnl": -94.01,
+      "n": 34,
+      "win_rate": 0.2647
+     },
+     "2024": {
+      "pnl": -47.49,
+      "n": 54,
+      "win_rate": 0.3519
+     },
+     "2025": {
+      "pnl": 125.74,
+      "n": 45,
+      "win_rate": 0.4889
+     },
+     "2026": {
+      "pnl": 187.02,
+      "n": 31,
+      "win_rate": 0.6129
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5283,
+     "bias": 1668,
+     "slots": 763,
+     "filter": 671,
+     "cooldown": 160
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 63,
+    "n_legs": 63,
+    "pnl": 417.5713,
+    "expectancy": 6.6281,
+    "win_rate": 0.3016,
+    "profit_factor": 1.8851,
+    "return_pct": 41.76,
+    "max_drawdown_pct": -13.2,
+    "total_fees": 50.68,
+    "per_year": {
+     "2023": {
+      "pnl": -5.25,
+      "n": 14,
+      "win_rate": 0.2857
+     },
+     "2024": {
+      "pnl": 218.0,
+      "n": 22,
+      "win_rate": 0.1364
+     },
+     "2025": {
+      "pnl": 15.48,
+      "n": 18,
+      "win_rate": 0.3889
+     },
+     "2026": {
+      "pnl": 189.34,
+      "n": 9,
+      "win_rate": 0.5556
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8196,
+     "filter": 386,
+     "slots": 105,
+     "cooldown": 6,
+     "circuit_breaker": 4
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 78,
+    "n_legs": 78,
+    "pnl": 174.5913,
+    "expectancy": 2.2384,
+    "win_rate": 0.3205,
+    "profit_factor": 1.3292,
+    "return_pct": 17.46,
+    "max_drawdown_pct": -15.52,
+    "total_fees": 60.41,
+    "per_year": {
+     "2023": {
+      "pnl": 17.25,
+      "n": 17,
+      "win_rate": 0.3529
+     },
+     "2024": {
+      "pnl": -43.23,
+      "n": 26,
+      "win_rate": 0.1538
+     },
+     "2025": {
+      "pnl": 92.59,
+      "n": 21,
+      "win_rate": 0.381
+     },
+     "2026": {
+      "pnl": 107.98,
+      "n": 14,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8196,
+     "filter": 386,
+     "slots": 82,
+     "cooldown": 11,
+     "circuit_breaker": 7
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 122,
+    "n_legs": 122,
+    "pnl": 106.3666,
+    "expectancy": 0.8719,
+    "win_rate": 0.418,
+    "profit_factor": 1.1529,
+    "return_pct": 10.64,
+    "max_drawdown_pct": -9.27,
+    "total_fees": 89.12,
+    "per_year": {
+     "2023": {
+      "pnl": -44.92,
+      "n": 27,
+      "win_rate": 0.2963
+     },
+     "2024": {
+      "pnl": -5.65,
+      "n": 42,
+      "win_rate": 0.381
+     },
+     "2025": {
+      "pnl": 68.54,
+      "n": 29,
+      "win_rate": 0.5172
+     },
+     "2026": {
+      "pnl": 88.4,
+      "n": 24,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5792,
+     "bias": 1377,
+     "slots": 728,
+     "filter": 589,
+     "cooldown": 111
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 114,
+    "n_legs": 114,
+    "pnl": 117.2644,
+    "expectancy": 1.0286,
+    "win_rate": 0.4211,
+    "profit_factor": 1.1796,
+    "return_pct": 11.73,
+    "max_drawdown_pct": -9.0,
+    "total_fees": 80.77,
+    "per_year": {
+     "2023": {
+      "pnl": -24.6,
+      "n": 27,
+      "win_rate": 0.3333
+     },
+     "2024": {
+      "pnl": -12.52,
+      "n": 42,
+      "win_rate": 0.381
+     },
+     "2025": {
+      "pnl": 100.33,
+      "n": 28,
+      "win_rate": 0.5357
+     },
+     "2026": {
+      "pnl": 54.05,
+      "n": 17,
+      "win_rate": 0.4706
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 3363,
+     "climax": 3276,
+     "bias": 991,
+     "slots": 543,
+     "filter": 373
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "ATOMUSDT": {
+   "base": {
+    "n": 104,
+    "n_legs": 104,
+    "pnl": 2.4317,
+    "expectancy": 0.0234,
+    "win_rate": 0.3654,
+    "profit_factor": 1.0039,
+    "return_pct": 0.24,
+    "max_drawdown_pct": -11.06,
+    "total_fees": 30.83,
+    "per_year": {
+     "2023": {
+      "pnl": -10.34,
+      "n": 37,
+      "win_rate": 0.3784
+     },
+     "2024": {
+      "pnl": 15.33,
+      "n": 32,
+      "win_rate": 0.3438
+     },
+     "2025": {
+      "pnl": -26.79,
+      "n": 21,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": 24.23,
+      "n": 14,
+      "win_rate": 0.4286
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5081,
+     "bias": 3036,
+     "slots": 264,
+     "filter": 191,
+     "cooldown": 54
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 79,
+    "n_legs": 79,
+    "pnl": -66.8462,
+    "expectancy": -0.8462,
+    "win_rate": 0.3291,
+    "profit_factor": 0.8678,
+    "return_pct": -6.68,
+    "max_drawdown_pct": -16.62,
+    "total_fees": 24.82,
+    "per_year": {
+     "2023": {
+      "pnl": -61.6,
+      "n": 27,
+      "win_rate": 0.2593
+     },
+     "2024": {
+      "pnl": 75.83,
+      "n": 19,
+      "win_rate": 0.5789
+     },
+     "2025": {
+      "pnl": -34.86,
+      "n": 16,
+      "win_rate": 0.375
+     },
+     "2026": {
+      "pnl": -46.21,
+      "n": 17,
+      "win_rate": 0.1176
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8107,
+     "filter": 415,
+     "slots": 150,
+     "circuit_breaker": 6,
+     "cooldown": 3
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 92,
+    "n_legs": 92,
+    "pnl": -6.5993,
+    "expectancy": -0.0717,
+    "win_rate": 0.3261,
+    "profit_factor": 0.9892,
+    "return_pct": -0.66,
+    "max_drawdown_pct": -13.15,
+    "total_fees": 28.85,
+    "per_year": {
+     "2023": {
+      "pnl": -27.62,
+      "n": 33,
+      "win_rate": 0.2727
+     },
+     "2024": {
+      "pnl": 78.52,
+      "n": 23,
+      "win_rate": 0.5217
+     },
+     "2025": {
+      "pnl": -33.44,
+      "n": 17,
+      "win_rate": 0.3529
+     },
+     "2026": {
+      "pnl": -24.06,
+      "n": 19,
+      "win_rate": 0.1579
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8107,
+     "filter": 415,
+     "slots": 136,
+     "circuit_breaker": 7,
+     "cooldown": 3
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 34,
+    "n_legs": 34,
+    "pnl": -20.2709,
+    "expectancy": -0.5962,
+    "win_rate": 0.3824,
+    "profit_factor": 0.9046,
+    "return_pct": -2.03,
+    "max_drawdown_pct": -9.01,
+    "total_fees": 7.97,
+    "per_year": {
+     "2023": {
+      "pnl": 10.26,
+      "n": 20,
+      "win_rate": 0.4
+     },
+     "2024": {
+      "pnl": 21.44,
+      "n": 9,
+      "win_rate": 0.5556
+     },
+     "2025": {
+      "pnl": -21.2,
+      "n": 2,
+      "win_rate": 0.0
+     },
+     "2026": {
+      "pnl": -30.78,
+      "n": 3,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5651,
+     "bias": 2693,
+     "slots": 199,
+     "filter": 138,
+     "cooldown": 30
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 41,
+    "n_legs": 41,
+    "pnl": 63.1584,
+    "expectancy": 1.5404,
+    "win_rate": 0.4878,
+    "profit_factor": 1.2955,
+    "return_pct": 6.32,
+    "max_drawdown_pct": -4.17,
+    "total_fees": 11.67,
+    "per_year": {
+     "2023": {
+      "pnl": 22.33,
+      "n": 21,
+      "win_rate": 0.4762
+     },
+     "2024": {
+      "pnl": 25.2,
+      "n": 10,
+      "win_rate": 0.6
+     },
+     "2025": {
+      "pnl": -12.02,
+      "n": 4,
+      "win_rate": 0.25
+     },
+     "2026": {
+      "pnl": 27.64,
+      "n": 6,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3322,
+     "trigger": 3212,
+     "bias": 1931,
+     "slots": 142,
+     "filter": 99
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "NEARUSDT": {
+   "base": {
+    "n": 137,
+    "n_legs": 137,
+    "pnl": -63.1647,
+    "expectancy": -0.4611,
+    "win_rate": 0.3577,
+    "profit_factor": 0.9187,
+    "return_pct": -6.32,
+    "max_drawdown_pct": -19.51,
+    "total_fees": 24.75,
+    "per_year": {
+     "2023": {
+      "pnl": 17.18,
+      "n": 34,
+      "win_rate": 0.3529
+     },
+     "2024": {
+      "pnl": -130.77,
+      "n": 36,
+      "win_rate": 0.2778
+     },
+     "2025": {
+      "pnl": -42.19,
+      "n": 24,
+      "win_rate": 0.2917
+     },
+     "2026": {
+      "pnl": 92.62,
+      "n": 43,
+      "win_rate": 0.4651
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5016,
+     "bias": 2578,
+     "slots": 601,
+     "filter": 260,
+     "cooldown": 108
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 69,
+    "n_legs": 69,
+    "pnl": 257.1283,
+    "expectancy": 3.7265,
+    "win_rate": 0.2609,
+    "profit_factor": 1.5538,
+    "return_pct": 25.71,
+    "max_drawdown_pct": -10.26,
+    "total_fees": 16.68,
+    "per_year": {
+     "2023": {
+      "pnl": 76.4,
+      "n": 24,
+      "win_rate": 0.25
+     },
+     "2024": {
+      "pnl": -53.53,
+      "n": 12,
+      "win_rate": 0.25
+     },
+     "2025": {
+      "pnl": -10.09,
+      "n": 17,
+      "win_rate": 0.2941
+     },
+     "2026": {
+      "pnl": 244.36,
+      "n": 16,
+      "win_rate": 0.25
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8084,
+     "filter": 453,
+     "slots": 148,
+     "circuit_breaker": 6,
+     "bias": 0
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 90,
+    "n_legs": 90,
+    "pnl": 167.6133,
+    "expectancy": 1.8624,
+    "win_rate": 0.2889,
+    "profit_factor": 1.2746,
+    "return_pct": 16.76,
+    "max_drawdown_pct": -10.45,
+    "total_fees": 20.46,
+    "per_year": {
+     "2023": {
+      "pnl": 56.36,
+      "n": 30,
+      "win_rate": 0.3
+     },
+     "2024": {
+      "pnl": -22.32,
+      "n": 15,
+      "win_rate": 0.2
+     },
+     "2025": {
+      "pnl": -18.73,
+      "n": 18,
+      "win_rate": 0.2778
+     },
+     "2026": {
+      "pnl": 152.31,
+      "n": 27,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8084,
+     "filter": 453,
+     "slots": 125,
+     "cooldown": 5,
+     "circuit_breaker": 3
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 80,
+    "n_legs": 80,
+    "pnl": 82.5292,
+    "expectancy": 1.0316,
+    "win_rate": 0.425,
+    "profit_factor": 1.1767,
+    "return_pct": 8.25,
+    "max_drawdown_pct": -12.41,
+    "total_fees": 13.98,
+    "per_year": {
+     "2023": {
+      "pnl": 99.11,
+      "n": 17,
+      "win_rate": 0.5294
+     },
+     "2024": {
+      "pnl": -53.17,
+      "n": 32,
+      "win_rate": 0.3438
+     },
+     "2025": {
+      "pnl": -42.23,
+      "n": 4,
+      "win_rate": 0.0
+     },
+     "2026": {
+      "pnl": 78.82,
+      "n": 27,
+      "win_rate": 0.5185
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5616,
+     "bias": 2225,
+     "slots": 570,
+     "filter": 184,
+     "cooldown": 60
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 78,
+    "n_legs": 78,
+    "pnl": 15.81,
+    "expectancy": 0.2027,
+    "win_rate": 0.4103,
+    "profit_factor": 1.0349,
+    "return_pct": 1.58,
+    "max_drawdown_pct": -13.7,
+    "total_fees": 13.59,
+    "per_year": {
+     "2023": {
+      "pnl": 87.79,
+      "n": 18,
+      "win_rate": 0.5
+     },
+     "2024": {
+      "pnl": -99.12,
+      "n": 30,
+      "win_rate": 0.3
+     },
+     "2025": {
+      "pnl": -30.43,
+      "n": 7,
+      "win_rate": 0.2857
+     },
+     "2026": {
+      "pnl": 57.57,
+      "n": 23,
+      "win_rate": 0.5217
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3363,
+     "trigger": 3206,
+     "bias": 1556,
+     "slots": 372,
+     "filter": 121
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "APTUSDT": {
+   "base": {
+    "n": 100,
+    "n_legs": 100,
+    "pnl": 34.7638,
+    "expectancy": 0.3476,
+    "win_rate": 0.37,
+    "profit_factor": 1.0563,
+    "return_pct": 3.48,
+    "max_drawdown_pct": -10.61,
+    "total_fees": 22.48,
+    "per_year": {
+     "2023": {
+      "pnl": -17.11,
+      "n": 14,
+      "win_rate": 0.2857
+     },
+     "2024": {
+      "pnl": 104.58,
+      "n": 51,
+      "win_rate": 0.451
+     },
+     "2025": {
+      "pnl": -51.48,
+      "n": 20,
+      "win_rate": 0.25
+     },
+     "2026": {
+      "pnl": -1.23,
+      "n": 15,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4891,
+     "bias": 3006,
+     "slots": 407,
+     "filter": 270,
+     "cooldown": 68
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 61,
+    "n_legs": 61,
+    "pnl": 126.7393,
+    "expectancy": 2.0777,
+    "win_rate": 0.4098,
+    "profit_factor": 1.3338,
+    "return_pct": 12.67,
+    "max_drawdown_pct": -10.4,
+    "total_fees": 16.1,
+    "per_year": {
+     "2022": {
+      "pnl": 6.06,
+      "n": 1,
+      "win_rate": 1.0
+     },
+     "2023": {
+      "pnl": 122.52,
+      "n": 8,
+      "win_rate": 0.625
+     },
+     "2024": {
+      "pnl": 57.05,
+      "n": 22,
+      "win_rate": 0.4545
+     },
+     "2025": {
+      "pnl": -59.69,
+      "n": 14,
+      "win_rate": 0.2143
+     },
+     "2026": {
+      "pnl": 0.8,
+      "n": 16,
+      "win_rate": 0.375
+     }
+    },
+    "positive_years": 4,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8068,
+     "filter": 478,
+     "slots": 142,
+     "circuit_breaker": 8,
+     "cooldown": 3
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 71,
+    "n_legs": 71,
+    "pnl": 180.584,
+    "expectancy": 2.5434,
+    "win_rate": 0.3944,
+    "profit_factor": 1.3827,
+    "return_pct": 18.06,
+    "max_drawdown_pct": -8.46,
+    "total_fees": 18.02,
+    "per_year": {
+     "2022": {
+      "pnl": 6.06,
+      "n": 1,
+      "win_rate": 1.0
+     },
+     "2023": {
+      "pnl": 117.24,
+      "n": 11,
+      "win_rate": 0.5455
+     },
+     "2024": {
+      "pnl": 82.36,
+      "n": 26,
+      "win_rate": 0.4231
+     },
+     "2025": {
+      "pnl": -23.93,
+      "n": 16,
+      "win_rate": 0.1875
+     },
+     "2026": {
+      "pnl": -1.15,
+      "n": 17,
+      "win_rate": 0.4118
+     }
+    },
+    "positive_years": 3,
+    "years_n": 5,
+    "veto_top": {
+     "trigger": 8068,
+     "filter": 478,
+     "slots": 130,
+     "circuit_breaker": 9,
+     "cooldown": 4
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 45,
+    "n_legs": 45,
+    "pnl": 24.5594,
+    "expectancy": 0.5458,
+    "win_rate": 0.4,
+    "profit_factor": 1.0961,
+    "return_pct": 2.46,
+    "max_drawdown_pct": -4.91,
+    "total_fees": 9.04,
+    "per_year": {
+     "2023": {
+      "pnl": 0.12,
+      "n": 11,
+      "win_rate": 0.3636
+     },
+     "2024": {
+      "pnl": 35.1,
+      "n": 33,
+      "win_rate": 0.4242
+     },
+     "2025": {
+      "pnl": -10.66,
+      "n": 1,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 2,
+    "years_n": 3,
+    "veto_top": {
+     "trigger": 5482,
+     "bias": 2673,
+     "slots": 341,
+     "filter": 161,
+     "cooldown": 57
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 44,
+    "n_legs": 44,
+    "pnl": -27.6276,
+    "expectancy": -0.6279,
+    "win_rate": 0.3636,
+    "profit_factor": 0.8912,
+    "return_pct": -2.76,
+    "max_drawdown_pct": -7.77,
+    "total_fees": 8.83,
+    "per_year": {
+     "2023": {
+      "pnl": 0.45,
+      "n": 10,
+      "win_rate": 0.4
+     },
+     "2024": {
+      "pnl": -21.66,
+      "n": 28,
+      "win_rate": 0.3571
+     },
+     "2025": {
+      "pnl": -11.05,
+      "n": 4,
+      "win_rate": 0.25
+     },
+     "2026": {
+      "pnl": 4.63,
+      "n": 2,
+      "win_rate": 0.5
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3284,
+     "trigger": 3157,
+     "bias": 1878,
+     "slots": 235,
+     "filter": 128
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "ARBUSDT": {
+   "base": {
+    "n": 110,
+    "n_legs": 110,
+    "pnl": -5.8262,
+    "expectancy": -0.053,
+    "win_rate": 0.3727,
+    "profit_factor": 0.9912,
+    "return_pct": -0.58,
+    "max_drawdown_pct": -11.63,
+    "total_fees": 22.73,
+    "per_year": {
+     "2023": {
+      "pnl": -33.35,
+      "n": 6,
+      "win_rate": 0.1667
+     },
+     "2024": {
+      "pnl": 41.23,
+      "n": 38,
+      "win_rate": 0.4211
+     },
+     "2025": {
+      "pnl": -80.75,
+      "n": 38,
+      "win_rate": 0.2895
+     },
+     "2026": {
+      "pnl": 67.04,
+      "n": 28,
+      "win_rate": 0.4643
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4479,
+     "bias": 2586,
+     "filter": 334,
+     "slots": 328,
+     "circuit_breaker": 36
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 73,
+    "n_legs": 73,
+    "pnl": 118.1004,
+    "expectancy": 1.6178,
+    "win_rate": 0.3699,
+    "profit_factor": 1.2396,
+    "return_pct": 11.81,
+    "max_drawdown_pct": -9.4,
+    "total_fees": 20.48,
+    "per_year": {
+     "2023": {
+      "pnl": -16.99,
+      "n": 10,
+      "win_rate": 0.4
+     },
+     "2024": {
+      "pnl": 211.88,
+      "n": 19,
+      "win_rate": 0.4737
+     },
+     "2025": {
+      "pnl": -100.91,
+      "n": 25,
+      "win_rate": 0.28
+     },
+     "2026": {
+      "pnl": 24.12,
+      "n": 19,
+      "win_rate": 0.3684
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 7279,
+     "filter": 386,
+     "slots": 161,
+     "cooldown": 7,
+     "circuit_breaker": 1
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 90,
+    "n_legs": 90,
+    "pnl": 66.5118,
+    "expectancy": 0.739,
+    "win_rate": 0.3444,
+    "profit_factor": 1.1093,
+    "return_pct": 6.65,
+    "max_drawdown_pct": -11.04,
+    "total_fees": 23.22,
+    "per_year": {
+     "2023": {
+      "pnl": -21.05,
+      "n": 11,
+      "win_rate": 0.3636
+     },
+     "2024": {
+      "pnl": 101.21,
+      "n": 30,
+      "win_rate": 0.3333
+     },
+     "2025": {
+      "pnl": -55.22,
+      "n": 26,
+      "win_rate": 0.3077
+     },
+     "2026": {
+      "pnl": 41.57,
+      "n": 23,
+      "win_rate": 0.3913
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 7279,
+     "filter": 386,
+     "slots": 141,
+     "cooldown": 6,
+     "circuit_breaker": 5
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 36,
+    "n_legs": 36,
+    "pnl": -90.7984,
+    "expectancy": -2.5222,
+    "win_rate": 0.2778,
+    "profit_factor": 0.6073,
+    "return_pct": -9.08,
+    "max_drawdown_pct": -10.95,
+    "total_fees": 6.09,
+    "per_year": {
+     "2023": {
+      "pnl": -31.5,
+      "n": 4,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 31.74,
+      "n": 12,
+      "win_rate": 0.5
+     },
+     "2025": {
+      "pnl": -53.04,
+      "n": 12,
+      "win_rate": 0.1667
+     },
+     "2026": {
+      "pnl": -38.0,
+      "n": 8,
+      "win_rate": 0.25
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5029,
+     "bias": 2282,
+     "filter": 264,
+     "slots": 260,
+     "cooldown": 23
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 42,
+    "n_legs": 42,
+    "pnl": -29.9961,
+    "expectancy": -0.7142,
+    "win_rate": 0.3333,
+    "profit_factor": 0.8867,
+    "return_pct": -3.0,
+    "max_drawdown_pct": -10.02,
+    "total_fees": 7.88,
+    "per_year": {
+     "2023": {
+      "pnl": -31.5,
+      "n": 4,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 58.33,
+      "n": 14,
+      "win_rate": 0.5
+     },
+     "2025": {
+      "pnl": -73.21,
+      "n": 14,
+      "win_rate": 0.2143
+     },
+     "2026": {
+      "pnl": 16.38,
+      "n": 10,
+      "win_rate": 0.4
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 2927,
+     "trigger": 2898,
+     "bias": 1630,
+     "slots": 197,
+     "filter": 186
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "OPUSDT": {
+   "base": {
+    "n": 103,
+    "n_legs": 103,
+    "pnl": -72.6738,
+    "expectancy": -0.7056,
+    "win_rate": 0.3398,
+    "profit_factor": 0.8829,
+    "return_pct": -7.27,
+    "max_drawdown_pct": -14.49,
+    "total_fees": 20.61,
+    "per_year": {
+     "2023": {
+      "pnl": 10.2,
+      "n": 30,
+      "win_rate": 0.3667
+     },
+     "2024": {
+      "pnl": -57.1,
+      "n": 43,
+      "win_rate": 0.3256
+     },
+     "2025": {
+      "pnl": -43.76,
+      "n": 19,
+      "win_rate": 0.2632
+     },
+     "2026": {
+      "pnl": 17.99,
+      "n": 11,
+      "win_rate": 0.4545
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4981,
+     "bias": 3121,
+     "slots": 326,
+     "filter": 128,
+     "cooldown": 52
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 79,
+    "n_legs": 79,
+    "pnl": -170.3032,
+    "expectancy": -2.1557,
+    "win_rate": 0.2152,
+    "profit_factor": 0.6826,
+    "return_pct": -17.03,
+    "max_drawdown_pct": -19.53,
+    "total_fees": 16.2,
+    "per_year": {
+     "2023": {
+      "pnl": -42.61,
+      "n": 24,
+      "win_rate": 0.2917
+     },
+     "2024": {
+      "pnl": -90.73,
+      "n": 23,
+      "win_rate": 0.1304
+     },
+     "2025": {
+      "pnl": -35.21,
+      "n": 19,
+      "win_rate": 0.2105
+     },
+     "2026": {
+      "pnl": -1.75,
+      "n": 13,
+      "win_rate": 0.2308
+     }
+    },
+    "positive_years": 0,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8048,
+     "filter": 478,
+     "slots": 138,
+     "cooldown": 10,
+     "circuit_breaker": 7
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 90,
+    "n_legs": 90,
+    "pnl": -41.8089,
+    "expectancy": -0.4645,
+    "win_rate": 0.2333,
+    "profit_factor": 0.9356,
+    "return_pct": -4.18,
+    "max_drawdown_pct": -15.09,
+    "total_fees": 19.48,
+    "per_year": {
+     "2023": {
+      "pnl": 41.69,
+      "n": 29,
+      "win_rate": 0.2759
+     },
+     "2024": {
+      "pnl": -104.74,
+      "n": 25,
+      "win_rate": 0.16
+     },
+     "2025": {
+      "pnl": 18.62,
+      "n": 22,
+      "win_rate": 0.2273
+     },
+     "2026": {
+      "pnl": 2.62,
+      "n": 14,
+      "win_rate": 0.2857
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8048,
+     "filter": 478,
+     "slots": 125,
+     "circuit_breaker": 17,
+     "cooldown": 2
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 43,
+    "n_legs": 43,
+    "pnl": 15.9149,
+    "expectancy": 0.3701,
+    "win_rate": 0.4186,
+    "profit_factor": 1.0677,
+    "return_pct": 1.59,
+    "max_drawdown_pct": -7.41,
+    "total_fees": 8.16,
+    "per_year": {
+     "2023": {
+      "pnl": 16.22,
+      "n": 15,
+      "win_rate": 0.4
+     },
+     "2024": {
+      "pnl": 10.18,
+      "n": 27,
+      "win_rate": 0.4444
+     },
+     "2026": {
+      "pnl": -10.49,
+      "n": 1,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 2,
+    "years_n": 3,
+    "veto_top": {
+     "trigger": 5585,
+     "bias": 2763,
+     "slots": 270,
+     "filter": 43,
+     "cooldown": 40
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 46,
+    "n_legs": 46,
+    "pnl": -87.771,
+    "expectancy": -1.9081,
+    "win_rate": 0.3043,
+    "profit_factor": 0.6933,
+    "return_pct": -8.78,
+    "max_drawdown_pct": -11.84,
+    "total_fees": 8.38,
+    "per_year": {
+     "2023": {
+      "pnl": -50.71,
+      "n": 15,
+      "win_rate": 0.2667
+     },
+     "2024": {
+      "pnl": -20.9,
+      "n": 25,
+      "win_rate": 0.32
+     },
+     "2025": {
+      "pnl": -28.21,
+      "n": 3,
+      "win_rate": 0.0
+     },
+     "2026": {
+      "pnl": 12.06,
+      "n": 3,
+      "win_rate": 0.6667
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3303,
+     "trigger": 3254,
+     "bias": 1913,
+     "slots": 159,
+     "filter": 37
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "SUIUSDT": {
+   "base": {
+    "n": 127,
+    "n_legs": 127,
+    "pnl": -19.3455,
+    "expectancy": -0.1523,
+    "win_rate": 0.3622,
+    "profit_factor": 0.9747,
+    "return_pct": -1.93,
+    "max_drawdown_pct": -11.85,
+    "total_fees": 24.5,
+    "per_year": {
+     "2024": {
+      "pnl": -11.52,
+      "n": 69,
+      "win_rate": 0.3478
+     },
+     "2025": {
+      "pnl": -32.1,
+      "n": 35,
+      "win_rate": 0.3714
+     },
+     "2026": {
+      "pnl": 24.27,
+      "n": 23,
+      "win_rate": 0.3913
+     }
+    },
+    "positive_years": 1,
+    "years_n": 3,
+    "veto_top": {
+     "trigger": 4324,
+     "bias": 2298,
+     "slots": 466,
+     "filter": 291,
+     "cooldown": 104
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 74,
+    "n_legs": 74,
+    "pnl": -184.1126,
+    "expectancy": -2.488,
+    "win_rate": 0.2297,
+    "profit_factor": 0.6229,
+    "return_pct": -18.41,
+    "max_drawdown_pct": -18.41,
+    "total_fees": 14.71,
+    "per_year": {
+     "2023": {
+      "pnl": -79.31,
+      "n": 8,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": -30.44,
+      "n": 30,
+      "win_rate": 0.2667
+     },
+     "2025": {
+      "pnl": 9.74,
+      "n": 15,
+      "win_rate": 0.4
+     },
+     "2026": {
+      "pnl": -84.11,
+      "n": 21,
+      "win_rate": 0.1429
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 7032,
+     "filter": 425,
+     "slots": 121,
+     "circuit_breaker": 5,
+     "cooldown": 4
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 82,
+    "n_legs": 82,
+    "pnl": -124.157,
+    "expectancy": -1.5141,
+    "win_rate": 0.2439,
+    "profit_factor": 0.7792,
+    "return_pct": -12.42,
+    "max_drawdown_pct": -14.13,
+    "total_fees": 16.64,
+    "per_year": {
+     "2023": {
+      "pnl": -79.31,
+      "n": 8,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 12.51,
+      "n": 34,
+      "win_rate": 0.2647
+     },
+     "2025": {
+      "pnl": 37.77,
+      "n": 17,
+      "win_rate": 0.4118
+     },
+     "2026": {
+      "pnl": -95.13,
+      "n": 23,
+      "win_rate": 0.1739
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 7032,
+     "filter": 425,
+     "slots": 112,
+     "circuit_breaker": 6,
+     "cooldown": 4
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 66,
+    "n_legs": 66,
+    "pnl": -32.4825,
+    "expectancy": -0.4922,
+    "win_rate": 0.3485,
+    "profit_factor": 0.923,
+    "return_pct": -3.25,
+    "max_drawdown_pct": -13.17,
+    "total_fees": 13.0,
+    "per_year": {
+     "2024": {
+      "pnl": 57.26,
+      "n": 43,
+      "win_rate": 0.3953
+     },
+     "2025": {
+      "pnl": -81.71,
+      "n": 17,
+      "win_rate": 0.2353
+     },
+     "2026": {
+      "pnl": -8.03,
+      "n": 6,
+      "win_rate": 0.3333
+     }
+    },
+    "positive_years": 1,
+    "years_n": 3,
+    "veto_top": {
+     "trigger": 4862,
+     "bias": 1984,
+     "slots": 431,
+     "filter": 214,
+     "cooldown": 61
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 66,
+    "n_legs": 66,
+    "pnl": -109.5195,
+    "expectancy": -1.6594,
+    "win_rate": 0.3333,
+    "profit_factor": 0.7432,
+    "return_pct": -10.95,
+    "max_drawdown_pct": -17.28,
+    "total_fees": 12.5,
+    "per_year": {
+     "2024": {
+      "pnl": 0.07,
+      "n": 42,
+      "win_rate": 0.381
+     },
+     "2025": {
+      "pnl": -92.88,
+      "n": 17,
+      "win_rate": 0.2353
+     },
+     "2026": {
+      "pnl": -16.71,
+      "n": 7,
+      "win_rate": 0.2857
+     }
+    },
+    "positive_years": 1,
+    "years_n": 3,
+    "veto_top": {
+     "climax": 2919,
+     "trigger": 2728,
+     "bias": 1428,
+     "slots": 303,
+     "filter": 159
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "TONUSDT": {
+   "base": {
+    "n": 72,
+    "n_legs": 72,
+    "pnl": -9.4814,
+    "expectancy": -0.1317,
+    "win_rate": 0.3333,
+    "profit_factor": 0.9781,
+    "return_pct": -0.95,
+    "max_drawdown_pct": -17.38,
+    "total_fees": 18.06,
+    "per_year": {
+     "2024": {
+      "pnl": -62.74,
+      "n": 25,
+      "win_rate": 0.28
+     },
+     "2025": {
+      "pnl": 28.23,
+      "n": 31,
+      "win_rate": 0.3871
+     },
+     "2026": {
+      "pnl": 25.03,
+      "n": 16,
+      "win_rate": 0.3125
+     }
+    },
+    "positive_years": 2,
+    "years_n": 3,
+    "veto_top": {
+     "trigger": 3515,
+     "bias": 2019,
+     "filter": 261,
+     "slots": 197,
+     "cooldown": 33
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 46,
+    "n_legs": 46,
+    "pnl": 342.7993,
+    "expectancy": 7.4522,
+    "win_rate": 0.3043,
+    "profit_factor": 1.9484,
+    "return_pct": 34.28,
+    "max_drawdown_pct": -11.61,
+    "total_fees": 15.92,
+    "per_year": {
+     "2023": {
+      "pnl": -4.71,
+      "n": 1,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 65.4,
+      "n": 13,
+      "win_rate": 0.3077
+     },
+     "2025": {
+      "pnl": 297.4,
+      "n": 25,
+      "win_rate": 0.32
+     },
+     "2026": {
+      "pnl": -15.3,
+      "n": 7,
+      "win_rate": 0.2857
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5704,
+     "filter": 254,
+     "slots": 106,
+     "cooldown": 3,
+     "circuit_breaker": 3
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 57,
+    "n_legs": 57,
+    "pnl": 135.1568,
+    "expectancy": 2.3712,
+    "win_rate": 0.3158,
+    "profit_factor": 1.3153,
+    "return_pct": 13.52,
+    "max_drawdown_pct": -12.01,
+    "total_fees": 18.34,
+    "per_year": {
+     "2023": {
+      "pnl": -4.71,
+      "n": 1,
+      "win_rate": 0.0
+     },
+     "2024": {
+      "pnl": 109.72,
+      "n": 17,
+      "win_rate": 0.3529
+     },
+     "2025": {
+      "pnl": 14.62,
+      "n": 30,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": 15.53,
+      "n": 9,
+      "win_rate": 0.2222
+     }
+    },
+    "positive_years": 3,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5704,
+     "filter": 254,
+     "slots": 96,
+     "cooldown": 4,
+     "circuit_breaker": 1
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 21,
+    "n_legs": 21,
+    "pnl": -47.5236,
+    "expectancy": -2.263,
+    "win_rate": 0.2381,
+    "profit_factor": 0.6732,
+    "return_pct": -4.75,
+    "max_drawdown_pct": -9.18,
+    "total_fees": 3.85,
+    "per_year": {
+     "2024": {
+      "pnl": -34.16,
+      "n": 15,
+      "win_rate": 0.2667
+     },
+     "2026": {
+      "pnl": -13.37,
+      "n": 6,
+      "win_rate": 0.1667
+     }
+    },
+    "positive_years": 0,
+    "years_n": 2,
+    "veto_top": {
+     "trigger": 3859,
+     "bias": 1828,
+     "filter": 215,
+     "slots": 163,
+     "cooldown": 22
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 24,
+    "n_legs": 24,
+    "pnl": -65.238,
+    "expectancy": -2.7182,
+    "win_rate": 0.25,
+    "profit_factor": 0.6048,
+    "return_pct": -6.52,
+    "max_drawdown_pct": -10.03,
+    "total_fees": 4.96,
+    "per_year": {
+     "2024": {
+      "pnl": -41.95,
+      "n": 17,
+      "win_rate": 0.2941
+     },
+     "2026": {
+      "pnl": -23.29,
+      "n": 7,
+      "win_rate": 0.1429
+     }
+    },
+    "positive_years": 0,
+    "years_n": 2,
+    "veto_top": {
+     "trigger": 2249,
+     "climax": 2243,
+     "bias": 1320,
+     "filter": 144,
+     "slots": 116
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  },
+  "BCHUSDT": {
+   "base": {
+    "n": 141,
+    "n_legs": 141,
+    "pnl": -145.7034,
+    "expectancy": -1.0334,
+    "win_rate": 0.3404,
+    "profit_factor": 0.8302,
+    "return_pct": -14.57,
+    "max_drawdown_pct": -19.27,
+    "total_fees": 36.27,
+    "per_year": {
+     "2023": {
+      "pnl": -56.08,
+      "n": 30,
+      "win_rate": 0.3667
+     },
+     "2024": {
+      "pnl": -9.04,
+      "n": 47,
+      "win_rate": 0.3617
+     },
+     "2025": {
+      "pnl": -47.62,
+      "n": 45,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": -32.96,
+      "n": 19,
+      "win_rate": 0.2632
+     }
+    },
+    "positive_years": 0,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 4669,
+     "bias": 2469,
+     "slots": 716,
+     "filter": 566,
+     "cooldown": 118
+    },
+    "label": "پایه (همان تایم‌فریم اسکن)"
+   },
+   "trend": {
+    "n": 76,
+    "n_legs": 76,
+    "pnl": -153.4341,
+    "expectancy": -2.0189,
+    "win_rate": 0.2105,
+    "profit_factor": 0.7129,
+    "return_pct": -15.34,
+    "max_drawdown_pct": -24.12,
+    "total_fees": 22.07,
+    "per_year": {
+     "2023": {
+      "pnl": -79.26,
+      "n": 21,
+      "win_rate": 0.0952
+     },
+     "2024": {
+      "pnl": -10.18,
+      "n": 19,
+      "win_rate": 0.2632
+     },
+     "2025": {
+      "pnl": -95.41,
+      "n": 20,
+      "win_rate": 0.3
+     },
+     "2026": {
+      "pnl": 31.41,
+      "n": 16,
+      "win_rate": 0.1875
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8072,
+     "filter": 457,
+     "slots": 138,
+     "cooldown": 11,
+     "circuit_breaker": 6
+    },
+    "label": "روندکاوی: شکست + بدون TP + تریل باز"
+   },
+   "trend_tp": {
+    "n": 89,
+    "n_legs": 89,
+    "pnl": -157.0712,
+    "expectancy": -1.7648,
+    "win_rate": 0.236,
+    "profit_factor": 0.7437,
+    "return_pct": -15.71,
+    "max_drawdown_pct": -22.75,
+    "total_fees": 24.56,
+    "per_year": {
+     "2023": {
+      "pnl": -124.15,
+      "n": 25,
+      "win_rate": 0.12
+     },
+     "2024": {
+      "pnl": 33.06,
+      "n": 24,
+      "win_rate": 0.2917
+     },
+     "2025": {
+      "pnl": -80.44,
+      "n": 21,
+      "win_rate": 0.2857
+     },
+     "2026": {
+      "pnl": 14.46,
+      "n": 19,
+      "win_rate": 0.2632
+     }
+    },
+    "positive_years": 2,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 8072,
+     "filter": 457,
+     "slots": 123,
+     "cooldown": 17,
+     "circuit_breaker": 2
+    },
+    "label": "روندکاوی + TP ثابت 6×ATR (برای سنجش اثر TP)"
+   },
+   "pullback": {
+    "n": 93,
+    "n_legs": 93,
+    "pnl": -41.4616,
+    "expectancy": -0.4458,
+    "win_rate": 0.3763,
+    "profit_factor": 0.9292,
+    "return_pct": -4.15,
+    "max_drawdown_pct": -9.35,
+    "total_fees": 25.77,
+    "per_year": {
+     "2023": {
+      "pnl": -13.02,
+      "n": 23,
+      "win_rate": 0.4348
+     },
+     "2024": {
+      "pnl": 48.83,
+      "n": 32,
+      "win_rate": 0.4375
+     },
+     "2025": {
+      "pnl": -25.79,
+      "n": 32,
+      "win_rate": 0.3438
+     },
+     "2026": {
+      "pnl": -51.48,
+      "n": 6,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "trigger": 5268,
+     "bias": 2131,
+     "slots": 690,
+     "filter": 457,
+     "cooldown": 68
+    },
+    "label": "فقط pullback (فرضیهٔ ۱ ساله — باید رد شود)"
+   },
+   "climax": {
+    "n": 88,
+    "n_legs": 88,
+    "pnl": -88.2417,
+    "expectancy": -1.0027,
+    "win_rate": 0.3523,
+    "profit_factor": 0.84,
+    "return_pct": -8.82,
+    "max_drawdown_pct": -10.6,
+    "total_fees": 23.73,
+    "per_year": {
+     "2023": {
+      "pnl": -32.12,
+      "n": 21,
+      "win_rate": 0.381
+     },
+     "2024": {
+      "pnl": 6.97,
+      "n": 30,
+      "win_rate": 0.4
+     },
+     "2025": {
+      "pnl": -33.89,
+      "n": 33,
+      "win_rate": 0.3333
+     },
+     "2026": {
+      "pnl": -29.2,
+      "n": 4,
+      "win_rate": 0.0
+     }
+    },
+    "positive_years": 1,
+    "years_n": 4,
+    "veto_top": {
+     "climax": 3194,
+     "trigger": 3004,
+     "bias": 1562,
+     "slots": 478,
+     "filter": 341
+    },
+    "label": "ردِ کندل اوج (فرضیهٔ ۱ ساله — باید رد شود)"
+   }
+  }
+ },
+ "aggregate": {
+  "base": {
+   "ok": true,
+   "n_symbols": 20,
+   "total_trades": 2488,
+   "total_pnl": 448.01,
+   "median_pf": 1.0358,
+   "median_expectancy": 0.235,
+   "profitable_symbols": 11,
+   "profitable_symbols_pct": 55.0,
+   "positive_years": 39,
+   "years_n": 78,
+   "positive_years_pct": 50.0,
+   "sign_vs_base": null,
+   "checks": {
+    "symbols": true,
+    "trades": true,
+    "profitable_symbols": false,
+    "positive_years": false,
+    "median_pf": false,
+    "significance": true
+   },
+   "survived": false
+  },
+  "trend": {
+   "ok": true,
+   "n_symbols": 20,
+   "total_trades": 1418,
+   "total_pnl": 1418.65,
+   "median_pf": 1.1515,
+   "median_expectancy": 0.9626,
+   "profitable_symbols": 12,
+   "profitable_symbols_pct": 60.0,
+   "positive_years": 44,
+   "years_n": 84,
+   "positive_years_pct": 52.38,
+   "sign_vs_base": {
+    "wins": 9,
+    "of": 20,
+    "p_value": 0.8238
+   },
+   "checks": {
+    "symbols": true,
+    "trades": true,
+    "profitable_symbols": true,
+    "positive_years": false,
+    "median_pf": true,
+    "significance": false
+   },
+   "survived": false
+  },
+  "trend_tp": {
+   "ok": true,
+   "n_symbols": 20,
+   "total_trades": 1711,
+   "total_pnl": 948.02,
+   "median_pf": 1.0769,
+   "median_expectancy": 0.5352,
+   "profitable_symbols": 12,
+   "profitable_symbols_pct": 60.0,
+   "positive_years": 47,
+   "years_n": 85,
+   "positive_years_pct": 55.29,
+   "sign_vs_base": {
+    "wins": 11,
+    "of": 20,
+    "p_value": 0.8238
+   },
+   "checks": {
+    "symbols": true,
+    "trades": true,
+    "profitable_symbols": true,
+    "positive_years": false,
+    "median_pf": true,
+    "significance": false
+   },
+   "survived": false
+  },
+  "pullback": {
+   "ok": true,
+   "n_symbols": 20,
+   "total_trades": 1275,
+   "total_pnl": -276.94,
+   "median_pf": 0.9292,
+   "median_expectancy": -0.4458,
+   "profitable_symbols": 9,
+   "profitable_symbols_pct": 45.0,
+   "positive_years": 32,
+   "years_n": 75,
+   "positive_years_pct": 42.67,
+   "sign_vs_base": {
+    "wins": 7,
+    "of": 20,
+    "p_value": 0.2632
+   },
+   "checks": {
+    "symbols": true,
+    "trades": true,
+    "profitable_symbols": false,
+    "positive_years": false,
+    "median_pf": false,
+    "significance": false
+   },
+   "survived": false
+  },
+  "climax": {
+   "ok": true,
+   "n_symbols": 20,
+   "total_trades": 1246,
+   "total_pnl": -683.16,
+   "median_pf": 0.8867,
+   "median_expectancy": -0.7142,
+   "profitable_symbols": 6,
+   "profitable_symbols_pct": 30.0,
+   "positive_years": 32,
+   "years_n": 77,
+   "positive_years_pct": 41.56,
+   "sign_vs_base": {
+    "wins": 5,
+    "of": 20,
+    "p_value": 0.0414
+   },
+   "checks": {
+    "symbols": true,
+    "trades": true,
+    "profitable_symbols": false,
+    "positive_years": false,
+    "median_pf": false,
+    "significance": true
+   },
+   "survived": false
+  }
+ },
+ "rankings": [
+  {
+   "variant": "trend",
+   "median_expectancy": 0.9626
+  },
+  {
+   "variant": "trend_tp",
+   "median_expectancy": 0.5352
+  },
+  {
+   "variant": "base",
+   "median_expectancy": 0.235
+  },
+  {
+   "variant": "pullback",
+   "median_expectancy": -0.4458
+  },
+  {
+   "variant": "climax",
+   "median_expectancy": -0.7142
+  }
+ ],
+ "winner": "trend",
+ "survived": [],
+ "errors": []
+}
