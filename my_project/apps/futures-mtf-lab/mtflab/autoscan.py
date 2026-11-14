@@ -1071,6 +1071,7 @@ def autoscan_command(argv: Optional[List[str]] = None) -> int:
                    "--hunt": "bash run-auto.sh --hunt",
                    "--watch": "bash run-auto.sh --watch",
                    "--exits": "bash run-auto.sh --exits",
+                   "--v10": "bash run-auto.sh --v10 --download --days 180",
                    "--desk": "bash run-auto.sh --dash",
                    "--serve": "bash run-auto.sh --dash",
                    "--paper": "bash run-auto.sh --live",
