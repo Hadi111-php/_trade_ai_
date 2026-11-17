@@ -31,6 +31,7 @@
   shadow     دفتر خبر: سیگنال خبری کاغذی + کارنامهٔ اعتبار منبع (بی‌اثر روی سیستم)
   exitstyles حد ضرر/سود ثابت درصدی در برابر شناور (ATR+تریل) روی همان ورودی‌ها
   ops        مدیریت کلان: دانلود/به‌روزرسانی دادهٔ واقعی + آزمون‌های مستقل + معاینه
+  health     سلامت سیستم: آخرین کندل، تازگی داده، warmup و «چرا سیگنالی نیست»
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -186,6 +187,9 @@ def main(argv=None) -> int:
     if cmd in ("patterns", "pattern-scorecard", "attribution"):
         from .attribution import patterns_command
         return patterns_command(rest)
+    if cmd in ("health", "status", "سلامت"):
+        from .health import health_command
+        return health_command(rest)
     if cmd in ("ops", "manage", "مدیریت"):
         from .ops import ops_command
         return ops_command(rest)

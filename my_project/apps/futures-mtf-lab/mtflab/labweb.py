@@ -91,6 +91,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
 </nav>
 <main>
   <section id="tab-live" class="on">
+    <div class="card" id="sysHealth" style="margin-bottom:10px"></div>
     <div class="cards" id="liveCards"></div>
     <div class="row"><button class="act" id="stepBtn">قدم بعدی (گرفتن کندل تازه)</button>
       <span class="spin" id="stepMsg" style="display:none"></span>
@@ -336,7 +337,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
 
     <h3>هر تب چه می‌کند</h3>
     <div class="note">
-      <b>زنده</b>: سرمایهٔ مجازی، معاملات باز، و «چرا وارد نشد». دکمهٔ «قدم بعدی» یک کندل تازه می‌گیرد.<br>
+      <b>زنده</b>: کارت «سلامت سیستم» (کندل بعدی، تازگی داده، گرم‌شدن لایه‌ها، دروازهٔ بسته)، سرمایهٔ مجازی، معاملات باز، و «چرا وارد نشد». دکمهٔ «قدم بعدی» یک کندل تازه می‌گیرد.<br>
       <b>سیگنال‌ها</b>: هر سیگنال یک پرونده دارد؛ روی ردیف بزن تا ببینی با کدام الگو وارد شد و با کدام قاعده بسته شد.<br>
       <b>آزمایشگاه</b>: الگو را عوض کن، تنظیمات را تغییر بده و روی همان داده ببین چه می‌شود. دروازهٔ قبولی را <b>قبل</b> پر کن.<br>
       <b>آزمایش‌ها</b>: همهٔ اجراها ذخیره‌اند — حتی بدها. اگر فقط بهترین را نگه داریم، خودمان را گول زده‌ایم.<br>
@@ -400,6 +401,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.remove("on"));
   document.querySelectorAll("section").forEach(x => x.classList.remove("on"));
   b.classList.add("on"); $("#tab-" + b.dataset.tab).classList.add("on");
+  if (b.dataset.tab === "live") loadSystem();
   if (b.dataset.tab === "signals") loadSignals();
   if (b.dataset.tab === "runs") loadRuns();
   if (b.dataset.tab === "brain") loadBrain();
@@ -568,6 +570,60 @@ $("#shBuy").onclick = () => shadowTake("LONG");
 $("#shSell").onclick = () => shadowTake("SHORT");
 $("#shReload").onclick = loadShadow;
 
+
+
+/* ── سلامت سیستم (چرا سیگنالی نیست؟) ───────────────────────────────── */
+let SYS = null, SYS_TICK = null;
+function _mmss(sec) {
+  if (sec == null) return "—";
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+function _sysCountdown() {
+  if (!SYS || !SYS.clock || !SYS.clock.next_close_ms) return;
+  const el = $("#sysCount");
+  if (!el) return;
+  const left = Math.max(0, Math.round((SYS.clock.next_close_ms - Date.now()) / 1000));
+  el.textContent = _mmss(left);
+}
+function renderSystem() {
+  const box = $("#sysHealth");
+  if (!box) return;
+  if (!SYS) { box.innerHTML = `<div class="mut">سلامت سیستم خوانده نشد.</div>`; return; }
+  const v = SYS.verdict || {}, c = SYS.clock || {}, w = SYS.warmup || {}, j = SYS.journal || {};
+  const cls = v.code === "signal" ? "ok" : (["stale", "no_data", "warmup", "error"].includes(v.code) ? "bad" : "");
+  const rows = (SYS.rows || []).map(r => `<tr>
+    <td><b>${esc(r.symbol)}</b></td>
+    <td class="num">${r.bars}</td>
+    <td>${esc(r.last_candle_utc || "—")}</td>
+    <td class="num ${r.fresh ? "ok" : "bad"}">${r.behind_bars == null ? "—" : (r.fresh ? "به‌روز" : r.behind_bars + " کندل عقب")}</td>
+    <td>${esc(r.state || "—")}${r.readiness != null ? ` <span class="mut">${Math.round(r.readiness * 100)}٪</span>` : ""}</td>
+    <td class="mut" style="font-size:11px">${esc(r.blocking || "—")}</td>
+  </tr>`).join("");
+  const warm = (w.rows || []).map(x => `<span class="mut" style="margin-left:10px">
+    ${x.ready ? "✅" : "❌"} ${esc(x.layer)} (${esc(x.tf)}): ${x.have}/${x.need}</span>`).join("");
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div class="k ${cls}">${v.code === "signal" ? "🎯" : "🩺"} ${esc(v.label || "—")}</div>
+      <div class="mut" style="font-size:12px">
+        کندل ${esc((c.tf || ""))} · آخرین بسته: ${esc(c.last_closed_utc || "—")}
+        · بستهٔ بعدی: ${esc(c.next_close_utc || "—")} (تا <b id="sysCount">${_mmss(c.seconds_to_next)}</b>)
+      </div>
+    </div>
+    <div style="margin-top:6px;font-size:13px">${esc(v.detail || "")}</div>
+    ${rows ? `<table style="margin-top:8px"><thead><tr><th>نماد</th><th>کندل</th>
+      <th>آخرین کندل</th><th>تازگی</th><th>وضعیت</th><th>مانع</th></tr></thead>
+      <tbody>${rows}</tbody></table>` : ""}
+    <div style="margin-top:8px;font-size:11px">گرم‌کردن لایه‌ها:${warm || " —"}</div>
+    <div class="mut" style="margin-top:4px;font-size:11px">ژورنال: ${j.opens || 0} ورود ·
+      ${j.closes || 0} خروج · آخرین رکورد: ${esc(j.last_record_utc || "—")}
+      ${SYS.note ? " · " + esc(SYS.note) : ""}</div>`;
+  if (!SYS_TICK) SYS_TICK = setInterval(_sysCountdown, 1000);
+}
+async function loadSystem() {
+  try { SYS = await api("/api/system"); } catch (e) { SYS = null; }
+  renderSystem();
+}
 
 /* ── مدیریت کلان (داده + آزمون‌های مستقل) ─────────────────────────── */
 let OPS = null, OPS_TIMER = null;
@@ -1474,6 +1530,8 @@ def make_handler(lab):
                 elif path == "/api/manual_signal":
                     # یک قدم واقعی؛ `?offline=1` فقط برای تست/دمو (بدون شبکه)
                     self._json(lab.manual_signal(offline=(q.get("offline") == "1")))
+                elif path == "/api/system":
+                    self._json(lab.system_health())
                 elif path == "/api/ops":
                     self._json(lab.ops_status())
                 elif path == "/api/ops/start":

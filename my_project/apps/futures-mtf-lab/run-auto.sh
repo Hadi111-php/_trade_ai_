@@ -34,6 +34,7 @@
 #   bash run-auto.sh --v10 --compare               # مقایسهٔ V10 با الگوهای MTF
 #   bash run-auto.sh --patterns                    # کارنامهٔ الگوها: کدام سیگنال بابت کدام الگو
 #   bash run-auto.sh --algorithms                  # کاتالوگ الگوریتم‌ها با فرمول و مقدار فعلی
+#   bash run-auto.sh --health                      # سلامت سیستم: چرا سیگنالی نیست؟
 #   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
 #   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
 #   bash run-auto.sh --ops --download --days 365   # دانلود یک‌ساله از Bybit
@@ -227,6 +228,15 @@ for a in "$@"; do
       for b in "${_A[@]+"${_A[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
       if [ "$_OUT" = "0" ]; then _A=(--out-dir results "${_A[@]+"${_A[@]}"}"); fi
       python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
+      exit $?
+      ;;
+    --health|--status)
+      _H=()
+      for b in "$@"; do
+        case "$b" in --health|--status) continue;; esac
+        _H+=("$b")
+      done
+      python3 -m mtflab health "${_H[@]+"${_H[@]}"}"
       exit $?
       ;;
     --ops|--manage)

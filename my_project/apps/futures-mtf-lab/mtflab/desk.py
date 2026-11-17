@@ -634,6 +634,21 @@ class Lab:
         self.universe(reload=True)
         return out
 
+    # -- سلامت سیستم -----------------------------------------------------
+    def system_health(self) -> dict:
+        """«کار می‌کند ولی سیگنالی نیست» — با عدد، نه با حس."""
+        from .health import system_health
+        try:
+            return system_health(self.universe(reload=True), self.base_cfg(),
+                                 state_path=self.state_path,
+                                 journal_path=self.journal_path)
+        except Exception as e:                                     # noqa: BLE001
+            return {"rows": [], "warmup": {"rows": [], "ok": False, "missing": []},
+                    "clock": {}, "journal": {"opens": 0, "closes": 0},
+                    "verdict": {"code": "error", "label": "خطا در محاسبهٔ سلامت",
+                                "detail": f"{type(e).__name__}: {e}"},
+                    "heartbeat": {}, "note": ""}
+
     # -- مدیریت کلان (مرکز عملیات: داده، آزمون‌های مستقل، معاینه) ----------
     def ops_status(self) -> dict:
         """وضعیت داده + کارهای پس‌زمینه + گزارش‌های مستقل."""
