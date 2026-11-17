@@ -252,3 +252,47 @@ def test_health_and_control_tolerate_lang_flag():
                                            "--out", td, "--lang", "en"])
         assert rc2 == 1
         assert "گزارش کنترل" in buf2.getvalue()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  ۵) گزارشِ واقعیِ گوشی: «۳۰ روز داده داری، ۱۷۱ روز کم است»
+# ══════════════════════════════════════════════════════════════════════════
+def test_days_needed_matches_phone_report():
+    """دقیقاً همان ردیف‌های گزارش کاربر: bias(1d) 29/200 و filter(1d) 29/50."""
+    missing = [{"layer": "filter", "tf": "1d", "shortfall": 21},
+               {"layer": "bias", "tf": "1d", "shortfall": 171}]
+    assert control._days_needed(missing) == 171
+    # روی ۴h، ۲۱ کندل یعنی ~۳.۵ روز ⇒ ۴ روز
+    assert control._days_needed([{"layer": "x", "tf": "4h", "shortfall": 21}]) == 4
+    assert control._days_needed([]) == 0
+
+
+def test_warmup_check_tells_how_many_days_to_download():
+    with tempfile.TemporaryDirectory() as td:
+        uni = {s: synthetic_candles("4h", 180, seed=40 + i)
+               for i, s in enumerate(("BTCUSDT", "ETHUSDT"))}
+        rep = control.collect(uni, _cfg(), out_dir=os.path.join(td, "out"),
+                              now_ms=_now_after(uni))
+        by = {c["name"]: c for c in rep["checks"]}
+        w = by["گرم‌شدن لایه‌ها"]
+        assert w["ok"] is False
+        assert "کمبود تاریخ" in w["detail"] and "روز" in w["detail"]
+        assert "--days" in w["fix"] and "--evaluate" in w["fix"]
+        md = open(rep["paths"]["md"], encoding="utf-8").read()
+        assert "کمبود تاریخ" in md and "**171 روز**" in md
+
+
+def test_symbols_table_shows_pending_processing_column():
+    with tempfile.TemporaryDirectory() as td:
+        rep = control.collect(_uni(200), _cfg(), out_dir=os.path.join(td, "out"),
+                              now_ms=_now_after(_uni(200)))
+        md = open(rep["paths"]["md"], encoding="utf-8").read()
+        assert "عقبِ پردازش" in md
+
+
+def test_evaluate_accepts_days_for_real_download():
+    sh = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "run-auto.sh"), encoding="utf-8").read()
+    assert "--days)" in sh and "--days=*)" in sh
+    assert 'ops --download --days "$_DAYS"' in sh
+    assert "evaluate --days" in sh

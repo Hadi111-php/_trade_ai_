@@ -39,6 +39,7 @@
 #   bash run-auto.sh --evaluate                    # همهٔ گام‌ها با هم: پروب → سینک → بک‌فیل → سلامت → گزارش
 #   bash run-auto.sh --update                      # به‌روزرسانی کد (بدون کلون تازه) + نمایش کد قبلی/جدید
 #   bash run-auto.sh --evaluate --offline          # همان، بدون شبکه (روی کش موجود)
+#   bash run-auto.sh --evaluate --days 400         # همان، ولی اول ۴۰۰ روز دادهٔ واقعی را دانلود کن
 #   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
 #   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
 #   bash run-auto.sh --ops --download --days 365   # دانلود یک‌ساله از Bybit
@@ -268,16 +269,18 @@ for a in "$@"; do
       ;;
     --evaluate|--eval)
       # یک دستور برای «ارزیابی کامل + فایل گزارش»: پروب → سینک → بک‌فیل → سلامت → کنترل
-      _DATA="data"; _TF="4h"; _OFF="0"; _SYMS=""
+      _DATA="data"; _TF="4h"; _OFF="0"; _SYMS=""; _DAYS=""
       _prev=""
       for b in "$@"; do
         case "$_prev" in
           --data-dir) _DATA="$b" ;;
           --tf) _TF="$b" ;;
           --symbols) _SYMS="$b" ;;
+          --days) _DAYS="$b" ;;
         esac
         case "$b" in
           --offline) _OFF="1" ;;
+          --days=*) _DAYS="${b#--days=}" ;;
         esac
         _prev="$b"
       done
@@ -291,9 +294,15 @@ for a in "$@"; do
         echo "۱/۵ بررسی دسترسی به دادهٔ Bybit…"
         python3 -m mtflab ops --probe --data-dir "$_DATA" \
           || echo "⚠️ گام ۱ موفق نبود (شبکه/فیلتر IP) — ادامه می‌دهم با کش موجود"
-        echo "۲/۵ به‌روزرسانی داده (۳۰ روز، با ادغام)…"
-        python3 -m mtflab ops --sync --sync-days 30 --data-dir "$_DATA" "${_S[@]+"${_S[@]}"}" \
-          || echo "⚠️ گام ۲ موفق نبود — ادامه می‌دهم با کش موجود"
+        if [ -n "$_DAYS" ]; then
+          echo "۲/۵ دانلود $_DAYS روز دادهٔ واقعی (اولین بار چند دقیقه طول می‌کشد)…"
+          python3 -m mtflab ops --download --days "$_DAYS" --data-dir "$_DATA" "${_S[@]+"${_S[@]}"}" \
+            || echo "⚠️ گام ۲ موفق نبود — ادامه می‌دهم با کش موجود"
+        else
+          echo "۲/۵ به‌روزرسانی داده (۳۰ روز، با ادغام)…"
+          python3 -m mtflab ops --sync --sync-days 30 --data-dir "$_DATA" "${_S[@]+"${_S[@]}"}" \
+            || echo "⚠️ گام ۲ موفق نبود — ادامه می‌دهم با کش موجود"
+        fi
       fi
       echo "۳/۵ اتوترید مجازی تا آخرین کندل بسته (بک‌فیل ۴۰۰)…"
       if [ "$_OFF" = "1" ]; then

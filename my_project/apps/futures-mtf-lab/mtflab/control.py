@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import platform
 import subprocess
@@ -62,6 +63,22 @@ def _git_commit(root: str = ".") -> str:
         return ""
 
 
+def _days_needed(missing: Sequence[dict]) -> int:
+    """از کمبود هر لایه، دست‌کم چند **روز** دادهٔ واقعی لازم است.
+
+    مثال واقعی از گوشی کاربر: `bias (1d) have=29 need=200` ⇒ ۱۷۱ روز کم است.
+    این عدد را گزارش می‌نویسد تا کاربر بداند «--days 365» یعنی چه.
+    """
+    per_day = {"1d": 1.0, "4h": 6.0, "1h": 24.0, "15m": 96.0, "5m": 288.0}
+    need = 0.0
+    for m in missing or ():
+        short = float(m.get("shortfall") or 0)
+        if short <= 0:
+            continue
+        need = max(need, short / per_day.get(str(m.get("tf") or "1d"), 1.0))
+    return int(math.ceil(need))
+
+
 def _mark(ok) -> str:
     """True → ✅، False → ❌، None → ⚠️ (هشدار، اجرا را نمی‌بندد)."""
     return "✅" if ok is True else ("❌" if ok is False else "⚠️")
@@ -100,12 +117,20 @@ def checks(health: dict, data: dict) -> List[dict]:
 
     # ۳) گرم‌شدن لایه‌ها
     wrows = warm.get("rows") or []
+    missing = warm.get("missing") or []
+    need_days = _days_needed(missing)
+    wdetail = ("، ".join(f"{w.get('layer')}({w.get('tf')}) "
+                         f"{w.get('have')}/{w.get('need')}" for w in wrows[:4])
+               or "بدون دادهٔ کافی برای سنجش")
+    if missing:
+        wdetail += (f" · کمبود تاریخ: دست‌کم {need_days} روز "
+                    f"(پیشنهاد: --days {max(365, need_days + 60)})")
     out.append({
         "name": "گرم‌شدن لایه‌ها",
         "ok": bool(warm.get("ok")) if rows else None,
-        "detail": ("، ".join(f"{w.get('layer')} {w.get('have')}/{w.get('need')}" for w in wrows[:4])
-                   or "بدون دادهٔ کافی برای سنجش"),
-        "fix": "نماد/تاریخ بیشتری بگیر: bash run-auto.sh --days 730",
+        "detail": wdetail,
+        "fix": (f"bash run-auto.sh --evaluate --days {max(365, need_days + 60)}"
+                if missing else "—"),
     })
 
     # ۴) موتور تا آخرین کندلِ بسته پردازش کرده؟
@@ -242,17 +267,19 @@ def render_md(rep: dict) -> str:
     L.append("")
     L.append("## ۳) نمادها")
     L.append("")
-    L.append("| نماد | کندل | آخرین کندل | عقب | تازه | گرم | دروازه‌های بسته |")
-    L.append("|---|---|---|---|---|---|---|")
+    L.append("| نماد | کندل | آخرین کندل | عقب | تازه | گرم | عقبِ پردازش | دروازه‌های بسته |")
+    L.append("|---|---|---|---|---|---|---|---|")
     for r in h.get("rows") or []:
         blocked = [g.get("label") or g.get("id") for g in (r.get("gates") or [])
                    if not g.get("ok")]
+        pend = r.get("pending_bars")
         L.append(f"| {r.get('symbol')} | {r.get('bars')} | {r.get('last_candle_utc')} | "
                  f"{r.get('behind_bars')} | {'✅' if r.get('fresh') else '❌'} | "
                  f"{'✅' if r.get('warmup_ok') else '❌'} | "
+                 f"{(str(pend) + ' کندل') if pend else '—'} | "
                  f"{'، '.join(str(b) for b in blocked) or '—'} |")
     if not (h.get("rows") or []):
-        L.append("| — | — | — | — | — | — | — |")
+        L.append("| — | — | — | — | — | — | — | — |")
     L.append("")
     wrows = (h.get("warmup") or {}).get("rows") or []
     L.append("## ۴) گرم‌شدن لایه‌ها")
@@ -265,6 +292,13 @@ def render_md(rep: dict) -> str:
                      f"{'✅' if w.get('ready') else '❌'} |")
     else:
         L.append("_دادهٔ کافی برای سنجش لایه‌ها نیست._")
+    missing_w = (h.get("warmup") or {}).get("missing") or []
+    if missing_w:
+        nd = _days_needed(missing_w)
+        L.append("")
+        L.append(f"**کمبود تاریخ:** دست‌کم **{nd} روز** داده لازم است "
+                 f"(پیشنهاد {max(365, nd + 60)} روز) ⇒ "
+                 f"`bash run-auto.sh --evaluate --days {max(365, nd + 60)}`")
     L.append("")
     d = rep.get("data") or {}
     L.append("## ۵) داده و ژورنال")
