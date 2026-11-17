@@ -24,6 +24,7 @@ from .data import BYBIT_INTERVAL, Candle, tf_to_minutes, tf_to_ms, write_csv, cs
 
 DEFAULT_BASE_URL = "https://api.bybit.com"
 KLINE_ENDPOINT = "/v5/market/kline"
+TICKER_ENDPOINT = "/v5/market/tickers"
 MAX_LIMIT = 1000
 #: تعداد تلاش اضافی مخصوص «سقف نرخ» (به‌جز retries شبکهٔ معمولی)
 RATE_LIMIT_RETRIES = 6
@@ -121,6 +122,35 @@ def fetch_klines(symbol: str, timeframe: str,
     if drop_forming:
         candles = drop_forming_candle(candles, timeframe)
     return candles
+
+
+def last_price(symbol: str, base_url: str = DEFAULT_BASE_URL,
+               category: str = "linear", timeout: int = 8,
+               retries: int = 1) -> Optional[float]:
+    """آخرین قیمت معامله‌شدهٔ یک نماد (برای «همین لحظه» در دفتر خبر).
+
+    چرا: سیگنال خبری باید روی قیمت **همان لحظه** ثبت شود، نه بستهٔ کندل قبلی.
+    ولی شبکه که نباشد چیزی جعل نمی‌کنیم: `None` برمی‌گردانیم و caller خودش
+    می‌نویسد `price_source="last_close"`.
+    """
+    params = {"category": category, "symbol": symbol.upper()}
+    url = f"{base_url}{TICKER_ENDPOINT}?{urllib.parse.urlencode(params)}"
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "mtf-lab/1.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            rows = (payload.get("result") or {}).get("list") or []
+            if payload.get("retCode") == 0 and rows:
+                px = float(rows[0].get("lastPrice") or 0.0)
+                return px if px > 0 else None
+            return None
+        except (urllib.error.URLError, TimeoutError, OSError,
+                json.JSONDecodeError, ValueError):
+            if attempt >= retries:
+                return None
+            time.sleep(1.0)
+    return None
 
 
 def fetch_klines_range(symbol: str, timeframe: str, days: int = 365,

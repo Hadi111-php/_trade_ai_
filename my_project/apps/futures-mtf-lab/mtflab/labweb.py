@@ -77,6 +77,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
 <nav>
   <button data-tab="live" class="on">زنده</button>
   <button data-tab="signals">سیگنال‌ها</button>
+  <button data-tab="shadow">دفتر خبر</button>
   <button data-tab="lab">آزمایشگاه</button>
   <button data-tab="runs">آزمایش‌ها</button>
   <button data-tab="watch">شکار زنده</button>
@@ -119,6 +120,35 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
     <div id="sigDetail"></div>
   </section>
 
+  <section id="tab-shadow">
+    <div class="card" style="margin-bottom:10px">
+      <div class="k">📰 دفتر خبر — «آن منبع سیگنال چقدر معتبر بود؟»</div>
+      <div class="mut" style="margin-top:6px;line-height:1.8">
+        وقتی خبری می‌آید و بازار زیر و رو می‌شود، این‌جا همان لحظه یک سیگنال
+        <b>کاغذی</b> می‌زنی. جهت را خودت انتخاب می‌کنی (BUY/SELL).<br>
+        <b>روی سیستم اثر ندارد:</b> سرمایه، اسلات، ژورنال و آمار اصلی دست نمی‌خورند
+        (فایل جدا: <code>shadow.jsonl</code>).<br>
+        <b>خروج خودکار با همان تنظیمات:</b> حد ضرر، حد سود، تریل، سربه‌سر و سقف
+        زمانی — همان اعدادی که موتور اصلی می‌زند.
+        <span id="shCfg" class="mut"></span>
+      </div>
+    </div>
+    <div class="grid2">
+      <div><label>نماد</label><select id="shSym"></select></div>
+      <div><label>یادداشت خبر (اختیاری)</label>
+        <input id="shNote" placeholder="مثلاً: تصویب ETF / هک صرافی / جلسهٔ فدرال"
+          style="width:100%;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="act" id="shBuy" style="background:#12351f;border-color:#2f7a4a">🟢 BUY (LONG)</button>
+      <button class="act" id="shSell" style="background:#3a1414;border-color:#8b3a3a">🔴 SELL (SHORT)</button>
+      <span class="spin" id="shMsg" style="display:none"></span>
+      <button class="ghost" id="shReload">تازه‌سازی</button>
+    </div>
+    <div id="shResult"></div>
+    <div id="shScore"></div>
+    <div id="shTable"></div>
+  </section>
   <section id="tab-lab">
     <div class="note">اینجا می‌توانی تنظیمات را عوض کنی و <b>روی همان داده</b> نتیجه را ببینی.
       ولی هر اجرا سه چیز را کنار نتیجه می‌نویسد تا گول نخوریم:
@@ -354,6 +384,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "v10") loadV10();
   if (b.dataset.tab === "patterns") loadPatterns();
   if (b.dataset.tab === "algos") loadAlgos();
+  if (b.dataset.tab === "shadow") loadShadow();
   if (b.dataset.tab === "signals") loadValidation();
 });
 
@@ -389,6 +420,128 @@ async function loadAlgos() {
 }
 $("#algosSearch").oninput = renderAlgos;
 $("#algosReload").onclick = loadAlgos;
+
+
+/* ── دفتر خبر (اعتبارسنجی منبع، بی‌اثر روی سیستم) ───────────────────── */
+let SHADOW = null;
+function _num(x, d) { return (x === null || x === undefined || x === "") ? "—"
+  : Number(x).toFixed(d === undefined ? 4 : d); }
+function _shFillSyms() {
+  const sel = $("#shSym"); if (!sel || !SHADOW) return;
+  const cur = sel.value;
+  const syms = SHADOW.symbols || [];
+  if (sel.dataset.n !== String(syms.length)) {
+    sel.innerHTML = syms.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join("");
+    sel.dataset.n = String(syms.length);
+  }
+  if (cur && syms.includes(cur)) sel.value = cur;
+}
+function renderShadow() {
+  const box = $("#shScore"), tbl = $("#shTable");
+  if (!SHADOW) { box.innerHTML = `<div class="mut">دفتر خبر بار نشد.</div>`; tbl.innerHTML = ""; return; }
+  _shFillSyms();
+  const cfg = SHADOW.cfg || {};
+  $("#shCfg").textContent = ` · الگو: ${SHADOW.variant} · حد ضرر ${cfg.stop_atr_mult}×ATR`
+    + ` · حد سود ${(cfg.take_profit_atr_mult && cfg.take_profit_atr_mult < 50) ? cfg.take_profit_atr_mult + "×ATR" : "بدون TP"}`
+    + ` · تریل ${cfg.trail_enabled ? cfg.trail_atr_mult + "×ATR" : "خاموش"}`
+    + ` · کارمزد ${cfg.fee_bps}bps + اسلیپیج ${cfg.slippage_pct}٪`;
+
+  const sc = SHADOW.scorecard || {}, ov = sc.overall || {};
+  const verdict = (v) => v ? `<span class="${v.code === "keep" ? "ok" : (v.code === "drop" ? "bad" : "mut")}">${esc(v.label)}</span>` : "—";
+  const srcRows = (sc.by_source || []).map(x => `<tr><td><code>${esc(x.id)}</code></td>
+    <td class="num">${x.n}</td><td class="num">${x.win_rate == null ? "—" : x.win_rate + "٪"}</td>
+    <td class="num">${x.expectancy_r == null ? "—" : x.expectancy_r}</td><td>${verdict(x.verdict)}</td></tr>`).join("");
+  const agrRows = (sc.by_agreement || []).filter(x => x.n).map(x => `<tr><td>${esc(x.label)}</td>
+    <td class="num">${x.n}</td><td class="num">${x.win_rate}٪</td>
+    <td class="num">${x.expectancy_r}</td><td>${verdict(x.verdict)}</td></tr>`).join("");
+  box.innerHTML = `<div class="card" style="margin:10px 0">
+    <div class="k">کارنامهٔ اعتبار منبع</div>
+    <div style="margin-top:6px;font-size:13px">
+      بسته‌شده: <b>${ov.n || 0}</b> · باز: <b>${sc.open_n || 0}</b>
+      · نرخ برد: <b>${ov.win_rate == null ? "—" : ov.win_rate + "٪"}</b>
+      · expectancy: <b>${ov.expectancy_r == null ? "—" : ov.expectancy_r + " R"}</b>
+      ${sc.verdict ? " · " + verdict(sc.verdict) : ""}
+    </div>
+    <div class="mut" style="margin-top:4px;font-size:12px">${esc(sc.note || "")}</div>
+    ${srcRows ? `<div style="margin-top:10px" class="mut">به تفکیک الگویی که همان لحظه رأی داد:</div>
+      <table style="margin-top:4px"><thead><tr><th>منبع</th><th>n</th><th>برد</th>
+      <th>expectancy</th><th>حکم</th></tr></thead><tbody>${srcRows}</tbody></table>` : ""}
+    ${agrRows ? `<div style="margin-top:10px" class="mut">هم‌جهتی با بایاس تایم‌فریم بالا:</div>
+      <table style="margin-top:4px"><thead><tr><th>گروه</th><th>n</th><th>برد</th>
+      <th>expectancy</th><th>حکم</th></tr></thead><tbody>${agrRows}</tbody></table>` : ""}
+  </div>`;
+
+  const rows = (SHADOW.rows || []).map((r, i) => {
+    const st = r.status === "closed" ? `<span class="ok">بسته</span>` : `<span class="mut">باز</span>`;
+    const votes = ((r.source || {}).votes || {}).ids || [];
+    const agree = (r.source || {}).agree;
+    const agreeTxt = agree === true ? "هم‌جهت" : (agree === false ? "خلاف بایاس" : "—");
+    const rv = r.r_multiple != null ? r.r_multiple : r.unrealized_r;
+    const pv = r.net_pct != null ? r.net_pct : r.unrealized_pct;
+    return `<tr data-sh="${i}">
+      <td><b>${esc(r.symbol)}</b></td>
+      <td>${r.side === "LONG" ? "🟢 BUY" : "🔴 SELL"}</td>
+      <td class="num">${_num(r.entry)}</td>
+      <td class="num">${_num(r.stop)}</td>
+      <td class="num">${r.take == null ? "—" : _num(r.take)}</td>
+      <td class="num">${_num(r.stop_dist)}</td>
+      <td>${st}${r.reason ? ` <span class="mut">(${esc(r.reason)})</span>` : ""}</td>
+      <td class="num">${rv == null ? "—" : _num(rv, 2)}</td>
+      <td class="num ${pv > 0 ? "ok" : (pv < 0 ? "bad" : "")}">${pv == null ? "—" : _num(pv, 2) + "٪"}</td>
+      <td>${votes.length ? votes.map(v => `<code>${esc(v)}</code>`).join("، ") : "—"}</td>
+      <td class="mut">${esc(agreeTxt)}</td>
+      <td class="mut">${esc(r.note || "")}</td>
+      <td>${new Date(r.bar_ts).toLocaleString("fa-IR")}</td>
+      <td>${r.status === "open" ? `<button class="ghost shclose" data-id="${esc(r.id)}">بستن دستی</button>` : "—"}</td>
+    </tr>`;
+  }).join("");
+  tbl.innerHTML = rows ? `<div class="card"><div class="k">سیگنال‌های خبری</div>
+    <table style="margin-top:6px"><thead><tr><th>نماد</th><th>جهت</th><th>ورود</th>
+    <th>حد ضرر</th><th>حد سود</th><th>فاصله</th><th>وضعیت</th><th>R</th><th>%</th>
+    <th>منبع (رأی)</th><th>بایاس</th><th>یادداشت</th><th>کندل</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="mut" style="margin-top:6px;font-size:11px">R و درصد با کارمزد و اسلیپیج محاسبه شده‌اند. «—» یعنی هنوز داده‌ای نیست.</div>
+    </div>` : `<div class="card mut">هنوز سیگنال خبری ثبت نشده. نماد را انتخاب کن و BUY یا SELL را بزن.</div>`;
+  document.querySelectorAll(".shclose").forEach(b => b.onclick = () => shadowClose(b.dataset.id));
+}
+async function loadShadow() {
+  try { SHADOW = await api("/api/shadow"); } catch (e) { SHADOW = null; }
+  renderShadow();
+}
+async function shadowTake(side) {
+  const sym = ($("#shSym") || {}).value || "";
+  if (!sym) { alert("اول نماد را انتخاب کن."); return; }
+  const note = ($("#shNote") || {}).value || "";
+  const msg = $("#shMsg");
+  msg.style.display = "inline"; msg.textContent = "در حال ثبت…";
+  const q = new URLSearchParams({symbol: sym, side: side, note: note});
+  let r = null;
+  try { r = await api("/api/shadow_open?" + q.toString()); }
+  catch (e) { r = {ok: false, note: "خطای شبکه"}; }
+  msg.style.display = "none";
+  $("#shResult").innerHTML = `<div class="card" style="margin:10px 0">
+    <div class="k">${r.ok ? "✅ ثبت شد" : "⚠️ ثبت نشد"}</div>
+    <div class="mut" style="margin-top:4px">${esc(r.note || "")}</div>
+    ${r.trade ? `<div style="margin-top:6px;font-size:12px">
+      منبع همان لحظه: ${(((r.trade.source || {}).votes || {}).ids || []).map(v => `<code>${esc(v)}</code>`).join("، ") || "هیچ الگویی شرط ورود نداشت"}
+      · بایاس: ${esc(((r.trade.source || {}).bias) || "—")}
+      · قیمت از: ${esc(r.trade.price_source === "ticker" ? "قیمت زندهٔ بازار" : "بستهٔ آخرین کندل")}
+    </div>` : ""}
+  </div>`;
+  if (r.book) { SHADOW = Object.assign({}, SHADOW, r.book); }
+  await loadShadow();
+}
+async function shadowClose(id) {
+  if (!confirm("این سیگنال خبری دستی بسته شود؟ (قیمت = بستهٔ آخرین کندل)")) return;
+  let r = null;
+  try { r = await api("/api/shadow_close?id=" + encodeURIComponent(id)); }
+  catch (e) { r = {ok: false, note: "خطای شبکه"}; }
+  if (!r.ok) alert(r.note || "بسته نشد");
+  await loadShadow();
+}
+$("#shBuy").onclick = () => shadowTake("LONG");
+$("#shSell").onclick = () => shadowTake("SHORT");
+$("#shReload").onclick = loadShadow;
 
 /* ── کارنامهٔ الگوها ───────────────────────────────────────────────── */
 let PAT = {available: false};
@@ -1211,6 +1364,15 @@ def make_handler(lab):
                 elif path == "/api/manual_signal":
                     # یک قدم واقعی؛ `?offline=1` فقط برای تست/دمو (بدون شبکه)
                     self._json(lab.manual_signal(offline=(q.get("offline") == "1")))
+                elif path == "/api/shadow":
+                    self._json(lab.shadow_payload())
+                elif path == "/api/shadow_open":
+                    self._json(lab.shadow_take(
+                        symbol=q.get("symbol", ""), side=q.get("side", ""),
+                        note=q.get("note", ""),
+                        offline=(q.get("offline") == "1")))
+                elif path == "/api/shadow_close":
+                    self._json(lab.shadow_close(q.get("id", "")))
                 elif path == "/api/patterns":
                     self._json(lab.pattern_report())
                 elif path == "/api/v10":

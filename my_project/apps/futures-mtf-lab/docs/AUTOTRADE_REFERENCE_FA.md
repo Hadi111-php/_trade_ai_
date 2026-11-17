@@ -369,3 +369,33 @@ _این سند مرجع است؛ تغییرش باید آگاهانه و با ت
 `api.algorithms()` ⇒ همان `catalog.catalog()`: `{version, generated_utc, tf,
 sections[mtf|v10|exits|pump], counts}`. مسیر وب: `GET /api/algorithms`.
 CLI: `python3 -m mtflab algorithms [--json] [--out-dir DIR]`.
+
+## ۱۶) قرارداد «دفتر خبر» (shadow book) — اعتبارسنجی منبع، بی‌اثر روی سیستم
+
+کاربرد: در لحظهٔ خبر، کاربر یک سیگنال کاغذی با جهت دلخواه می‌زند و بعد می‌خواهد
+بداند «آن منبع» معتبر بود یا نه. این دفتر عمداً **از** ژورنال اصلی جدا است.
+
+| مورد | تعریف |
+|---|---|
+| فایل | `results/live/shadow.jsonl` (JSONL افزودنی، هیچ رکوردی پاک نمی‌شود) |
+| رکورد `open` | `id`, `symbol`, `side` (LONG/SHORT), `entry`, `price_source` (`ticker`\|`last_close`), `stop`, `take` (یا `null`), `stop_dist`, `rr`, `atr`, `bar_ts`, `entry_candle`, `note`, `wall_clock_ms`, `source{votes, bias, agree, bias_is_reference}` |
+| رکورد `close` | `open_id`, `reason` (`stop`\|`take`\|`time_stop`\|`manual`), `exit`, `exit_candle`, `bars_held`, `gross_pct`, `net_pct`, `fee_pct`, `slip_pct`, `r_multiple`, `mfe_pct`, `mae_pct`, `is_win`, `stop_final` |
+| خروج | همان پارامترهای `MTFConfig`: `stop_atr_mult`, `take_profit_atr_mult` (۰ یا ≥۵۰ ⇒ بدون TP)، `trail_*`, `breakeven_at_r`, `max_holding_bars` |
+| لحظهٔ ورود | قیمت زندهٔ بازار اگر شبکه بود؛ وگرنه بستهٔ آخرین کندل. انتخاب **همیشه** در `price_source` نوشته می‌شود |
+| کهنگی | بستن‌ها فقط با کندل‌های **بعد از** کندل ورود سنجیده می‌شوند؛ کندل ورود هرگز استفاده نمی‌شود |
+
+**تضمین‌های تست‌شده:** `journal.jsonl` و `state.json` بعد از ثبت سیگنال خبری
+ساخته نمی‌شوند؛ هر بست فقط یک‌بار نوشته می‌شود؛ اگر در یک کندل هم حد ضرر و هم
+حد سود لمس شود، `stop` فرض می‌شود.
+
+**کارنامه (`scorecard`):** `overall` + `by_source` (فقط الگوهایی که جهتشان با
+سیگنال یکی بود) + `by_agreement` (هم‌جهت/خلاف بایاس/نامشخص) + `by_side`، با حکم
+`keep` / `drop` / `need_more` روی آستانهٔ `min_n` (پیش‌فرض ۱۰).
+
+**سطح‌های دسترسی:** `api.shadow_payload()`، `api.shadow_take(symbol, side, note,
+offline)`، `api.shadow_close(id)`؛ وب: `GET /api/shadow`, `/api/shadow_open`,
+`/api/shadow_close`؛ CLI: `python3 -m mtflab shadow [--open SYM --side LONG]`.
+
+**چیزی که شبیه‌سازی نمی‌شود:** خروج با «برگشت رژیم» و «سیگنال مخالف» — چون به
+وضعیت کامل لایه‌ها وابسته‌اند. عدد R این دفتر با عدد اتوترید یکی نیست و نباید
+به‌جای کارنامهٔ اصلی استفاده شود.

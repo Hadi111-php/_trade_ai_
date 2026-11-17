@@ -35,6 +35,7 @@ from .data import Candle, synthetic_candles
 from .engine import run_backtest
 from .live import (VETO_FA, cfg_digest, open_positions_from_journal,
                    read_journal, rule_meta, summarize)
+from .shadow import replay as replay_shadow
 
 LAB_DIR = os.path.join("results", "live_lab")
 VERSION = "1.0"
@@ -632,6 +633,157 @@ class Lab:
                            "بسته نشده، یا شرط‌های ورود برقرار نبود.")
         self.universe(reload=True)
         return out
+
+    # -- دفتر سایهٔ خبر (اعتبارسنجی منبع، بی‌اثر روی سیستم) ---------------
+    @property
+    def shadow_path(self) -> str:
+        """فایل جدا از ژورنال: `shadow.jsonl` کنار همان ژورنال."""
+        d = os.path.dirname(os.path.abspath(self.journal_path)) or "."
+        return os.path.join(d, "shadow.jsonl")
+
+    def _shadow_cfg(self):
+        cfg = self.base_cfg()
+        return cfg
+
+    def shadow_book(self, reload: bool = False) -> dict:
+        """ردیف‌های دفتر سایه + کارنامهٔ اعتبار منبع (با بستن‌های تازه)."""
+        from .shadow import ShadowBook
+        uni = self.universe(reload=reload)
+        try:
+            return ShadowBook(self.shadow_path).book(uni, self._shadow_cfg())
+        except Exception as e:                                     # noqa: BLE001
+            return {"rows": [], "fresh_closes": 0, "path": self.shadow_path,
+                    "scorecard": {"overall": {"n": 0}, "by_source": [],
+                                  "by_agreement": [], "by_side": [], "open_n": 0,
+                                  "note": ""},
+                    "error": f"{type(e).__name__}: {e}"}
+
+    def shadow_sources(self, candles: Sequence[Candle]) -> dict:
+        """در همین لحظه، کدام الگوها شرط ورود داشتند و بایاس چه می‌گفت؟"""
+        out: dict = {"votes": {"available": False, "ids": [], "n": 0},
+                     "bias": None, "bias_why": "", "engine_signal": None}
+        if not candles:
+            return out
+        bar_ts = int(candles[-1].open_time_ms)
+        cfg = self._shadow_cfg()
+        try:
+            from .attribution import pattern_votes
+            out["votes"] = pattern_votes(candles, bar_ts, cfg=cfg,
+                                         tf_trigger=self.tf,
+                                         tf_filter=self.tf_filter,
+                                         tf_bias=self.tf_bias)
+        except Exception as e:                                     # noqa: BLE001
+            out["votes"] = {"available": False, "ids": [], "n": 0,
+                            "note": f"رأی در دسترس نیست: {type(e).__name__}"}
+        try:
+            from dataclasses import replace as _replace
+            from .signals import TFContext, bias_state
+            # بایاس این‌جا **فقط مرجع** است (برچسب کارنامه)، پس حتی اگر در
+            # تنظیمات همین الگو خاموش باشد، جهت تایم‌فریم بالا محاسبه می‌شود.
+            bcfg = _replace(cfg, bias_enabled=True)
+            layers = build_layers(candles, self.tf, self.tf_filter, self.tf_bias,
+                                  bias_enabled=True)
+            ctx = TFContext(layers["bias"], bcfg, "bias")
+            # TFContext عمداً __len__ ندارد؛ طول از خودِ کندل‌ها گرفته می‌شود.
+            st = bias_state(ctx, len(ctx.candles) - 1, bcfg)
+            out["bias"] = int(st.direction)
+            out["bias_why"] = st.reason
+            out["bias_is_reference"] = not bool(cfg.bias_enabled)
+        except Exception as e:                                     # noqa: BLE001
+            out["bias"] = None
+            out["bias_why"] = f"بایاس در دسترس نیست: {type(e).__name__}"
+        return out
+
+    def shadow_payload(self) -> dict:
+        """همهٔ چیزی که تب «دفتر خبر» لازم دارد (بدون اثر روی سیستم)."""
+        book = self.shadow_book()
+        cfg = self._shadow_cfg()
+        book["symbols"] = sorted(self.universe().keys())
+        book["variant"] = self.variant
+        book["cfg"] = {
+            "stop_atr_mult": cfg.stop_atr_mult,
+            "take_profit_atr_mult": cfg.take_profit_atr_mult,
+            "trail_enabled": bool(cfg.trail_enabled),
+            "trail_atr_mult": cfg.trail_atr_mult,
+            "trail_start_r": cfg.trail_start_r,
+            "breakeven_at_r": cfg.breakeven_at_r,
+            "max_holding_bars": cfg.max_holding_bars,
+            "fee_bps": cfg.fee_bps,
+            "slippage_pct": cfg.slippage_pct,
+        }
+        book["note"] = ("این دفتر فقط برای اعتبارسنجی منبع است: سرمایه، اسلات، "
+                        "ژورنال و آمار اصلی را دست نمی‌زند. خروج با همان حد "
+                        "ضرر/سود/تریل/سقف زمانی تنظیمات انجام می‌شود.")
+        return book
+
+    def shadow_take(self, symbol: str, side: str, note: str = "",
+                    offline: bool = False) -> dict:
+        """ثبت «همین حالا» یک سیگنال خبری کاغذی — فقط برای اعتبارسنجی منبع.
+
+        **هیچ اثری روی سیستم ندارد:** نه `state.json` را می‌نویسد، نه در
+        `journal.jsonl` رکورد می‌زند، نه سرمایه/اسلات/آمار را دست می‌زند.
+        """
+        from .shadow import ShadowBook, open_trade
+        if self.demo:
+            return {"ok": False, "trade": None,
+                    "note": "حالت نمایشی است (دادهٔ مصنوعی) — دفتر خبر روی دادهٔ "
+                            "واقعی معنا دارد. با دادهٔ دانلودی اجرا کن."}
+        sym = str(symbol or "").upper().strip()
+        if not sym:
+            return {"ok": False, "trade": None, "note": "نماد را انتخاب کن."}
+        try:
+            from .shadow import _side_sign
+            _side_sign(side)
+        except ValueError as e:
+            return {"ok": False, "trade": None, "note": str(e)}
+        uni = self.universe(reload=True)
+        cs = uni.get(sym) or []
+        if len(cs) < 60:
+            return {"ok": False, "trade": None,
+                    "note": f"کندل کافی برای {sym} نیست ({len(cs)})."}
+        cfg = self._shadow_cfg()
+        src = self.shadow_sources(cs)
+
+        price, price_source = None, "last_close"
+        if not offline:
+            try:
+                from .bybit_public import last_price
+                price = last_price(sym, base_url=getattr(cfg, "bybit_base_url",
+                                                         "https://api.bybit.com"))
+                if price:
+                    price_source = "ticker"
+            except Exception:                                      # noqa: BLE001
+                price = None
+
+        rec = open_trade(sym, side, cs, cfg, price=price,
+                         price_source=price_source, note=note, tf=self.tf,
+                         votes=src.get("votes"), bias=src.get("bias"),
+                         bias_is_reference=bool(src.get("bias_is_reference")))
+        ShadowBook(self.shadow_path).append(rec)
+        book = self.shadow_book()
+        return {"ok": True, "trade": rec, "note": (
+            f"ثبت شد: {sym} {rec['side']} @ {rec['entry']} "
+            f"({('قیمت زندهٔ بازار' if price_source == 'ticker' else 'بستهٔ آخرین کندل')})"
+            f" · حد ضرر {rec['stop']} · حد سود {rec['take'] or 'بدون TP'}"),
+            "book": book}
+
+    def shadow_close(self, trade_id: str, price: Optional[float] = None) -> dict:
+        """بستن دستی یک سیگنال سایه (برای وقتی خودت می‌خواهی دفتر را ببندی)."""
+        from .shadow import ShadowBook
+        if self.demo:
+            return {"ok": False, "note": "حالت نمایشی — بستن دستی لازم نیست."}
+        book = ShadowBook(self.shadow_path)
+        opens, _closes = replay_shadow(book.events())
+        rec = opens.get(str(trade_id))
+        if rec is None:
+            return {"ok": False, "note": "سیگنال سایه با این شناسه پیدا نشد."}
+        cs = self.universe().get(rec.get("symbol", "")) or []
+        try:
+            out = book.close_manual(str(trade_id), price=price, candles=cs,
+                                    cfg=self._shadow_cfg())
+        except (KeyError, ValueError) as e:
+            return {"ok": False, "note": str(e)}
+        return {"ok": True, "close": out, "book": self.shadow_book()}
 
     def pattern_report(self) -> dict:
         """کارنامهٔ الگوها از همین ژورنال (محاسبهٔ هنگام درخواست)."""
