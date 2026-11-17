@@ -285,8 +285,16 @@ for a in "$@"; do
         esac
         _prev="$b"
       done
-      _S=()
-      [ -n "$_SYMS" ] && _S=(--symbols "$_SYMS")
+      # ops/health/control «کاما-جدا» می‌خواهند، ولی `live --symbols` آرگومان‌های
+      # جدا (nargs="+") می‌خواهد. بدون این تبدیل، «A,B» یک نمادِ ناموجود می‌شد.
+      _S=(); _SL=()
+      if [ -n "$_SYMS" ]; then
+        _S=(--symbols "$_SYMS")
+        _IFS_OLD="$IFS"; IFS=','
+        for _s2 in $_SYMS; do _SL+=("$_s2"); done
+        IFS="$_IFS_OLD"
+        _SL=(--symbols "${_SL[@]}")
+      fi
       echo "════════ ارزیابی کامل — داده: $_DATA · تایم‌فریم: $_TF ════════"
       if [ "$_OFF" = "1" ]; then
         echo "۱/۵ دسترسی به داده — رد شد (--offline)"
@@ -308,10 +316,10 @@ for a in "$@"; do
       echo "۳/۵ اتوترید مجازی تا آخرین کندل بسته (بک‌فیل ۴۰۰)…"
       if [ "$_OFF" = "1" ]; then
         python3 -m mtflab live --offline --backfill 400 --no-brain --data-dir "$_DATA" \
-          --tf "$_TF" --lang en "${_S[@]+"${_S[@]}"}" || echo "⚠️ گام ۳ با خطا تمام شد"
+          --tf "$_TF" --lang en "${_SL[@]+"${_SL[@]}"}" || echo "⚠️ گام ۳ با خطا تمام شد"
       else
         python3 -m mtflab live --backfill 400 --no-brain --data-dir "$_DATA" \
-          --tf "$_TF" --lang en "${_S[@]+"${_S[@]}"}" || echo "⚠️ گام ۳ با خطا تمام شد"
+          --tf "$_TF" --lang en "${_SL[@]+"${_SL[@]}"}" || echo "⚠️ گام ۳ با خطا تمام شد"
       fi
       echo "۴/۵ سلامت سیستم…"
       python3 -m mtflab health --data-dir "$_DATA" --tf "$_TF" --lang en

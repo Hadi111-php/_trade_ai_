@@ -1652,6 +1652,10 @@ bash run-auto.sh --evaluate --offline
 >
 > ```bash
 > bash run-auto.sh --evaluate --days 365     # دانلود یک‌ساله + بقیهٔ گام‌ها
+>
+> # با نمادهای مشخص (دروازه حداقل ۸ نماد می‌خواهد):
+> bash run-auto.sh --evaluate --days 730 \
+>   --symbols BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,BNBUSDT,DOGEUSDT,ADAUSDT,LINKUSDT
 > ```
 >
 > گزارش کنترل خودش می‌گوید چند روز کم داری: ردیف «گرم‌شدن لایه‌ها» دقیقاً

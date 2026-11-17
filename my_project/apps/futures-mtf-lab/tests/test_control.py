@@ -296,3 +296,12 @@ def test_evaluate_accepts_days_for_real_download():
     assert "--days)" in sh and "--days=*)" in sh
     assert 'ops --download --days "$_DAYS"' in sh
     assert "evaluate --days" in sh
+
+
+def test_evaluate_converts_comma_symbols_for_live():
+    """`live --symbols` آرگومان جدا می‌خواهد؛ «A,B» باید به «A B» تبدیل شود."""
+    sh = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "run-auto.sh"), encoding="utf-8").read()
+    assert "IFS=','" in sh
+    assert "_SL=(--symbols" in sh
+    assert '"${_SL[@]+"${_SL[@]}"}"' in sh       # live با نسخهٔ فاصله‌دار اجرا می‌شود
