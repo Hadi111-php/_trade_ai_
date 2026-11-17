@@ -1491,6 +1491,8 @@ bash run-auto.sh
 | `destination path ... already exists` | قبلاً یک‌بار کلون کرده‌اید. یا به پوشهٔ جدید کلون کنید (`... .git lab`) یا همان قبلی را تعمیر کنید (پایین) |
 | `cd: .../futures-mtf-lab: No such file` | کلونِ قدیمی از شاخهٔ `main` است و این پوشه در آن وجود ندارد → با `-b` کلون کنید |
 | نام پوشه با `*` نشان داده می‌شود | `_trade_ai_` در متن‌های فرمت‌دار به‌صورت ایتالیک رندر می‌شود و زیرخط‌ها گم می‌شوند. کلون را با نام ساده بگیرید: `... .git lab` |
+| `fatal: destination path 'lab' already exists` | قبلاً کلون کرده‌اید. کلون نکن؛ `cd ~/lab/my_project/apps/futures-mtf-lab && bash run-auto.sh --update` |
+| خودآزمایی چند دقیقه هیچ چیزی چاپ نمی‌کند | ساکت است، نه مانده: خط `… 45s · N خط خروجی` باید هر ۳ ثانیه بیاید. عجله داری: `--quick` |
 | `No module named mtflab` | از پوشهٔ اشتباه اجرا کرده‌اید. از ریشهٔ پروژه: `bash run-auto.sh` |
 | `python3 نصب نیست` | `pkg install python -y` |
 | `به Bybit دسترسی نیست` | `bash run-auto.sh --offline` یا VPN |
@@ -1584,8 +1586,20 @@ pkg update -y && pkg install git python -y
 cd ~
 git clone -b arena/444f3300-trade-ai --depth 1 https://github.com/Hadi111-php/_trade_ai_.git lab
 cd lab/my_project/apps/futures-mtf-lab
-python3 -m mtflab selftest
+python3 -m mtflab selftest --quick
 ```
+
+> **اگر قبلاً کلون کرده‌ای، `git clone` را تکرار نکن** — خطای
+> `fatal: destination path 'lab' already exists` می‌دهد. برای نسخهٔ موجود:
+>
+> ```bash
+> cd ~/lab/my_project/apps/futures-mtf-lab
+> bash run-auto.sh --update          # کد را به آخرین نسخه می‌برد و قبلی/جدید را نشان می‌دهد
+> python3 -m mtflab selftest --quick
+> ```
+>
+> `--update` اگر تغییری ذخیره‌نشده ببیند **اجرا نمی‌کند** (با `--force` رد شو).
+> مسیر جایگزین (اگر پوشه خراب است): کلون در پوشهٔ تازه، مثلاً `... .git lab2`.
 
 **کامپیوتر (لینوکس/مک/ویندوز با Git Bash):**
 
@@ -1606,6 +1620,12 @@ python3 -m mtflab selftest
 ```bash
 bash run-auto.sh --evaluate
 ```
+
+> **«ماند؟» نه — خودآزمایی ساکت است، نه خراب.** خط اول آن شناسنامه را چاپ می‌کند
+> (`نسخه: … · کد: e6295bc · پایتون 3.13 · Termux`) و بعد تست‌های واحد شروع می‌شوند:
+> روی گوشی چند دقیقه طول می‌کشد و هر ۳ ثانیه یک خط `… 45s · 120 خط خروجی` می‌آید.
+> اگر عجله داری: `python3 -m mtflab selftest --quick` (۴ آزمون موتور، کمتر از ۲ ثانیه).
+> نسخهٔ چاپ‌شده در خط اول را با آخرین کامیت مقایسه کن؛ اگر قدیمی بود، `--update`.
 
 این چه می‌کند (به ترتیب، همه در یک اجرا):
 

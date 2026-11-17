@@ -78,7 +78,7 @@ def main(argv=None) -> int:
 
     if cmd == "selftest":
         from .selftest import run_selftest
-        return run_selftest()
+        return run_selftest(quick=("--quick" in rest or "-q" in rest))
 
     if cmd == "diagnose":
         import argparse

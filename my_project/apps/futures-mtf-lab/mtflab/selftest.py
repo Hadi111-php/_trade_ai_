@@ -21,14 +21,58 @@ from .engine import run_backtest
 from .fees import FeeConfig, passes_cost_filter, round_trip_cost_pct
 
 
-def _run_unit_tests() -> Tuple[bool, str]:
+def _git_commit() -> str:
+    """کوتاه‌شدهٔ HEAD — تا از روی اسکرین‌شات معلوم باشد کدام نسخه اجرا شده."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        out = subprocess.run(["git", "-C", root, "rev-parse", "--short", "HEAD"],
+                             capture_output=True, text=True, timeout=5)
+        return out.stdout.strip() if out.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def env_line() -> str:
+    """یک خط شناسنامه: نسخه، کامیت، پایتون، پلتفرم. اولِ خودآزمایی چاپ می‌شود."""
+    from . import __version__
+    plat = "Termux" if os.environ.get("TERMUX_VERSION") else "PC/لینوکس"
+    return (f"نسخه: {__version__} · کد: {_git_commit() or '?'} · "
+            f"پایتون {sys.version.split()[0]} · {plat} · "
+            f"{time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())}")
+
+
+def _run_unit_tests(progress_every_s: float = 3.0) -> Tuple[bool, str]:
+    """تست‌های واحد با **نشانگر پیشرفت**.
+
+    روی گوشی این مرحله چند دقیقه طول می‌کشد؛ قبلاً خروجی تا پایان کامل
+    گرفته می‌شد و صفحه چند دقیقه ساکت می‌ماند — کاربر فکر می‌کرد «مانده».
+    """
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     runner = os.path.join(root, "tests", "run_tests.py")
     if not os.path.exists(runner):
         return False, "tests/run_tests.py پیدا نشد"
     import subprocess
-    p = subprocess.run([sys.executable, runner], cwd=root, capture_output=True, text=True)
-    tail = "\n".join(p.stdout.strip().splitlines()[-4:])
+    t0 = time.time()
+    last = t0
+    lines: List[str] = []
+    try:
+        p = subprocess.Popen([sys.executable, "-u", runner], cwd=root,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                             text=True, bufsize=1)
+    except OSError as e:
+        return False, f"اجرا نشد: {e}"
+    assert p.stdout is not None
+    for raw in p.stdout:
+        line = raw.rstrip("\n")
+        if line.strip():
+            lines.append(line)
+        now = time.time()
+        if now - last >= progress_every_s:
+            print(f"        … {int(now - t0)}s · {len(lines)} خط خروجی", flush=True)
+            last = now
+    p.wait()
+    tail = "\n".join(lines[-4:]) if lines else "(بدون خروجی)"
     return p.returncode == 0, tail
 
 
@@ -89,18 +133,29 @@ def _strictness_check() -> Tuple[bool, str]:
     return ok, f"A={a['trades']} معامله، B={b['trades']}، C={c['trades']}"
 
 
-def run_selftest() -> int:
+def run_selftest(quick: bool = False) -> int:
+    """`quick=True` تست‌های واحد را رد می‌کند (برای گوشی/شبکهٔ ضعیف)."""
     checks: List[Tuple[str, Tuple[bool, str]]] = []
     t0 = time.time()
     print("=" * 70)
     print("  🧪 خودآزمایی Futures MTF Lab")
     print("=" * 70)
+    print(f"  {env_line()}", flush=True)
+    if quick:
+        print("  حالت سریع: تست‌های واحد رد می‌شوند (--quick)")
+    else:
+        print("  تست‌های واحد چند دقیقه طول می‌کشد (روی گوشی بیشتر)؛"
+              " تا پایان ساکت نمان — هر ۳ ثانیه پیشرفت چاپ می‌شود.", flush=True)
+    print("-" * 70, flush=True)
 
-    for name, fn in [("تست‌های واحد (alignment/fees/pitfalls)", _run_unit_tests),
-                     ("علی‌بودن موتور (prefix invariance)", _causality_check),
-                     ("حسابرسی نشتی هم‌ترازی", _leakage_check),
-                     ("فیلتر هزینه (edge ≥ 1.5×)", _cost_filter_check),
-                     ("کنترل سخت‌گیری نسخه‌های A/B/C", _strictness_check)]:
+    plan = [("علی‌بودن موتور (prefix invariance)", _causality_check),
+            ("حسابرسی نشتی هم‌ترازی", _leakage_check),
+            ("فیلتر هزینه (edge ≥ 1.5×)", _cost_filter_check),
+            ("کنترل سخت‌گیری نسخه‌های A/B/C", _strictness_check)]
+    if not quick:
+        plan.insert(0, ("تست‌های واحد (alignment/fees/pitfalls)", _run_unit_tests))
+
+    for name, fn in plan:
         try:
             res = fn()
         except Exception as e:                          # noqa: BLE001

@@ -37,6 +37,7 @@
 #   bash run-auto.sh --health                      # سلامت سیستم: چرا سیگنالی نیست؟
 #   bash run-auto.sh --control                     # گزارش کنترل: یک فایل برای فرستادن (چک‌لیست + هش)
 #   bash run-auto.sh --evaluate                    # همهٔ گام‌ها با هم: پروب → سینک → بک‌فیل → سلامت → گزارش
+#   bash run-auto.sh --update                      # به‌روزرسانی کد (بدون کلون تازه) + نمایش کد قبلی/جدید
 #   bash run-auto.sh --evaluate --offline          # همان، بدون شبکه (روی کش موجود)
 #   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
 #   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
@@ -232,6 +233,38 @@ for a in "$@"; do
       if [ "$_OUT" = "0" ]; then _A=(--out-dir results "${_A[@]+"${_A[@]}"}"); fi
       python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
       exit $?
+      ;;
+    --update|--upgrade)
+      # به‌روزرسانی بدون کلون تازه: حلِ خطای «destination path 'lab' already exists»
+      _REPO="$(git rev-parse --show-toplevel 2>/dev/null)"
+      if [ -z "$_REPO" ]; then
+        echo "❌ این پوشه داخل یک مخزن git نیست."
+        echo "   اگر با ZIP دانلود کرده‌اید، یک‌بار درست کلون کنید (راهنما: بخش ۴۰)."
+        exit 2
+      fi
+      _FORCE=0
+      for b in "$@"; do [ "$b" = "--force" ] && _FORCE=1; done
+      _DIRTY="$(git -C "$_REPO" status --porcelain 2>/dev/null)"
+      if [ -n "$_DIRTY" ] && [ "$_FORCE" = "0" ]; then
+        echo "⚠️  فایل‌های ذخیره‌نشده دارند (به‌روزرسانی آن‌ها را پاک می‌کند):"
+        printf '%s\n' "$_DIRTY" | head -5
+        echo "   اگر خودت دستی عوض کرده‌ای: اول commit کن، یا با --force نادیده بگیر."
+        exit 3
+      fi
+      _BR="$(git -C "$_REPO" rev-parse --abbrev-ref HEAD)"
+      _OLD="$(git -C "$_REPO" rev-parse --short HEAD)"
+      echo "شاخه: $_BR  ·  کد فعلی: $_OLD"
+      echo "در حال گرفتن آخرین نسخه از GitHub…"
+      if ! git -C "$_REPO" fetch origin "$_BR" --depth 1; then
+        echo "❌ دریافت نشد (شبکه/VPN). چیزی عوض نشد."
+        exit 1
+      fi
+      git -C "$_REPO" reset --hard FETCH_HEAD || exit 1
+      _NEW="$(git -C "$_REPO" rev-parse --short HEAD)"
+      echo "✅ کد: $_OLD → $_NEW"
+      echo "   داده و ژورنال دست‌نخورده ماند (results/ و data/ در git نیستند)."
+      echo "   بعدی: python3 -m mtflab selftest --quick   یا   bash run-auto.sh --evaluate"
+      exit 0
       ;;
     --evaluate|--eval)
       # یک دستور برای «ارزیابی کامل + فایل گزارش»: پروب → سینک → بک‌فیل → سلامت → کنترل
