@@ -34,6 +34,7 @@
 #   bash run-auto.sh --v10 --compare               # مقایسهٔ V10 با الگوهای MTF
 #   bash run-auto.sh --patterns                    # کارنامهٔ الگوها: کدام سیگنال بابت کدام الگو
 #   bash run-auto.sh --algorithms                  # کاتالوگ الگوریتم‌ها با فرمول و مقدار فعلی
+#   bash run-auto.sh --exit-styles                 # ثابت درصدی در برابر شناور (ATR+تریل) روی همان ورودی‌ها
 #   bash run-auto.sh --shadow                      # دفتر خبر: کارنامهٔ اعتبار منبع (بی‌اثر روی سیستم)
 #   bash run-auto.sh --shadow --open BTCUSDT --side LONG --note "خبر"   # ثبت سیگنال خبری
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
@@ -222,6 +223,15 @@ for a in "$@"; do
       for b in "${_A[@]+"${_A[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
       if [ "$_OUT" = "0" ]; then _A=(--out-dir results "${_A[@]+"${_A[@]}"}"); fi
       python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
+      exit $?
+      ;;
+    --exit-styles|--exitstyles|--stops)
+      _E=()
+      for b in "$@"; do
+        case "$b" in --exit-styles|--exitstyles|--stops) continue;; esac
+        _E+=("$b")
+      done
+      python3 -m mtflab exitstyles "${_E[@]+"${_E[@]}"}"
       exit $?
       ;;
     --shadow|--news)
