@@ -148,3 +148,30 @@ def test_single_young_symbol_keeps_its_own_explanation():
     note = short_history_note(cov, 1460, fa=False)
     assert "listed after the window start" in note
     assert "cache" not in note.lower()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  ۵) گزارش خالی ≠ FAIL
+# ══════════════════════════════════════════════════════════════════════════
+def test_empty_report_is_not_a_failure_verdict():
+    rep = {"gate": dict(gate.DEFAULT_GATE), "aggregate": {}, "settings": {}}
+    r = gate.readiness(rep)
+    assert r["empty"] is True
+    txt = gate.render_text(rep)
+    assert "گزارش خالی است" in txt
+    assert "کش خالی" in txt                 # علت، نه شرمندگی
+    assert "| نسخه |" not in txt            # جدولِ بی‌معنا چاپ نمی‌شود
+
+
+def test_empty_report_exit_code_is_2_not_1():
+    import contextlib
+    import io
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "auto_scan_empty.json")
+        json.dump({"gate": dict(gate.DEFAULT_GATE), "aggregate": {},
+                   "settings": {"symbols": [], "days": 365}}, open(p, "w", encoding="utf-8"))
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = gate.gate_command([p])
+        assert rc == 2
+        assert "گزارش خالی" in buf.getvalue()

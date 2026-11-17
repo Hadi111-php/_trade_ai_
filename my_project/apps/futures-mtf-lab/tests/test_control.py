@@ -305,3 +305,25 @@ def test_evaluate_converts_comma_symbols_for_live():
     assert "IFS=','" in sh
     assert "_SL=(--symbols" in sh
     assert '"${_SL[@]+"${_SL[@]}"}"' in sh       # live با نسخهٔ فاصله‌دار اجرا می‌شود
+
+
+def test_year_branch_runs_the_seven_steps_in_order():
+    """`--year` باید یک مسیر کامل و لاگ‌دار باشد، نه چند دستور پراکنده."""
+    sh = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "run-auto.sh"), encoding="utf-8").read()
+    assert "--year|--one-year)" in sh
+    order = ["== ۱/۷", "== ۲/۷", "== ۳/۷", "== ۴/۷", "== ۵/۷", "== ۶/۷", "== ۷/۷"]
+    pos = [sh.find(x) for x in order]
+    assert all(p > 0 for p in pos) and pos == sorted(pos)
+    # ابزارهای هر گام
+    for piece in ("-m mtflab ops --download --days", "-m mtflab live --offline --backfill 400",
+                  "-m mtflab health", "-m mtflab autoscan --source json",
+                  "-m mtflab control", "-m mtflab gate --tag"):
+        assert piece in sh, piece
+    # خروجی لاگ‌دار + راهنمای بیدار ماندن گوشی
+    assert "results/year_run_" in sh and "termux-wake-lock" in sh
+    # پیش‌پرواز: با کش خالی و --offline نباید ۴۰ دقیقه وقت تلف کند
+    assert "هیچ فایل 4h نیست" in sh and "exit 2" in sh
+    # پیش‌فرض ۱۰ نماد (دروازه ۸ می‌خواهد)
+    line = [l for l in sh.splitlines() if "_SYMS=\"BTCUSDT" in l][0]
+    assert line.count(",") == 9

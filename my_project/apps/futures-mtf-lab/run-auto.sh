@@ -41,6 +41,8 @@
 #   bash run-auto.sh --evaluate --offline          # همان، بدون شبکه (روی کش موجود)
 #   bash run-auto.sh --evaluate --days 400         # همان، ولی اول ۴۰۰ روز دادهٔ واقعی را دانلود کن
 #   bash run-auto.sh --gate                        # دروازهٔ پذیرش: چرا FAIL شد و برای عبور چه لازم است
+#   bash run-auto.sh --year                        # یک سال دادهٔ واقعی + اعتبارسنجی + دروازه (یک دستور، لاگ‌دار)
+#   bash run-auto.sh --year --days 730 --symbols A,B,C   # همان، با بازه/نماد دلخواه
 #   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
 #   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
 #   bash run-auto.sh --ops --download --days 365   # دانلود یک‌ساله از Bybit
@@ -235,6 +237,82 @@ for a in "$@"; do
       if [ "$_OUT" = "0" ]; then _A=(--out-dir results "${_A[@]+"${_A[@]}"}"); fi
       python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
       exit $?
+      ;;
+    --year|--one-year)
+      # «یک سال دادهٔ واقعی + اعتبارسنجی + دروازه» در یک دستور، با لاگ فایل‌دار.
+      _DATA="data"; _DAYS="365"; _OFF="0"; _SYMS="BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,BNBUSDT,DOGEUSDT,ADAUSDT,LINKUSDT,AVAXUSDT,DOTUSDT"; _TAG="year"
+      _prev=""
+      for b in "$@"; do
+        case "$_prev" in
+          --data-dir) _DATA="$b" ;;
+          --days) _DAYS="$b" ;;
+          --symbols) _SYMS="$b" ;;
+          --tag) _TAG="$b" ;;
+        esac
+        case "$b" in
+          --offline) _OFF="1" ;;
+          --days=*) _DAYS="${b#--days=}" ;;
+          --symbols=*) _SYMS="${b#--symbols=}" ;;
+          --tag=*) _TAG="${b#--tag=}" ;;
+        esac
+        _prev="$b"
+      done
+      # کاما برای ops، فاصله برای live/autoscan (nargs="+")
+      _CS=(--symbols "$_SYMS")
+      _SS=(); _IFS_OLD="$IFS"; IFS=','
+      for _s2 in $_SYMS; do _SS+=("$_s2"); done
+      IFS="$_IFS_OLD"
+      _SS=(--symbols "${_SS[@]}")
+      _NSYM=$(printf '%s' "$_SYMS" | tr -cd ',' | wc -c)
+      _NSYM=$((_NSYM + 1))
+      mkdir -p results
+      _LOG="results/year_run_$(date -u +%Y%m%dT%H%M%SZ).log"
+      echo "════════ یک سال دادهٔ واقعی + اعتبارسنجی ════════"
+      echo "نماد: $_NSYM · روز: $_DAYS · داده: $_DATA · لاگ: $_LOG"
+      echo "این اجرا ممکن است ۱۵ تا ۴۰ دقیقه طول بکشد؛ گوشی را روشن نگه دار: termux-wake-lock"
+      if [ "$_OFF" = "1" ]; then
+        _N4H=$(ls -1 "$_DATA"/json/*_4h.json 2>/dev/null | wc -l)
+        if [ "$_N4H" -eq 0 ]; then
+          echo "❌ در $_DATA/json هیچ فایل 4h نیست ⇒ با --offline چیزی برای تحلیل نیست."
+          echo "   بدون --offline اجرا کن تا داده دانلود شود."
+          exit 2
+        fi
+        echo "(آفلاین: با $_N4H فایل 4h موجود در کش ادامه می‌دهم)"
+      fi
+      {
+        echo "== $(date -u +%Y-%m-%dT%H:%M:%SZ) start =="
+        if [ "$_OFF" = "1" ]; then
+          echo "== ۱/۷ probe: رد شد (--offline) =="
+          echo "== ۲/۷ download: رد شد (--offline) =="
+        else
+          echo "== ۱/۷ بررسی دسترسی به Bybit =="
+          python3 -m mtflab ops --probe --data-dir "$_DATA" || echo "⚠️ probe ناموفق"
+          echo "== ۲/۷ دانلود $_DAYS روز برای $_NSYM نماد =="
+          python3 -m mtflab ops --download --days "$_DAYS" --data-dir "$_DATA" "${_CS[@]}" \
+            || echo "⚠️ دانلود کامل نشد؛ با کش موجود ادامه می‌دهم"
+        fi
+        echo "== ۳/۷ اتوترید مجازی روی همان داده (بک‌فیل ۴۰۰) =="
+        python3 -m mtflab live --offline --backfill 400 --no-brain --data-dir "$_DATA" \
+          --lang en "${_SS[@]}" || echo "⚠️ گام live خطا داد"
+        echo "== ۴/۷ سلامت سیستم =="
+        python3 -m mtflab health --data-dir "$_DATA" --tf 4h --lang en "${_CS[@]}"
+        echo "== ۵/۷ اسکن پنج نسخه روی کش (بدون شبکه) =="
+        python3 -m mtflab autoscan --source json --days "$_DAYS" --data-dir "$_DATA" \
+          --lang en --tag "$_TAG" "${_SS[@]}" || echo "⚠️ autoscan خطا داد"
+        echo "== ۶/۷ گزارش کنترل =="
+        python3 -m mtflab control --data-dir "$_DATA" --tf 4h --lang en "${_CS[@]}" \
+          || echo "⚠️ گزارش کنترل ساخته نشد"
+        echo "== ۷/۷ دروازهٔ پذیرش =="
+        python3 -m mtflab gate --tag "$_TAG" --results-dir results
+        echo "== end =="
+      } 2>&1 | tee "$_LOG"
+      echo ""
+      echo "════════ تمام شد ════════"
+      echo "این دو را بفرست:"
+      ls -1 results/auto_scan_*"$_TAG"*.md 2>/dev/null | tail -1
+      ls -1t results/control/control_*.md 2>/dev/null | head -1
+      echo "(متن دروازه هم داخل لاگ است) لاگ کامل: $_LOG"
+      exit 0
       ;;
     --update|--upgrade)
       # به‌روزرسانی بدون کلون تازه: حلِ خطای «destination path 'lab' already exists»

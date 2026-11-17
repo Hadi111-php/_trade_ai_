@@ -121,6 +121,7 @@ def readiness(rep: dict) -> dict:
         })
 
     best = max(out, key=lambda v: (v.get("expectancy") or -1e9), default=None)
+    empty = (not out) or not any(v.get("trades") is not None for v in out)
     return {
         "version": VERSION,
         "gate": gate,
@@ -131,6 +132,7 @@ def readiness(rep: dict) -> dict:
         "variants": out,
         "best": best,
         "survived": [v["variant"] for v in out if v["survived"]],
+        "empty": bool(empty),
     }
 
 
@@ -177,6 +179,16 @@ def render_text(rep: dict, path: str = "") -> str:
         L.append(f"منبع: `{os.path.basename(path)}` · پنجره: {r.get('days')} روز · "
                  f"منبع داده: {r.get('source')} · نماد: {r['n_symbols']}")
         L.append("")
+    if r.get("empty"):
+        L.append("## ⚠️ گزارش خالی است")
+        L.append("")
+        L.append("هیچ نمادی در این گزارش تحلیل نشده (تعداد معامله = ۰).")
+        L.append("یعنی اسکن روی **کش خالی** اجرا شده، نه اینکه استراتژی باخته باشد.")
+        L.append("")
+        L.append("اول داده بگیر، بعد دوباره: `bash run-auto.sh --year` یا "
+                 "`bash run-auto.sh --evaluate --days 365`.")
+        L.append("")
+        return "\n".join(L)
     L.append("## ۱) شرط‌ها")
     L.append("")
     L.append(f"پیش‌ثبت‌شده: نماد ≥ {g['min_symbols']} · معامله ≥ {g['min_trades']} · "
@@ -228,8 +240,11 @@ def gate_command(argv: Optional[List[str]] = None) -> int:
               "اول: bash run-auto.sh --source json --days 365 --tag year")
         return 2
     rep = load(path)
+    r = readiness(rep)
     if a.json:
-        print(json.dumps(readiness(rep), ensure_ascii=False, indent=2))
+        print(json.dumps(r, ensure_ascii=False, indent=2))
     else:
         print(render_text(rep, path))
-    return 0 if readiness(rep)["survived"] else 1
+    if r.get("empty"):
+        return 2                      # گزارش خالی ≠ FAIL
+    return 0 if r["survived"] else 1
