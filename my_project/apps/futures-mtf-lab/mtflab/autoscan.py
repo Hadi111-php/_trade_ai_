@@ -727,6 +727,43 @@ def _f(x, d: int = 2) -> str:
     return f"{x:+,.{d}f}" if isinstance(x, float) else str(x)
 
 
+def short_history_note(cov: dict, days: int, fa: bool = True) -> str:
+    """یادداشت «تاریخ کوتاه» — و تفکیک دو علتِ کاملاً متفاوت.
+
+    دام واقعی: کاربر `--days 1460` خواست ولی کش فقط ۳۶۵ روز داشت؛ گزارش گفت
+    «نمادها احتمالاً بعد از شروع بازه لیست شده‌اند». غلط بود: BTC از ۲۰۱۹ لیست
+    است. علت، کوتاه‌بودنِ **کش** بود. حالا این دو از هم جدا می‌شوند.
+    """
+    young = [s for s, c in cov.items()
+             if ((c.get("integrity") or {}).get("front_gap_days") or 0) > 30]
+    if not young:
+        return ""
+    gaps = [float((cov[s].get("integrity") or {}).get("front_gap_days") or 0) for s in young]
+    spans = [float((cov[s].get("integrity") or {}).get("span_days") or 0) for s in young]
+    # نشانهٔ «کش کوتاه»: **همهٔ** نمادها کوتاه‌اند و تقریباً هم‌اندازه — نه اینکه
+    # یکی‌دو نماد تازه‌تر باشد (آن حالت «نماد جوان» است و پیام خودش را دارد).
+    short_cache = (bool(spans) and len(cov) >= 2 and len(young) == len(cov)
+                   and max(spans) < max(1, int(days)) - 30
+                   and (max(gaps) - min(gaps) < 7))
+    if short_cache:
+        if fa:
+            return (f"> ℹ️ **{len(young)} نماد تاریخ کوتاه‌تری از بازهٔ درخواستی دارند** — "
+                    f"علتش **کش** است، نه تازه‌وارد بودن نماد: کش ~{max(spans):.0f} روز "
+                    f"دارد و {days} روز خواسته شده. با `--days {days}` دوباره دانلود کن "
+                    f"یا همان بازهٔ موجود را بخواه.\n")
+        return (f"> ℹ️ **{len(young)} symbol(s) have a shorter history than requested** — "
+                f"the **cache** is only ~{max(spans):.0f} days while {days} were requested "
+                f"(not young listings). Re-download with `--days {days}` or ask for fewer "
+                f"days.\n")
+    if fa:
+        return (f"> ℹ️ **{len(young)} نماد تاریخ کوتاه‌تری از بازهٔ درخواستی دارند** "
+                f"(احتمالاً بعد از شروع بازه لیست شده‌اند): {', '.join(young)}. "
+                f"این نقص داده نیست، ولی وزن‌شان کمتر است.\n")
+    return (f"> ℹ️ **{len(young)} symbol(s) have a shorter history than requested** "
+            f"(likely listed after the window start): {', '.join(young)}. "
+            f"Not a data fault, but they carry less weight.\n")
+
+
 def render_report(res: dict) -> str:
     L: List[str] = []
     w = L.append
@@ -847,12 +884,9 @@ def render_report(res: dict) -> str:
           f"{ig.get('stale_days', '—')} | {ig.get('front_gap_days', '—')} | "
           f"{round(100 * ig.get('missing_ratio', 0.0), 2)} | {c.get('source', '—')} |")
     w("")
-    young = [s2 for s2, c in cov.items()
-             if ((c.get("integrity") or {}).get("front_gap_days") or 0) > 30]
-    if young:
-        w(f"> ℹ️ **{len(young)} نماد تاریخ کوتاه‌تری از بازهٔ درخواستی دارند** "
-          f"(احتمالاً بعد از شروع بازه لیست شده‌اند): {', '.join(young)}. "
-          f"این نقص داده نیست، ولی وزن‌شان کمتر است.\n")
+    _note = short_history_note(cov, st["days"], fa=True)
+    if _note:
+        w(_note)
     bad = [s2 for s2, c in cov.items() if (c.get("integrity") or {}).get("ok") is False]
     if bad:
         w(f"> ⚠️ **{len(bad)} نماد دادهٔ ناسالم داشتند** و وارد دروازه نشدند: "
@@ -983,12 +1017,9 @@ def render_report_en(res: dict) -> str:
           f"{ig.get('stale_days', '—')} | {ig.get('front_gap_days', '—')} | "
           f"{round(100 * ig.get('missing_ratio', 0.0), 2)} | {c.get('source', '—')} |")
     w("")
-    young = [s2 for s2, c in cov.items()
-             if ((c.get("integrity") or {}).get("front_gap_days") or 0) > 30]
-    if young:
-        w(f"> ℹ️ **{len(young)} symbol(s) have a shorter history than requested** "
-          f"(likely listed after the window start): {', '.join(young)}. "
-          f"Not a data fault, but they carry less weight.\n")
+    _note = short_history_note(cov, st["days"], fa=False)
+    if _note:
+        w(_note)
     bad = [s2 for s2, c in cov.items() if (c.get("integrity") or {}).get("ok") is False]
     if bad:
         w(f"> ⚠️ **{len(bad)} symbol(s) had invalid data** and were excluded from "
