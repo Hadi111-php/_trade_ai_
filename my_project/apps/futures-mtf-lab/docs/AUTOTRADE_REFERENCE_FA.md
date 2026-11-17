@@ -389,7 +389,8 @@ CLI: `python3 -m mtflab algorithms [--json] [--out-dir DIR]`.
 حد سود لمس شود، `stop` فرض می‌شود.
 
 **کارنامه (`scorecard`):** `overall` + `by_source` (فقط الگوهایی که جهتشان با
-سیگنال یکی بود) + `by_agreement` (هم‌جهت/خلاف بایاس/نامشخص) + `by_side`، با حکم
+سیگنال یکی بود) + `unvoted` (سیگنال‌هایی که **هیچ** الگویی تأییدشان نکرد — گروه
+`بدون رأی الگو`) + `by_agreement` (هم‌جهت/خلاف بایاس/نامشخص) + `by_side`، با حکم
 `keep` / `drop` / `need_more` روی آستانهٔ `min_n` (پیش‌فرض ۱۰).
 
 **سطح‌های دسترسی:** `api.shadow_payload()`، `api.shadow_take(symbol, side, note,

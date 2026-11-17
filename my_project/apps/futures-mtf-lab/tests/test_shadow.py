@@ -223,6 +223,15 @@ def test_scorecard_groups_by_bias_agreement():
     assert got == {"هم‌جهت با بایاس": 1, "خلاف بایاس": 1, "بایاس نامشخص": 1}
 
 
+def test_unvoted_news_signal_is_its_own_group():
+    """سیگنالی که هیچ الگویی تأییدش نکرد باید جدا شمرده شود، نه نادیده."""
+    row = {"status": "closed", "r_multiple": -1.0, "side": "LONG",
+           "source": {"votes": {"ids": [], "patterns": []}, "agree": None}}
+    sc = sh.scorecard([row], min_n=10)
+    assert sc["unvoted"]["n"] == 1 and sc["unvoted"]["win_rate"] == 0.0
+    assert any(x["id"] == sh.NONE_VOTE_LABEL for x in sc["by_source"])
+
+
 # ══════════════════════════════════════════════════════════════════════════
 #  ۵) CLI و داشبورد
 # ══════════════════════════════════════════════════════════════════════════

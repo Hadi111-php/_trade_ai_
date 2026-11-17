@@ -32,6 +32,8 @@ from .indicators import atr as atr_series
 SHADOW_VERSION = 1
 MIN_STOP_PCT = 0.0015        # اگر ATR صفر بود (دادهٔ کم)، حداقل ۰.۱۵٪ فاصله
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+#: برچسب گروهی که هیچ الگویی رأی نداده بود (خبرِ خالی از تأیید الگو)
+NONE_VOTE_LABEL = "بدون رأی الگو"
 
 
 def _now_utc() -> str:
@@ -304,10 +306,15 @@ def scorecard(rows: Sequence[dict], min_n: int = 10) -> dict:
     by_id: Dict[str, List[float]] = {}
     for r in closed:
         votes = ((r.get("source") or {}).get("votes") or {})
+        credited = False
         for p in (votes.get("patterns") or []):
             if p.get("side") and p.get("side") != r.get("side"):
                 continue                    # الگویی که جهت مخالف می‌گفت، منبع این سیگنال نیست
+            credited = True
             by_id.setdefault(str(p.get("id")), []).append(float(r["r_multiple"]))
+        if not credited:
+            # سیگنال خبری که هیچ الگویی تأییدش نکرد — این گروه خودش یک یافته است.
+            by_id.setdefault(NONE_VOTE_LABEL, []).append(float(r["r_multiple"]))
     for pid, rs in sorted(by_id.items(), key=lambda kv: -len(kv[1])):
         st = _stats(rs)
         st["id"] = pid
@@ -331,6 +338,9 @@ def scorecard(rows: Sequence[dict], min_n: int = 10) -> dict:
         st["side"] = side
         out["by_side"].append(st)
 
+    if "بدون رأی الگو" in by_id:
+        out["unvoted"] = _stats(by_id["بدون رأی الگو"])
+        out["unvoted"]["verdict"] = _verdict(out["unvoted"], min_n)
     if not closed:
         out["note"] = "هنوز هیچ سیگنال خبری بسته نشده — حکمی در کار نیست."
     elif len(closed) < min_n:
@@ -460,10 +470,19 @@ def render_text(book: dict) -> str:
     if sc.get("by_source"):
         lines.append("## به تفکیک منبع (الگویی که همان لحظه رأی داد)")
         for st in sc["by_source"]:
+            if st["id"] == NONE_VOTE_LABEL:
+                continue                      # جداگانه در بخش پایین می‌آید
             lines.append(f"- `{st['id']}`: n={st['n']} · برد {st['win_rate']}٪ · "
                          f"expectancy {st['expectancy_r']} R ⇒ "
                          f"{(st.get('verdict') or {}).get('label')}")
         lines.append("")
+    if sc.get("unvoted"):
+        st = sc["unvoted"]
+        if st.get("n"):
+            lines.append("## سیگنال‌هایی که هیچ الگویی تأییدشان نکرد")
+            lines.append(f"- n={st['n']} · برد {st['win_rate']}٪ · expectancy "
+                         f"{st['expectancy_r']} R ⇒ {(st.get('verdict') or {}).get('label')}")
+            lines.append("")
     if sc.get("by_agreement"):
         lines.append("## هم‌جهتی با بایاس")
         for st in sc["by_agreement"]:
