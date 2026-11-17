@@ -331,3 +331,41 @@ _این سند مرجع است؛ تغییرش باید آگاهانه و با ت
 در بستهٔ سبک (`exports/autotrade_core`) تابع `v10_*` و `pattern_scorecard` کار
 می‌کند؛ `votes_now` چون به لایه‌سازی کامل پروژه (`autoscan.build_layers`) نیاز
 دارد، صادقانه `votes.available=false` برمی‌گرداند.
+
+### پروندهٔ کامل سیگنال در ژورنال (از نسخهٔ ۲۰۲۶-۱۰-۲۸)
+
+هر رکورد `open` و `close` در `results/live/journal.jsonl` باید این‌ها را داشته باشد
+(مصرف‌کننده حق ندارد از خودش پر کند؛ اگر نبود ⇒ «ثبت نشده»):
+
+| کلید | رکورد | معنی |
+|---|---|---|
+| `entry_candle` / `exit_candle` | open / close | `{ts, open, high, low, close, volume}` همان کندل |
+| `order.stop`, `order.take` | open | حد ضرر و حد سود لحظهٔ ورود |
+| `order.fee_open` | open | کارمزد ورود (جدا از خروج) |
+| `order.stop_initial`, `order.stop_final`, `result.fee_close` | close | وضعیت نهایی سفارش + کارمزد خروج |
+| `entry_indicators` / `exit_indicators` | open / close | همهٔ اندیکاتورها در دو لحظه (خروجی خروج اگر قدیمی باشد `{}`) |
+| `pattern_votes` | open | الگوهایی که روی همان کندل شرط ورود داشتند |
+| `origin` | open | `auto` یا `manual` |
+| `closed_by` | close | قاعده‌ای که بست (`rules.RULE_META`) |
+| `has_snapshot` | close | `false` = رکورد قبل از این نسخه؛ هیچ عددی جعل نمی‌شود |
+| `result` | close | `pnl`, `fees`, `r_multiple`, `mfe_pct`, `mae_pct`, `bars_held`, `is_win` |
+
+تضمین: `fee_open + fee_close == fees` (هر جزء تا ۴ رقم گِرد می‌شود، پس اختلاف
+≤ ۰.۰۰۰۲ مجاز است).
+
+### سیگنال دستی (وقتی اعتبارسنجی کامل نیست)
+
+| مسیر | خروجی |
+|---|---|
+| `api.validation_status()` | `n`, `expectancy_r`, `oos_n`, `oos_expectancy_r`, `min_n`, `complete`, `manual_allowed` |
+| `api.manual_signal(offline=False)` | `{ok, note, signals[], closed[]}` — یک گام واقعی موتور، همان قواعد، `origin="manual"` |
+
+`GET /api/validation` و `GET /api/manual_signal?offline=1` همین‌ها را می‌دهند.
+قواعد: در `--demo` (دادهٔ ساختگی) دستی **رد می‌شود**؛ اگر شرط ورود برقرار نباشد
+`ok=true` ولی `signals=[]` با توضیح؛ هیچ سیگنالی ساخته نمی‌شود.
+
+### کاتالوگ الگوریتم‌ها
+
+`api.algorithms()` ⇒ همان `catalog.catalog()`: `{version, generated_utc, tf,
+sections[mtf|v10|exits|pump], counts}`. مسیر وب: `GET /api/algorithms`.
+CLI: `python3 -m mtflab algorithms [--json] [--out-dir DIR]`.

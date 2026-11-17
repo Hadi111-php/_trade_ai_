@@ -27,6 +27,7 @@
   exits      حسابرسی خروج: چقدر سود با بستن زودهنگام از دست رفت
   v10        V10 Pro: بازگشت به میانگین (BB+RSI+حجم) — بک‌تست/مقایسه/نزدیکی
   patterns   کارنامهٔ الگوها: هر سیگنال بابت کدام الگو بود + پیشنهاد حذف/نگه‌داشتن
+  algorithms کاتالوگ الگوریتم‌ها: فرمول هر الگو با مقدار فعلی پارامترها
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -182,6 +183,9 @@ def main(argv=None) -> int:
     if cmd in ("patterns", "pattern-scorecard", "attribution"):
         from .attribution import patterns_command
         return patterns_command(rest)
+    if cmd in ("algorithms", "catalog", "algos"):
+        from .catalog import catalog_command
+        return catalog_command(rest)
 
     if cmd in ("watch", "scan-live", "radar"):
         from .watch import watch_command

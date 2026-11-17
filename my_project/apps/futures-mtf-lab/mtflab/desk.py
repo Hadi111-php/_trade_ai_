@@ -535,6 +535,104 @@ class Lab:
         out["stale_sec"] = min(ages) if ages else None
         return out
 
+    def algorithms(self) -> dict:
+        """کاتالوگ الگوریتم‌ها با پارامترهای همین لحظه (برای تب «الگوریتم‌ها»)."""
+        from .catalog import catalog
+        try:
+            return catalog(self.tf, self.tf_filter, self.tf_bias)
+        except Exception as e:                                     # noqa: BLE001
+            return {"sections": [], "counts": {"sections": 0, "items": 0},
+                    "error": f"{type(e).__name__}: {e}"}
+
+    def validation_status(self, min_n: int = 30) -> dict:
+        """آیا نمونه به‌قدری هست که حرف از «اعتبارسنجی» بزنیم؟ (بنر داشبورد)
+
+        قاعده همان قاعدهٔ پروژه است: `n < 30` ⇒ هیچ حکمی نمی‌دهیم. «بیرون‌نمونه»
+        این‌جا ۳۰٪ آخرِ **زمانی** ژورنال است (نه ترتیب ثبت)، تا نتیجه با نظم
+        اجرا بازی نخورد.
+        """
+        try:
+            rows = read_journal(self.journal_path)
+        except Exception:                                          # noqa: BLE001
+            rows = []
+        closes = [r for r in rows if r.get("type") == "close"]
+        rs = [(r.get("result") or {}).get("r_multiple") for r in closes]
+        rs = [float(x) for x in rs if x is not None]
+        n = len(rs)
+        ts = [int(r.get("ts") or 0) for r in closes if r.get("ts")]
+        cut = 0
+        if ts:
+            t0, t1 = min(ts), max(ts)
+            cut = t0 + (t1 - t0) * 0.7
+        ordered = sorted(zip(ts, rs), key=lambda x: x[0]) if ts else []
+        oos = [r for t, r in ordered if t >= cut] if cut else []
+        stats = {
+            "n": n,
+            "expectancy_r": (round(sum(rs) / n, 3) if n else None),
+            "r_sum": round(sum(rs), 3) if rs else 0.0,
+            "oos_n": len(oos),
+            "oos_expectancy_r": (round(sum(oos) / len(oos), 3) if oos else None),
+            "min_n": int(min_n),
+        }
+        complete = n >= int(min_n)
+        stats["complete"] = complete
+        stats["status"] = "اعتبارسنجی کامل" if complete else "اعتبارسنجی ناقص"
+        stats["note"] = (
+            f"{n} معاملهٔ بسته‌شده — آستانهٔ حکم {min_n} است."
+            if not complete else
+            f"{n} معامله کافی است؛ حکم نهایی هنوز به بیرون‌نمونه و دروازهٔ ازپیش‌نوشته وابسته است.")
+        stats["manual_allowed"] = True
+        stats["manual_note"] = ("سیگنال دستی همیشه مجاز است و مثل بقیه در ژورنال "
+                                "با برچسب «manual» ثبت می‌شود.")
+        return stats
+
+    def manual_signal(self, offline: bool = False) -> dict:
+        """سیگنال دستی: یک قدم اجرا می‌کند و سیگنال‌هایی که همین حالا ساخته شد را می‌دهد.
+
+        چرا: کاربر می‌خواهد پیش از کامل‌شدن اعتبارسنجی هم بتواند **یک سیگنال
+        مجازی مثل همیشه** بگیرد. این تابع همان مسیر عادی (`run_step` → live) را
+        اجرا می‌کند؛ هیچ میان‌بُری در موتور و هیچ سیگنال ساختگی وجود ندارد.
+        سیگنال‌های این اجرا در ژورنال با `origin: "manual"` برچسب می‌خورند.
+        """
+        if self.demo:
+            return {"ok": False,
+                    "note": "حالت نمایشی است (دادهٔ مصنوعی) — سیگنال دستی روی "
+                            "دادهٔ واقعی معنا دارد. با دادهٔ دانلودی اجرا کن."}
+        before = 0
+        try:
+            before = len(read_journal(self.journal_path))
+        except Exception:                                          # noqa: BLE001
+            before = 0
+        res = run_step(self, min_gap=0, quiet=True, offline=offline, manual=True)
+        out = {"ok": bool(res.get("ok")), "note": res.get("note") or "",
+               "signals": [], "closed": 0}
+        try:
+            rows = read_journal(self.journal_path)
+        except Exception:                                          # noqa: BLE001
+            rows = []
+        fresh = rows[before:] if before else rows
+        for r in fresh:
+            if r.get("type") != "open":
+                continue
+            o = r.get("order") or {}
+            pv = r.get("pattern_votes") or {}
+            out["signals"].append({
+                "symbol": r.get("symbol"), "id": r.get("id"),
+                "side": o.get("side"), "entry": o.get("entry"),
+                "stop": o.get("stop"), "take": o.get("take"),
+                "qty": o.get("qty"), "risk_amount": o.get("risk_amount"),
+                "mode": (r.get("entry_pattern") or {}).get("mode"),
+                "confidence": (r.get("entry_pattern") or {}).get("confidence"),
+                "votes": pv.get("ids") or [],
+                "origin": r.get("origin"),
+            })
+        out["closed"] = sum(1 for r in fresh if r.get("type") == "close")
+        if out["ok"] and not out["signals"]:
+            out["note"] = ("قدم اجرا شد ولی سیگنالی باز نشد — یا کندل تازه‌ای "
+                           "بسته نشده، یا شرط‌های ورود برقرار نبود.")
+        self.universe(reload=True)
+        return out
+
     def pattern_report(self) -> dict:
         """کارنامهٔ الگوها از همین ژورنال (محاسبهٔ هنگام درخواست)."""
         from .attribution import prune_plan, scorecard
@@ -583,6 +681,21 @@ class Lab:
                 "confidence": ep.get("confidence"),
                 "entry": (o.get("order") or {}).get("entry"),
                 "stop": (o.get("order") or {}).get("stop"),
+                "take": (o.get("order") or {}).get("take"),
+                "qty": (o.get("order") or {}).get("qty"),
+                "notional": (o.get("order") or {}).get("notional"),
+                "risk_amount": (o.get("order") or {}).get("risk_amount"),
+                "fee_open": (o.get("order") or {}).get("fee_open"),
+                "fee_close": res.get("fee_close"),
+                "fees_total": res.get("fees"),
+                "open_candle": o.get("entry_candle"),
+                "open_indicators": o.get("indicators") or {},
+                "exit_candle": c.get("exit_candle"),
+                "exit_indicators": c.get("exit_indicators") or {},
+                "exit_ts": c.get("ts"),
+                "has_close_snapshot": bool(c.get("has_snapshot")),
+                "votes": ((o.get("pattern_votes") or {}).get("ids") or []),
+                "origin": o.get("origin") or "auto",
                 "status": "closed" if c else "open",
                 "rule": cb.get("rule"),
                 "is_risk_control": cb.get("is_risk_control"),
@@ -699,7 +812,8 @@ def _trial_warning(k: int) -> str:
 # ══════════════════════════════════════════════════════════════════════════
 #  ۴) قدم زنده (همان مسیر `mtflab live`، از داخل داشبورد)
 # ══════════════════════════════════════════════════════════════════════════
-def run_step(lab: "Lab", min_gap: int = 20, quiet: bool = False) -> dict:
+def run_step(lab: "Lab", min_gap: int = 20, quiet: bool = False,
+             offline: bool = False, manual: bool = False) -> dict:
     """یک قدمِ اتوترید مجازی: کندل تازه → سیگنال تازه → گزارش. (شبکه)
 
     `min_gap` جلوی فشار دادن دکمه پشت‌سرهم را می‌گیرد (خودِ کش هم بیشترِ
@@ -720,6 +834,10 @@ def run_step(lab: "Lab", min_gap: int = 20, quiet: bool = False) -> dict:
             "--journal", lab.journal_path, "--lang", "fa"]
     if quiet:
         argv.append("--quiet")
+    if offline:
+        argv.append("--offline")
+    if manual:
+        argv.append("--manual")
     if lab.symbols_filter:
         argv += ["--symbols"] + list(lab.symbols_filter)
     rc = live_command(argv)

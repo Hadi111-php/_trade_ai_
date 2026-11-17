@@ -260,7 +260,7 @@ class LiveRunner:
 
     def __init__(self, cfg, variant_id: str, variant_label: str, overrides: dict,
                  state_path: str, journal_path: str, lang: str = "fa",
-                 brain=None, votes: bool = True):
+                 brain=None, votes: bool = True, manual: bool = False):
         self.cfg = cfg
         self.variant_id = variant_id
         self.variant_label = variant_label
@@ -274,6 +274,8 @@ class LiveRunner:
         # رأی‌گیری الگوها روی همان کندل: «این سیگنال بابت کدام الگوها بود؟»
         # با `--no-votes` خاموش می‌شود (هر رأی = اجرای مجدد چند الگو روی همان پنجره).
         self.votes = bool(votes)
+        # سیگنال دستی (دکمهٔ داشبورد) — فقط برای برچسب‌گذاری منبع در ژورنال
+        self.manual = bool(manual)
         self.state = load_state(state_path)
         if self.state.get("equity") is None:
             self.state["equity"] = float(cfg.initial_equity)
@@ -297,6 +299,7 @@ class LiveRunner:
             "ts": pos.open_ts,
             "symbol": symbol,
             "backfilled": backfilled,
+            "origin": ("manual" if self.manual else "auto"),
             "algorithm": self._algorithm(),
             "entry_pattern": {
                 "mode": trig.mode,
@@ -317,6 +320,10 @@ class LiveRunner:
             # دیدگاه مغز در همان لحظه — **فقط ثبت**، نه تصمیم
             "brain": brain or {"available": False, "reason": "observer-off"},
             "cost_check": getattr(info["decision"], "cost_check", None),
+            "entry_candle": {
+                "ts": pos.open_ts,
+                "open": None, "high": None, "low": None, "close": None, "volume": None,
+            },
             "order": {
                 "side": "LONG" if pos.direction > 0 else "SHORT",
                 "entry": round(pos.entry, 6),
@@ -329,8 +336,15 @@ class LiveRunner:
             },
         }
 
-    def _close_record(self, rec: dict, symbol: str, open_ts: int) -> dict:
+    def _close_record(self, rec: dict, symbol: str, open_ts: int,
+                      info: Optional[dict] = None) -> dict:
         meta = rule_meta(rec.get("reason"))
+        rec = dict(rec or {})
+        candle = ((info or {}).get("bar") or object())
+        lc = getattr(candle, "low_tf_candle", None)
+        exit_candle = ({"ts": lc.open_time_ms, "open": lc.open, "high": lc.high,
+                        "low": lc.low, "close": lc.close, "volume": lc.volume}
+                       if lc is not None else None)
         return {
             "type": "close",
             "id": f"{symbol}:{self.variant_id}:{open_ts}:closed",
@@ -344,12 +358,41 @@ class LiveRunner:
                 "pnl": rec.get("pnl"),
                 "gross_pnl": rec.get("gross_pnl"),
                 "fees": rec.get("fees"),
+                "fee_open": rec.get("fee_open"),
+                "fee_close": rec.get("fee_close"),
                 "r_multiple": rec.get("r_multiple"),
                 "mfe_pct": rec.get("mfe_pct"),
                 "mae_pct": rec.get("mae_pct"),
                 "bars_held": rec.get("bars_held"),
                 "is_win": rec.get("is_win"),
+                "net_pct": rec.get("net_pct"),
             },
+            # ── همهٔ اعداد لحظهٔ بستن (درخواست ۱) ──────────────────────────
+            "order": {
+                "entry": rec.get("entry"), "exit": rec.get("exit"),
+                "stop_initial": rec.get("stop_initial"),
+                "stop_final": rec.get("stop_final"),
+                "take": rec.get("take"), "qty": rec.get("qty"),
+                "notional": rec.get("notional"),
+                "risk_amount": rec.get("risk_amount"),
+                "fee_open": rec.get("fee_open"), "fee_close": rec.get("fee_close"),
+                "equity_before": rec.get("equity_before"),
+                "equity_after": rec.get("equity_after"),
+            },
+            "exit_candle": exit_candle,
+            "exit_indicators": (info or {}).get("snap_trigger") or {},
+            "exit_indicators_filter": (info or {}).get("snap_filter") or {},
+            "exit_indicators_bias": (info or {}).get("snap_bias") or {},
+            "exit_context": ({
+                "trigger_mode": getattr((info or {}).get("trig"), "mode", None),
+                "trigger_reason": getattr((info or {}).get("trig"), "reason", None),
+                "regime_filter": getattr((info or {}).get("filt"), "regime", None),
+                "regime_bias": getattr((info or {}).get("bias"), "regime", None),
+                "bars_held": rec.get("bars_held"),
+            } if info else None),
+            "entry_side": rec.get("side"),
+            "diagnosis": rec.get("diagnosis"),
+            "has_snapshot": bool(info),
         }
 
     # -- اجرا ------------------------------------------------------------
@@ -417,7 +460,7 @@ class LiveRunner:
             fresh = fresh[-1:]            # فقط آخرین کندل (بدون بازسازی تاریخ)
 
         opened = closed = 0
-        pending_closes: List[dict] = []
+        pending_closes: List[tuple] = []
 
         def on_open(pos: Position, info: dict) -> None:
             nonlocal opened
@@ -440,6 +483,10 @@ class LiveRunner:
                                     int(info["filt"].direction),
                                     backfilled=(idx < len(bars) - 1),
                                     brain=bview, ctx_extra=ctxsnap)
+            _c = info["bar"].low_tf_candle
+            rec["entry_candle"] = {"ts": _c.open_time_ms, "open": _c.open,
+                                   "high": _c.high, "low": _c.low,
+                                   "close": _c.close, "volume": _c.volume}
             if self.votes:
                 # ثبت اینکه همین کندل را کدام الگوهای دیگر هم تأیید می‌کردند.
                 # هرگز نباید معامله را بشکند: خطا ⇒ «رأی در دسترس نیست».
@@ -461,7 +508,9 @@ class LiveRunner:
 
         def on_close(rec: dict, info: dict, pos: Position) -> None:
             nonlocal closed
-            pending_closes.append((rec, pos.open_ts))
+            # `info` همان کندلِ خروج است؛ نگهش می‌داریم تا همهٔ اندیکاتورهای
+            # لحظهٔ بستن هم در ژورنال ثبت شوند (نه فقط قیمت خروج).
+            pending_closes.append((rec, pos.open_ts, info))
             r = rec.get("r_multiple")
             if r is not None:
                 rr = list(self.state.get("recent_r") or [])
@@ -472,9 +521,9 @@ class LiveRunner:
         for i in fresh:
             process_bar(engine, bars[i], ctxs, cfg, i, on_open, on_close)
 
-        for rec, open_ts in pending_closes:
+        for rec, open_ts, info in pending_closes:
             append_jsonl(self.journal_path,
-                         self._close_record(rec, symbol, open_ts))
+                         self._close_record(rec, symbol, open_ts, info))
 
         self.state["symbols"].setdefault(symbol, {})["last_bar_ms"] = \
             bars[fresh[-1]].low_tf_candle.open_time_ms
@@ -824,6 +873,8 @@ def live_command(argv: Optional[List[str]] = None) -> int:
                    help="مدل «چشم مغز»؛ اگر نباشد، فقط ثبت می‌شود که نبوده")
     p.add_argument("--no-brain", action="store_true",
                    help="نظاره‌گر مغز را کامل خاموش کن")
+    p.add_argument("--manual", action="store_true",
+                   help="این اجرا از دکمهٔ «سیگنال دستی» آمده — در ژورنال برچسب می‌خورد")
     p.add_argument("--no-votes", action="store_true",
                    help="رأی‌گیری الگوها روی هر سیگنال را خاموش کن (سریع‌تر)")
     a = p.parse_args(argv)
@@ -866,7 +917,7 @@ def live_command(argv: Optional[List[str]] = None) -> int:
               else _t("🧠 مدل مغز پیدا نشد — اتوترید بدون نظاره‌گر اجرا می‌شود",
                       "🧠 no brain model found — running without observer"))
     runner = LiveRunner(cfg, vid, label, overrides, a.state, a.journal,
-                        votes=(not a.no_votes),
+                        votes=(not a.no_votes), manual=bool(a.manual),
                         lang=a.lang, brain=brain)
     runner.state["variant"] = vid
     runner.state["algorithm"] = {"id": vid, "label": label,

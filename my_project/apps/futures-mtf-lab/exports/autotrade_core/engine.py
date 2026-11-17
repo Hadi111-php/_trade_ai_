@@ -432,6 +432,8 @@ class MTFEngine:
             "equity_after": round(self.equity, 4),
             "bars_held": bars_held, "reason": reason,
             "gross_pnl": round(gross_pnl, 4), "fees": round(open_fee_leg + close_fee, 4),
+            # تفکیک کارمزد ورود/خروج — «همهٔ اعداد» که کاربر خواسته
+            "fee_open": round(open_fee_leg, 4), "fee_close": round(close_fee, 4),
             "pnl": round(net_pnl, 4),
             "net_pct": round(net_pnl / max(q * pos.entry, 1e-9) * 100, 4),
             "r_multiple": round(r_multiple, 4),

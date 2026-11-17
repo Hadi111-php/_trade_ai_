@@ -83,6 +83,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="exit">خروج زودهنگام</button>
   <button data-tab="v10">V10 Pro</button>
   <button data-tab="patterns">کارنامهٔ الگوها</button>
+  <button data-tab="algos">الگوریتم‌ها</button>
   <button data-tab="brain">مغز دوم</button>
   <button data-tab="help">راهنما</button>
 </nav>
@@ -96,6 +97,13 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   </section>
 
   <section id="tab-signals">
+    <div class="card" id="sigValid" style="margin-bottom:10px"></div>
+    <div class="row">
+      <button class="act" id="manualBtn">🎯 گرفتن سیگنال دستی (مجازی)</button>
+      <span class="spin" id="manualMsg" style="display:none"></span>
+      <button class="ghost" id="sigReload">تازه‌سازی</button>
+    </div>
+    <div id="manualResult"></div>
     <div class="grid2">
       <div><label>نماد</label><select id="fSym"><option value="">همه</option></select></div>
       <div><label>قاعدهٔ بست</label><select id="fRule"><option value="">همه</option></select></div>
@@ -104,8 +112,9 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
       <div><label>فقط بسته‌شده با قاعدهٔ ضدضرر؟</label>
         <label style="color:var(--fg)"><input type="checkbox" id="fRisk"> بله</label></div>
     </div>
-    <div class="note">هر ردیف یک سیگنال است با شناسهٔ یکتا. روی ردیف بزن تا <b>پروندهٔ کامل</b> همان
-      سیگنال (الگوریتم، الگو، اندیکاتورها، سفارش، و قاعده‌ای که بستش) باز شود.</div>
+    <div class="note">هر ردیف یک سیگنال است با شناسهٔ یکتا. روی ردیف بزن تا <b>پروندهٔ کامل</b>
+      باز شود: قیمت‌ها، حد ضرر و سود، کارمزد، کندلِ ورود و خروج، اندیکاتورهای هر دو لحظه،
+      و الگوهایی که سیگنال را ساختند یا تأییدش کردند.</div>
     <div id="sigTable"></div>
     <div id="sigDetail"></div>
   </section>
@@ -187,6 +196,18 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
     <div id="v10Trades"></div>
     <div class="note">اگر خالی است: <code>python3 -m mtflab v10 --compare --proximity</code>
       (یا <code>bash run-auto.sh --v10</code>).</div>
+  </section>
+
+  <section id="tab-algos">
+    <div class="note">هر الگوریتم با <b>فرمول</b> و <b>مقدار فعلی پارامترهایش</b>.
+      عددها از خود کد خوانده می‌شوند؛ اگر پارامتری عوض شود، همین‌جا عوض می‌شود.
+      <span id="algosMeta" class="mut"></span></div>
+    <div class="row">
+      <input id="algosSearch" placeholder="جستجو در الگوها و فرمول‌ها…"
+        style="flex:1;min-width:140px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit">
+      <button class="ghost" id="algosReload">تازه‌سازی</button>
+    </div>
+    <div id="algosBody"></div>
   </section>
 
   <section id="tab-patterns">
@@ -332,7 +353,42 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "exit") loadExit();
   if (b.dataset.tab === "v10") loadV10();
   if (b.dataset.tab === "patterns") loadPatterns();
+  if (b.dataset.tab === "algos") loadAlgos();
+  if (b.dataset.tab === "signals") loadValidation();
 });
+
+/* ── الگوریتم‌ها ───────────────────────────────────────────────────── */
+let ALGOS = null;
+function renderAlgos() {
+  if (!ALGOS || !ALGOS.sections) { $("#algosBody").innerHTML = `<div class="mut">کاتالوگ بار نشد</div>`; return; }
+  const q = ($("#algosSearch").value || "").trim().toLowerCase();
+  const hit = it => !q || JSON.stringify(it).toLowerCase().includes(q);
+  $("#algosMeta").textContent = ` · ${ALGOS.counts.items} مورد · تایم‌فریم ${ALGOS.tf.trigger}/${ALGOS.tf.filter}/${ALGOS.tf.bias}`;
+  $("#algosBody").innerHTML = ALGOS.sections.map(sec => {
+    const items = (sec.items || []).filter(hit);
+    if (!items.length) return "";
+    return `<h3 style="margin-top:14px">${esc(sec.title)}</h3>
+      ${sec.note ? `<div class="mut" style="font-size:11px;margin-bottom:6px">${esc(sec.note)}</div>` : ""}
+      ${items.map(it => `<div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <div><b>${esc(it.label)}</b> <span class="mut">(${esc(it.id)} · ${esc(it.kind)})</span></div>
+          <div class="mut" style="font-size:11px">${esc(it.source || "")}</div>
+        </div>
+        <div style="font-size:12px;margin-top:4px">${esc(it.summary || "")}</div>
+        ${(it.formulas || []).map(f => `<div style="margin-top:8px">
+          <div class="mut" style="font-size:11px">${esc(f.title)}</div>
+          <pre style="background:#0d1420;border:1px solid var(--line);border-radius:8px;padding:8px;overflow:auto;font-size:12px">${esc(f.expr)}</pre>
+          ${f.values ? `<div style="font-size:11px">مقادیر فعلی: <code>${esc(f.values)}</code></div>` : ""}
+        </div>`).join("")}
+      </div>`).join("")}`;
+  }).join("") || `<div class="mut">چیزی با این جستجو پیدا نشد.</div>`;
+}
+async function loadAlgos() {
+  try { ALGOS = await api("/api/algorithms"); } catch (e) { ALGOS = null; }
+  renderAlgos();
+}
+$("#algosSearch").oninput = renderAlgos;
+$("#algosReload").onclick = loadAlgos;
 
 /* ── کارنامهٔ الگوها ───────────────────────────────────────────────── */
 let PAT = {available: false};
@@ -662,6 +718,21 @@ function fillSelect(sel, values) {
   sel.value = cur;
 }
 let FACETS = null;
+let VALID = null;
+async function loadValidation() {
+  try { VALID = await api("/api/validation"); } catch (e) { VALID = null; }
+  if (!VALID) { $("#sigValid").innerHTML = ""; return; }
+  const ok = VALID.complete;
+  $("#sigValid").innerHTML = `<div class="k">وضعیت اعتبارسنجی</div>
+    <div style="margin-top:6px">
+      <span class="${ok ? "pos" : "neg"}">${esc(VALID.status)}</span>
+      · ${VALID.n} معاملهٔ بسته‌شده (آستانه ${VALID.min_n})
+      · expectancy کل: <b class="${sgn(VALID.expectancy_r)}">${R(VALID.expectancy_r)}</b>
+      · بیرون‌نمونه (۳۰٪ آخر): <b class="${sgn(VALID.oos_expectancy_r)}">${R(VALID.oos_expectancy_r)}</b>
+      <span class="mut">(n=${VALID.oos_n})</span>
+    </div>
+    <div class="mut" style="margin-top:4px;font-size:11px">${esc(VALID.note)} ${esc(VALID.manual_note || "")}</div>`;
+}
 async function loadSignals() {
   if (!FACETS) {                       // فهرست کامل یک‌بار؛ وگرنه با فیلتر، گزینه‌ها کم می‌شوند
     const all = await api("/api/signals?limit=2000");
@@ -672,30 +743,107 @@ async function loadSignals() {
   const q = new URLSearchParams({symbol:$("#fSym").value, rule:$("#fRule").value,
     status:$("#fStatus").value, only_risk:$("#fRisk").checked ? "1" : ""});
   SIGS = await api("/api/signals?" + q.toString());
+  const tv = t => t ? new Date(t).toISOString().slice(5,16).replace("T"," ") : "—";
   const rows = SIGS.map((s,i) => {
-    const d = new Date(s.ts).toISOString().slice(0,16).replace("T"," ");
+    const o = s.open_candle || {}, x = s.exit_candle || {};
+    const votes = (s.votes || []);
     return [`<code>${esc(String(s.id).split(":").slice(1).join(":"))}</code>`,
-      esc(s.symbol), esc(d), esc(s.mode), esc(s.status==="open"?"باز":"بسته"),
+      `<b>${esc(s.symbol)}</b>`,
+      esc(tv(s.ts)) + `<div class="mut" style="font-size:10px">O ${num(o.open)} H ${num(o.high)} L ${num(o.low)} C ${num(o.close)}</div>`,
+      esc(s.mode) + (votes.length > 1 ? ` <span class="tag risk" title="${esc(votes.join(", "))}">هم‌گرا ${votes.length}</span>` : ""),
+      num(s.entry), num(s.stop), num(s.take),
+      (s.fees_total == null ? "—" : num(s.fees_total) + "$"),
       `<span class="${sgn(s.r)}">${R(s.r)}</span>`,
       `<span class="${sgn(s.pnl)}">${num(s.pnl)}$</span>`,
-      s.rule ? `<code>${esc(s.rule)}</code> ${s.is_risk_control?'<span class="tag risk">✅</span>':''}` : "—"];
+      esc(s.status==="open"?"باز":"بسته") + (s.origin === "manual" ? ' <span class="tag risk">دستی</span>' : ""),
+      s.rule ? `<code>${esc(s.rule)}</code>` : "—",
+      s.status === "closed" ? (esc(tv(s.exit_ts)) + `<div class="mut" style="font-size:10px">O ${num(x.open)} H ${num(x.high)} L ${num(x.low)} C ${num(x.close)}</div>`) : "—"];
   });
-  $("#sigTable").innerHTML = `<div class="mut" style="margin:8px 0">${SIGS.length} سیگنال</div>` +
-    table(["شناسه","نماد","زمان","الگو","وضعیت","R","سود","بست با"], rows);
+  $("#sigTable").innerHTML = `<div class="mut" style="margin:8px 0">${SIGS.length} سیگنال ·
+      «حد ضرر/حد سود» لحظهٔ ورود است · کندل‌ها با O/H/L/C نمایش داده می‌شوند</div>` +
+    table(["شناسه","نماد","کندل ورود","الگو","ورود","حد ضرر","حد سود","کارمزد","R","سود","وضعیت","بست با","کندل خروج"], rows);
   [...$("#sigTable").querySelectorAll("tbody tr")].forEach((tr,i) => {
     tr.style.cursor = "pointer";
     tr.onclick = () => showSignal(SIGS[i]);
   });
   $("#sigDetail").innerHTML = "";
 }
+function _indTable(obj) {
+  const ent = Object.entries(obj || {});
+  if (!ent.length) return `<div class="mut">ثبت نشده</div>`;
+  return `<table><tbody>${ent.map(([k,v]) =>
+    `<tr><td class="mut">${esc(k)}</td><td class="num">${esc(typeof v === "object" ? JSON.stringify(v) : v)}</td></tr>`).join("")}</tbody></table>`;
+}
+function _candleBox(c, title) {
+  if (!c) return `<div class="card"><div class="k">${title}</div><div class="mut">ثبت نشده</div></div>`;
+  return `<div class="card"><div class="k">${title}</div>
+    <div style="font-size:12px;line-height:1.9">
+      <div>زمان کندل: <code>${esc(new Date(c.ts).toISOString().replace("T"," ").slice(0,16))}</code></div>
+      <div>O <b>${num(c.open)}</b> · H <b>${num(c.high)}</b> · L <b>${num(c.low)}</b> · C <b>${num(c.close)}</b></div>
+      <div>حجم: ${num(c.volume)}</div>
+    </div></div>`;
+}
 function showSignal(s) {
-  $("#sigDetail").innerHTML = `<h3>پروندهٔ سیگنال <code>${esc(s.id)}</code></h3>` +
-    `<div class="note">الگوریتم <b>${esc(s.algorithm)}</b> (هش <code>${esc(s.digest)}</code>) ·
-      الگو <b>${esc(s.mode)}</b> · رژیم <b>${esc(s.regime)}</b> ·
-      ${s.rule ? `بست با <b>${esc(s.rule)}</b> ${s.is_risk_control?'<span class="tag risk">قاعدهٔ ضدضرر</span>':''}` : '<b>هنوز باز</b>'}</div>
-     <pre>${esc(JSON.stringify({open:s.raw_open, close:s.raw_close}, null, 1))}</pre>`;
+  const votes = s.votes || [];
+  const fees = (s.fee_open != null || s.fee_close != null)
+    ? `ورود ${num(s.fee_open)}$ + خروج ${num(s.fee_close)}$ = <b>${num(s.fees_total)}$</b>` : "—";
+  $("#sigDetail").innerHTML = `<h3>پروندهٔ سیگنال <code>${esc(s.id)}</code></h3>
+    <div class="note">الگوریتم <b>${esc(s.algorithm)}</b> · الگو <b>${esc(s.mode)}</b> ·
+      رژیم <b>${esc(s.regime)}</b> · منبع: <b>${s.origin === "manual" ? "دستی" : "خودکار"}</b> ·
+      ${s.rule ? `بست با <b>${esc(s.rule)}</b> ${s.is_risk_control?'<span class="tag risk">قاعدهٔ ضدضرر</span>':''}` : '<b>هنوز باز</b>'}
+      ${votes.length ? `<br>الگوهای تأییدکننده: ${votes.map(v=>`<code>${esc(v)}</code>`).join("، ")}` : ""}</div>
+    <div class="grid2">
+      ${_candleBox(s.open_candle, "لحظهٔ ورود (کندل بستهٔ سیگنال)")}
+      ${_candleBox(s.exit_candle, "لحظهٔ خروج")}
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="k">سفارش و ریسک</div>
+        <table><tbody>
+          <tr><td class="mut">جهت</td><td class="num">${esc((s.raw_open||{}).order ? s.raw_open.order.side : "—")}</td></tr>
+          <tr><td class="mut">ورود</td><td class="num">${num(s.entry)}</td></tr>
+          <tr><td class="mut">حد ضرر</td><td class="num">${num(s.stop)}</td></tr>
+          <tr><td class="mut">حد سود</td><td class="num">${num(s.take)}</td></tr>
+          <tr><td class="mut">حجم</td><td class="num">${num(s.qty)}</td></tr>
+          <tr><td class="mut">ارزش</td><td class="num">${num(s.notional)}$</td></tr>
+          <tr><td class="mut">ریسک</td><td class="num">${num(s.risk_amount)}$</td></tr>
+          <tr><td class="mut">کارمزد</td><td class="num">${fees}</td></tr>
+          <tr><td class="mut">نتیجه</td><td class="num ${sgn(s.r)}">${R(s.r)} · ${num(s.pnl)}$</td></tr>
+        </tbody></table></div>
+      <div class="card"><div class="k">اندیکاتورهای لحظهٔ ورود</div>${_indTable(s.open_indicators)}</div>
+    </div>
+    <div class="card"><div class="k">اندیکاتورهای لحظهٔ خروج</div>
+      ${s.status === "closed" ? (s.has_close_snapshot ? _indTable(s.exit_indicators)
+        : `<div class="mut">برای این سیگنال قدیمی ثبت نشده — از این نسخه به بعد ثبت می‌شود.</div>`)
+        : `<div class="mut">هنوز باز است</div>`}</div>
+    <details style="margin-top:10px"><summary class="mut">دادهٔ خام (JSON)</summary>
+      <pre>${esc(JSON.stringify({open:s.raw_open, close:s.raw_close}, null, 1))}</pre></details>`;
   $("#sigDetail").scrollIntoView({behavior:"smooth", block:"start"});
 }
+async function manualSignal() {
+  const btn = $("#manualBtn"), msg = $("#manualMsg");
+  if (!confirm("یک قدم روی دادهٔ واقعی اجرا شود؟ اگر شرط ورود برقرار باشد، یک سیگنال «مجازی» مثل همیشه ثبت می‌شود.")) return;
+  btn.disabled = true; msg.style.display = "inline"; msg.textContent = "در حال اجرا…";
+  let r = null;
+  try { r = await api("/api/manual_signal"); } catch (e) { r = {ok:false, note:"خطای شبکه"}; }
+  btn.disabled = false; msg.style.display = "none";
+  const rows = (r.signals || []).map(x => `<tr>
+    <td><b>${esc(x.symbol)}</b></td><td>${esc(x.side)}</td><td class="num">${num(x.entry)}</td>
+    <td class="num">${num(x.stop)}</td><td class="num">${num(x.take)}</td>
+    <td>${esc(x.mode || "—")}</td>
+    <td>${(x.votes || []).map(v=>`<code>${esc(v)}</code>`).join("، ") || "—"}</td></tr>`).join("");
+  $("#manualResult").innerHTML = `<div class="card" style="margin:10px 0">
+    <div class="k">${r.ok ? "✅ قدم اجرا شد" : "⚠️ اجرا نشد"}</div>
+    <div class="mut" style="margin-top:4px">${esc(r.note || "")}</div>
+    ${rows ? `<table style="margin-top:8px"><thead><tr><th>نماد</th><th>جهت</th><th>ورود</th>
+      <th>حد ضرر</th><th>حد سود</th><th>الگو</th><th>رأی الگوها</th></tr></thead>
+      <tbody>${rows}</tbody></table>` : ""}
+    ${(r.signals || []).length ? `<div class="mut" style="margin-top:6px">سیگنال‌های دستی با برچسب «manual» در ژورنال ذخیره شدند.</div>` : ""}
+  </div>`;
+  FACETS = null;
+  await loadSignals(); await loadValidation();
+}
+$("#manualBtn").onclick = manualSignal;
+$("#sigReload").onclick = () => { FACETS = null; loadValidation(); loadSignals(); };
 $("#fSym").onchange = loadSignals; $("#fRule").onchange = loadSignals;
 $("#fStatus").onchange = loadSignals; $("#fRisk").onchange = loadSignals;
 
@@ -1056,6 +1204,13 @@ def make_handler(lab):
                     self._json(lab.watch_report())
                 elif path == "/api/exit":
                     self._json(lab.exit_report())
+                elif path == "/api/algorithms":
+                    self._json(lab.algorithms())
+                elif path == "/api/validation":
+                    self._json(lab.validation_status())
+                elif path == "/api/manual_signal":
+                    # یک قدم واقعی؛ `?offline=1` فقط برای تست/دمو (بدون شبکه)
+                    self._json(lab.manual_signal(offline=(q.get("offline") == "1")))
                 elif path == "/api/patterns":
                     self._json(lab.pattern_report())
                 elif path == "/api/v10":

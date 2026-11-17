@@ -33,6 +33,7 @@
 #   bash run-auto.sh --v10 --download --days 180   # V10 Pro (BB+RSI+حجم) روی دادهٔ واقعی
 #   bash run-auto.sh --v10 --compare               # مقایسهٔ V10 با الگوهای MTF
 #   bash run-auto.sh --patterns                    # کارنامهٔ الگوها: کدام سیگنال بابت کدام الگو
+#   bash run-auto.sh --algorithms                  # کاتالوگ الگوریتم‌ها با فرمول و مقدار فعلی
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -207,6 +208,18 @@ for a in "$@"; do
       for b in "${_V[@]+"${_V[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
       if [ "$_OUT" = "0" ]; then _V=(--out-dir results "${_V[@]+"${_V[@]}"}"); fi
       python3 -m mtflab v10 "${_V[@]+"${_V[@]}"}"
+      exit $?
+      ;;
+    --algorithms|--algos|--catalog)
+      _A=()
+      for b in "$@"; do
+        case "$b" in --algorithms|--algos|--catalog) continue;; esac
+        _A+=("$b")
+      done
+      _OUT=0
+      for b in "${_A[@]+"${_A[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
+      if [ "$_OUT" = "0" ]; then _A=(--out-dir results "${_A[@]+"${_A[@]}"}"); fi
+      python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
       exit $?
       ;;
     --patterns|--scorecard|--attribution)

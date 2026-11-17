@@ -67,6 +67,7 @@
 | `exits.py` | حسابرسی خروج: MFE در برابر نتیجه (سودِ ریخته‌شده) |
 | `attribution.py` | انتساب سیگنال به الگو: `pattern_votes` (دروازه‌های هر الگو روی همان کندل)، `scorecard` (کارنامهٔ ژورنال)، `prune_plan` (پیشنهاد حذف با قاعدهٔ ثابت)، `patterns_command` |
 | `v10pro.py` | سناریوی V10 Pro (بازگشت به میانگین BB+RSI+حجم): `signal_at`، `backtest`، `summarize`، `compare_with_mtf`، `proximity`، `v10_command`. مستقل از `signals`/`patterns`؛ فقط `indicators` و `data` |
+| `catalog.py` | کاتالوگ پارامتریک الگوریتم‌ها: `catalog(tf_trigger, tf_filter, tf_bias)` چهار بخش (`mtf`, `v10`, `exits`, `pump`) و برای هر مورد فرمول + **مقادیر فعلی**. اعداد از `MTFConfig`، `v10pro.PARAMS` + `config/v10_settings.json`، `rules.RULE_META` و `pumpdump.DEFAULTS` خوانده می‌شوند (هیچ عدد دستی کپی نشده)؛ `render_text()` و `catalog_command()` (`python3 -m mtflab algorithms --json`) |
 | `pumpdump.py` | **سیستم مستقل** پامپ و دامپ: تشخیص رویداد + اندازه‌گیری واکنش. هیچ‌چیز از `engine`/`signals` ایمپورت نمی‌کند |
 
 ## ۶) قرارداد برای یک داشبورد دیگر
