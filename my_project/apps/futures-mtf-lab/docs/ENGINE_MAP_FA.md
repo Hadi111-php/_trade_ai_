@@ -65,6 +65,7 @@
 | `hunter.py` | مقایسهٔ برد/باخت روی همان ویژگی‌ها (AUC + جایگشتی + بونفرونی) |
 | `watch.py` | شکار زنده: وزن آمادگی هر نماد + هشدار بوق/اعلان |
 | `exits.py` | حسابرسی خروج: MFE در برابر نتیجه (سودِ ریخته‌شده) |
+| `attribution.py` | انتساب سیگنال به الگو: `pattern_votes` (دروازه‌های هر الگو روی همان کندل)، `scorecard` (کارنامهٔ ژورنال)، `prune_plan` (پیشنهاد حذف با قاعدهٔ ثابت)، `patterns_command` |
 | `v10pro.py` | سناریوی V10 Pro (بازگشت به میانگین BB+RSI+حجم): `signal_at`، `backtest`، `summarize`، `compare_with_mtf`، `proximity`، `v10_command`. مستقل از `signals`/`patterns`؛ فقط `indicators` و `data` |
 | `pumpdump.py` | **سیستم مستقل** پامپ و دامپ: تشخیص رویداد + اندازه‌گیری واکنش. هیچ‌چیز از `engine`/`signals` ایمپورت نمی‌کند |
 

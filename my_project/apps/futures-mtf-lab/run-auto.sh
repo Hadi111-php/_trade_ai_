@@ -32,6 +32,7 @@
 #   bash run-auto.sh --exits                       # حسابرسی خروج: چقدر سود روی میز ماند
 #   bash run-auto.sh --v10 --download --days 180   # V10 Pro (BB+RSI+حجم) روی دادهٔ واقعی
 #   bash run-auto.sh --v10 --compare               # مقایسهٔ V10 با الگوهای MTF
+#   bash run-auto.sh --patterns                    # کارنامهٔ الگوها: کدام سیگنال بابت کدام الگو
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
 #   bash run-auto.sh --brain-view     # ساخت/دیدن «چشم مغز» (دیدگاه هر نماد)
 # =============================================================================
@@ -206,6 +207,18 @@ for a in "$@"; do
       for b in "${_V[@]+"${_V[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
       if [ "$_OUT" = "0" ]; then _V=(--out-dir results "${_V[@]+"${_V[@]}"}"); fi
       python3 -m mtflab v10 "${_V[@]+"${_V[@]}"}"
+      exit $?
+      ;;
+    --patterns|--scorecard|--attribution)
+      _P=()
+      for b in "$@"; do
+        case "$b" in --patterns|--scorecard|--attribution) continue;; esac
+        _P+=("$b")
+      done
+      _OUT=0
+      for b in "${_P[@]+"${_P[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
+      if [ "$_OUT" = "0" ]; then _P=(--out-dir results "${_P[@]+"${_P[@]}"}"); fi
+      python3 -m mtflab patterns "${_P[@]+"${_P[@]}"}"
       exit $?
       ;;
     --exits|--exit-audit)

@@ -38,6 +38,8 @@ CORE_FILES: List[str] = [
     "rules.py",
     "stats.py",
     "patterns.py",
+    "attribution.py",
+    "v10pro.py",
     "autotrade_api.py",
 ]
 

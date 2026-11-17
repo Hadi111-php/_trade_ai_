@@ -26,6 +26,7 @@
   watch      شکار زنده: کدام نماد به سیگنال نزدیک است + وزن هر شرط + هشدار
   exits      حسابرسی خروج: چقدر سود با بستن زودهنگام از دست رفت
   v10        V10 Pro: بازگشت به میانگین (BB+RSI+حجم) — بک‌تست/مقایسه/نزدیکی
+  patterns   کارنامهٔ الگوها: هر سیگنال بابت کدام الگو بود + پیشنهاد حذف/نگه‌داشتن
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -178,6 +179,9 @@ def main(argv=None) -> int:
     if cmd in ("v10", "v10pro", "meanrev"):
         from .v10pro import v10_command
         return v10_command(rest)
+    if cmd in ("patterns", "pattern-scorecard", "attribution"):
+        from .attribution import patterns_command
+        return patterns_command(rest)
 
     if cmd in ("watch", "scan-live", "radar"):
         from .watch import watch_command

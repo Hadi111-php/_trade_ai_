@@ -196,9 +196,18 @@ def test_brain_observer_is_read_only():
     assert ext.calls > 0, "نظاره‌گر باید صدا زده شود"
     assert off["opened"] == on["opened"] and off["closed"] == on["closed"]
     # همان معاملات، همان پول — فقط یک فیلد اضافه
+    def _strip(rec):
+        # `brain` عمداً حذف می‌شود؛ `pattern_votes.created_utc` فقط مُهر زمانی است
+        # (هر اجرا زمان خودش را دارد) و ربطی به تصمیم ندارد.
+        out = {k: v for k, v in rec.items() if k != "brain"}
+        pv = out.get("pattern_votes")
+        if isinstance(pv, dict):
+            out["pattern_votes"] = {k: v for k, v in pv.items() if k != "created_utc"}
+        return out
+
     for a, b in zip(j_off, j_on):
-        a2 = {k: v for k, v in a.items() if k != "brain"}
-        b2 = {k: v for k, v in b.items() if k != "brain"}
+        a2 = _strip(a)
+        b2 = _strip(b)
         assert a2 == b2
         assert b2.get("type") != "open" or "brain" in b
     assert r_off.state["equity"] == r_on.state["equity"]

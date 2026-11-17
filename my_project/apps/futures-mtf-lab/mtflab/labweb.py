@@ -82,6 +82,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="watch">شکار زنده</button>
   <button data-tab="exit">خروج زودهنگام</button>
   <button data-tab="v10">V10 Pro</button>
+  <button data-tab="patterns">کارنامهٔ الگوها</button>
   <button data-tab="brain">مغز دوم</button>
   <button data-tab="help">راهنما</button>
 </nav>
@@ -186,6 +187,18 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
     <div id="v10Trades"></div>
     <div class="note">اگر خالی است: <code>python3 -m mtflab v10 --compare --proximity</code>
       (یا <code>bash run-auto.sh --v10</code>).</div>
+  </section>
+
+  <section id="tab-patterns">
+    <div class="note">هر سیگنال می‌گوید بابت <b>کدام الگوها</b> بود. این‌جا معلوم می‌شود
+      کدام الگو سود داد و کدام نه — با قاعدهٔ ثابت: زیر ۳۰ نمونه حکمی نمی‌دهیم.</div>
+    <div class="row"><span id="patMeta" class="mut"></span></div>
+    <div class="cards" id="patCards"></div>
+    <div id="patPlan"></div>
+    <div id="patByAlgo"></div>
+    <div id="patByVote"></div>
+    <div class="note">برای پر شدن: <code>bash run-auto.sh --live</code> ·
+      گزارش کامل: <code>bash run-auto.sh --patterns</code></div>
   </section>
 
   <section id="tab-exit">
@@ -318,7 +331,68 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "watch") loadWatch();
   if (b.dataset.tab === "exit") loadExit();
   if (b.dataset.tab === "v10") loadV10();
+  if (b.dataset.tab === "patterns") loadPatterns();
 });
+
+/* ── کارنامهٔ الگوها ───────────────────────────────────────────────── */
+let PAT = {available: false};
+function _pct(x) { return x == null ? "—" : x.toFixed(1) + "٪"; }
+function _r(x) { return x == null ? "—" : x.toFixed(3) + "R"; }
+function renderPatterns() {
+  const D = PAT;
+  if (!D.available) {
+    $("#patMeta").textContent = "";
+    $("#patCards").innerHTML = "";
+    $("#patPlan").innerHTML = `<div class="mut" style="padding:10px">${D.hint || D.reason || "چیزی نیست"}</div>`;
+    $("#patByAlgo").innerHTML = ""; $("#patByVote").innerHTML = "";
+    return;
+  }
+  const c = D.card || {}, plan = D.plan || {};
+  $("#patMeta").textContent = ` · ${c.signals_total} سیگنال · ${c.closed_total} بسته · ` +
+    `${c.voted_signals} با رأی الگو · ${c.unvoted_signals} بدون رأی`;
+  const conf = (c.confluence || {}).multi || {}, solo = (c.confluence || {}).solo || {};
+  $("#patCards").innerHTML = [
+    v10Card("نگه‌دار", (plan.keep || []).length, "pos"),
+    v10Card("نامزد حذف", (plan.drop || []).length, "neg"),
+    v10Card("داده کافی نیست", (plan.need_more || []).length),
+    v10Card("expectancy هم‌گرا", _r(conf.expectancy_r)),
+    v10Card("expectancy تک‌الگو", _r(solo.expectancy_r)),
+  ].join("");
+  const fmt = x => `<b>${x.id}</b> (${_r(x.expectancy_r)}، n=${x.n})`;
+  $("#patPlan").innerHTML = `<div class="card" style="margin:10px 0">
+    <div class="k">پیشنهاد (قاعده: n ≥ ۳۰ و expectancy &gt; ۰ ⇒ نگه‌دار)</div>
+    <div style="margin-top:6px">${(plan.keep || []).length ? "🟢 " + plan.keep.map(fmt).join("، ") : "🟢 —"}</div>
+    <div class="pos" style="margin-top:4px">${(plan.drop || []).length ? "🔴 " + plan.drop.map(fmt).join("، ") : "🔴 هیچ الگویی نامزد حذف نیست"}</div>
+    <div class="mut" style="margin-top:4px">${(plan.need_more || []).length ? "⏳ " + plan.need_more.map(x => `<b>${x.id}</b> (n=${x.n})`).join("، ") : ""}</div>
+  </div>`;
+
+  const byAlgo = c.by_algorithm || {};
+  const algoRows = Object.values(byAlgo);
+  $("#patByAlgo").innerHTML = algoRows.length ? `<table><thead><tr>
+    <th>الگویی که سیگنال ساخت</th><th>سیگنال</th><th>بسته</th><th>نرخ برد</th>
+    <th>expectancy</th><th>ضریب سود</th><th>حکم</th></tr></thead><tbody>
+    ${algoRows.map(d => `<tr><td><b>${d.id}</b></td><td class="num">${d.signals}</td>
+      <td class="num">${d.closed}</td><td class="num">${_pct(d.win_rate)}</td>
+      <td class="num ${d.expectancy_r > 0 ? "pos" : "neg"}">${_r(d.expectancy_r)}</td>
+      <td class="num">${d.profit_factor ?? "—"}</td><td>${d.verdict}</td></tr>`).join("")}
+    </tbody></table>` : "";
+
+  const byVote = Object.values(c.by_pattern_vote || {});
+  $("#patByVote").innerHTML = byVote.length ? `<table style="margin-top:10px"><thead><tr>
+    <th>الگو (رأی)</th><th>حضور</th><th>expectancy</th><th>تنها</th>
+    <th>با تأیید دیگران</th><th>حکم</th></tr></thead><tbody>
+    ${byVote.map(v => `<tr><td><b>${v.id}</b></td><td class="num">${v.signals}</td>
+      <td class="num ${v.expectancy_r > 0 ? "pos" : "neg"}">${_r(v.expectancy_r)}</td>
+      <td class="num">${_r((v.solo || {}).expectancy_r)} <span class="mut">(${(v.solo || {}).n || 0})</span></td>
+      <td class="num">${_r((v.concurrent || {}).expectancy_r)} <span class="mut">(${(v.concurrent || {}).n || 0})</span></td>
+      <td>${v.verdict}</td></tr>`).join("")}
+    </tbody></table>` : "";
+}
+async function loadPatterns() {
+  try { PAT = await api("/api/patterns"); }
+  catch (e) { PAT = {available: false, hint: "خطا در خواندن کارنامه"}; }
+  renderPatterns();
+}
 
 /* ── V10 Pro ───────────────────────────────────────────────────────── */
 let V10 = {available: false, rows: [], trades: []};
@@ -982,6 +1056,8 @@ def make_handler(lab):
                     self._json(lab.watch_report())
                 elif path == "/api/exit":
                     self._json(lab.exit_report())
+                elif path == "/api/patterns":
+                    self._json(lab.pattern_report())
                 elif path == "/api/v10":
                     self._json(lab.v10_report())
                 elif path == "/api/brain":

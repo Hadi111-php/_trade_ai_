@@ -278,3 +278,115 @@ def _rule_meta(rule: Optional[str]) -> dict:
 def to_json(report: dict) -> str:
     """خروجی JSON آمادهٔ فرستادن به هر داشبورد/زبانی."""
     return json.dumps(report, ensure_ascii=False, default=str)
+
+# ══════════════════════════════════════════════════════════════════════════
+#  انتساب سیگنال به الگو — «این سیگنال بابت کدام الگوها بود؟»
+# ══════════════════════════════════════════════════════════════════════════
+def votes_now(dataset: Dict[str, Sequence],
+              tf_trigger: str = "4h", tf_filter: str = "1d", tf_bias: str = "1d",
+              bars_ago: int = 0) -> List[dict]:
+    """برای هر نماد: سیگنال همان کندل + **همهٔ الگوهایی که هم‌زمان تأییدش می‌کردند**.
+
+    این همان چیزی است که اجازهٔ حذف الگوی بی‌فایده را می‌دهد: اگر یک سیگنال با
+    تأیید چهار الگو آمده باشد، نمی‌شود فهمید کدامش سود داد؛ ولی اگر همان سیگنال
+    با الگوی «base» تنها هم بیاید، سهمش قابل اندازه‌گیری است.
+    """
+    from .attribution import pattern_votes
+    from .patterns import variants_for
+
+    data = _dataset(dataset)
+    out: List[dict] = []
+    for sym, cs in data.items():
+        if not cs:
+            continue
+        bar_ts = cs[max(0, len(cs) - 1 - int(bars_ago))].open_time_ms
+        row = {"symbol": sym, "bar_ts": bar_ts, "variants": {}}
+        for vid, label, _ov in variants_for(tf_trigger, tf_filter, tf_bias):
+            try:
+                sigs = signals_now({sym: cs}, variant=vid, tf_trigger=tf_trigger,
+                                   tf_filter=tf_filter, tf_bias=tf_bias,
+                                   bars_ago=bars_ago)
+            except Exception as e:                                 # noqa: BLE001
+                row["variants"][vid] = {"error": f"{type(e).__name__}"}
+                continue
+            sig = next((x.get("signal") for x in sigs
+                        if x.get("signal") and int(x["signal"].get("entry_ts") or 0) == bar_ts),
+                       None)
+            row["variants"][vid] = {"label": label, "signal": sig}
+        row["firing"] = sorted(k for k, v in row["variants"].items() if v.get("signal"))
+        row["n_firing"] = len(row["firing"])
+        # رأی مستقل روی همان کندل — اگر در نسخهٔ سبک ممکن نبود، صادقانه خالی است
+        try:
+            row["votes"] = pattern_votes(
+                cs, bar_ts, cfg=config_for(None, None, tf_trigger, tf_filter, tf_bias))
+        except Exception as e:                                     # noqa: BLE001
+            row["votes"] = {"available": False, "ids": [],
+                            "note": f"votes unavailable: {type(e).__name__}"}
+        out.append(row)
+    return out
+
+
+def pattern_scorecard(journal_path: str = "results/live/journal.jsonl") -> dict:
+    """کارنامهٔ الگوها از ژورنال زنده + پیشنهاد حذف/نگه‌داشتن."""
+    from .attribution import prune_plan, scorecard
+    try:
+        from .live import read_journal
+    except Exception:                                              # noqa: BLE001
+        # بستهٔ سبک: خودِ ژورنال را می‌خوانیم (فرمت همان JSONL است)
+        def read_journal(path: str):                               # type: ignore
+            with open(path, encoding="utf-8") as f:
+                return [json.loads(x) for x in f if x.strip()]
+    try:
+        journal = read_journal(journal_path)
+    except (OSError, ValueError):
+        return {"available": False, "reason": f"ژورنال نیست: {journal_path}"}
+    card = scorecard(journal)
+    return {"available": True, "card": card, "plan": prune_plan(card)}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  V10 Pro از راه همین API (برای اتوترید و هر داشبورد دیگر)
+# ══════════════════════════════════════════════════════════════════════════
+def v10_run(dataset: Dict[str, Sequence], entry: str = "next_open",
+            same_bar: str = "pessimistic", risk_pct: float = 1.0,
+            params: Optional[dict] = None) -> dict:
+    """بک‌تست سناریوی V10 Pro روی همان دیتاست ورودی (همان قراردادِ `run`)."""
+    from .v10pro import backtest, summarize
+    data = _dataset(dataset)
+    trades: List[dict] = []
+    per_symbol: Dict[str, dict] = {}
+    errors: List[str] = []
+    for sym, cs in data.items():
+        try:
+            r = backtest(cs, params, entry=entry, same_bar=same_bar,
+                         risk_pct=risk_pct, symbol=sym)
+        except Exception as e:                                     # noqa: BLE001
+            errors.append(f"{sym}: {type(e).__name__}: {str(e)[:60]}")
+            continue
+        per_symbol[sym] = summarize(r)
+        trades.extend(r["trades"])
+    combined = summarize({"trades": trades, "equity_curve": [1000.0]})
+    return {"api": API_VERSION, "strategy": "v10pro", "entry": entry,
+            "same_bar": same_bar, "symbols": sorted(data),
+            "metrics": combined, "by_symbol": per_symbol,
+            "trades": trades[-500:], "errors": errors}
+
+
+def v10_proximity(dataset: Dict[str, Sequence], params: Optional[dict] = None) -> List[dict]:
+    """فاصلهٔ هر نماد تا سیگنال V10 (۰..۱۰۰) + سیگنال اگر همین حالا برقرار است."""
+    from .v10pro import proximity
+    data = _dataset(dataset)
+    rows: List[dict] = []
+    for sym, cs in data.items():
+        try:
+            pr = proximity(cs, params)
+        except Exception as e:                                     # noqa: BLE001
+            rows.append({"symbol": sym, "available": False,
+                         "reason": f"{type(e).__name__}"})
+            continue
+        if pr:
+            pr["symbol"] = sym
+            rows.append(pr)
+    rows.sort(key=lambda r: -max(r.get("long_score") or 0, r.get("short_score") or 0))
+    return rows
+

@@ -260,7 +260,7 @@ class LiveRunner:
 
     def __init__(self, cfg, variant_id: str, variant_label: str, overrides: dict,
                  state_path: str, journal_path: str, lang: str = "fa",
-                 brain=None):
+                 brain=None, votes: bool = True):
         self.cfg = cfg
         self.variant_id = variant_id
         self.variant_label = variant_label
@@ -271,6 +271,9 @@ class LiveRunner:
         self.lang = lang
         # نظاره‌گر مغز: فقط برای **ثبت** دیدگاه. هیچ تصمیمی از آن خوانده نمی‌شود.
         self.brain = brain
+        # رأی‌گیری الگوها روی همان کندل: «این سیگنال بابت کدام الگوها بود؟»
+        # با `--no-votes` خاموش می‌شود (هر رأی = اجرای مجدد چند الگو روی همان پنجره).
+        self.votes = bool(votes)
         self.state = load_state(state_path)
         if self.state.get("equity") is None:
             self.state["equity"] = float(cfg.initial_equity)
@@ -437,6 +440,22 @@ class LiveRunner:
                                     int(info["filt"].direction),
                                     backfilled=(idx < len(bars) - 1),
                                     brain=bview, ctx_extra=ctxsnap)
+            if self.votes:
+                # ثبت اینکه همین کندل را کدام الگوهای دیگر هم تأیید می‌کردند.
+                # هرگز نباید معامله را بشکند: خطا ⇒ «رأی در دسترس نیست».
+                try:
+                    from .attribution import pattern_votes
+                    rec["pattern_votes"] = pattern_votes(
+                        candles, pos.open_ts, cfg=self.cfg)
+                except Exception as e:                             # noqa: BLE001
+                    rec["pattern_votes"] = {"available": False,
+                                            "reason": f"{type(e).__name__}"}
+            pv = rec.get("pattern_votes") or {}
+            if pv.get("ids"):
+                # «این سیگنال بابت کدام الگوها بود» — همان لحظه، نه بعداً
+                print(f"   ⚡ {symbol} {rec['order']['side']} @ {rec['order']['entry']}"
+                      f" · الگوها: {', '.join(pv['ids'])}"
+                      f"{' (هم‌گرا)' if pv.get('n', 0) >= 2 else ''}")
             append_jsonl(self.journal_path, rec)
             opened += 1
 
@@ -805,6 +824,8 @@ def live_command(argv: Optional[List[str]] = None) -> int:
                    help="مدل «چشم مغز»؛ اگر نباشد، فقط ثبت می‌شود که نبوده")
     p.add_argument("--no-brain", action="store_true",
                    help="نظاره‌گر مغز را کامل خاموش کن")
+    p.add_argument("--no-votes", action="store_true",
+                   help="رأی‌گیری الگوها روی هر سیگنال را خاموش کن (سریع‌تر)")
     a = p.parse_args(argv)
     set_lang(a.lang)
 
@@ -845,6 +866,7 @@ def live_command(argv: Optional[List[str]] = None) -> int:
               else _t("🧠 مدل مغز پیدا نشد — اتوترید بدون نظاره‌گر اجرا می‌شود",
                       "🧠 no brain model found — running without observer"))
     runner = LiveRunner(cfg, vid, label, overrides, a.state, a.journal,
+                        votes=(not a.no_votes),
                         lang=a.lang, brain=brain)
     runner.state["variant"] = vid
     runner.state["algorithm"] = {"id": vid, "label": label,

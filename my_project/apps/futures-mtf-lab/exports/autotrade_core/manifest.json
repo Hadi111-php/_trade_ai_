@@ -1,7 +1,7 @@
 {
  "name": "autotrade_core",
  "version": "2026-10-28.1",
- "built_utc": "2026-11-01 09:22 UTC",
+ "built_utc": "2026-11-17 06:04 UTC",
  "python": "3.11",
  "files": {
   "__init__.py": "fc0cdbfdfff639b926606f1c7aa26a53d2f242ac2ea4c4a57adfe803e9babcfe",
@@ -17,7 +17,9 @@
   "rules.py": "ab823b1fa42a718e570195489616df0ab8ea0ece26393329f55de9dfee63a0c0",
   "stats.py": "820556071c7e9e34b7d3a00eb6494ce330c80642813440721fd70be5d4fb4698",
   "patterns.py": "633e3e29086ffa5f9d7e744da795299aad1463fdd060be41e73564f9abbc3770",
-  "autotrade_api.py": "a7a429a573fd41e5b1d0ffa7aff3010b51be368c4dbce992cc3092cc9a95d76d"
+  "attribution.py": "7d20d4675e6b2109ad3ac0cb14b974eb5ad9d70a4e94a953dac1739f4f0c1811",
+  "v10pro.py": "88aa4fe8b147eb16f39f464859f8794dc7df9353f5357573b67d9b92c487b393",
+  "autotrade_api.py": "c3e515fd7cf27d779cad3e53b190ecd35ae024f29e001a4f2836fa03c0bca1eb"
  },
  "api": "autotrade_api.API_VERSION",
  "note": "کپیِ عین فایل‌های موتور — بدون بازنویسی. با --check کهنه‌بودن معلوم می‌شود."

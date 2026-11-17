@@ -535,6 +535,20 @@ class Lab:
         out["stale_sec"] = min(ages) if ages else None
         return out
 
+    def pattern_report(self) -> dict:
+        """کارنامهٔ الگوها از همین ژورنال (محاسبهٔ هنگام درخواست)."""
+        from .attribution import prune_plan, scorecard
+        try:
+            from .live import read_journal
+            journal = read_journal(self.journal_path)
+        except Exception as e:                                     # noqa: BLE001
+            return {"available": False, "reason": f"{type(e).__name__}"}
+        if not journal:
+            return {"available": False,
+                    "hint": "هنوز سیگنالی ثبت نشده — bash run-auto.sh --live"}
+        card = scorecard(journal)
+        return {"available": True, "card": card, "plan": prune_plan(card)}
+
     def exit_report(self) -> dict:
         """حسابرسی خروج از همین ژورنال (محاسبهٔ هنگام درخواست)."""
         from .exits import analyze, collect

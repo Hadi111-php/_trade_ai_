@@ -315,3 +315,19 @@ bash run-auto.sh --dash
    سفارشی نمی‌سازد.
 
 _این سند مرجع است؛ تغییرش باید آگاهانه و با تاریخ باشد._
+
+## ۱۱) افزونه‌های تازهٔ API (برای اتوترید و داشبوردهای دیگر)
+
+| تابع | خروجی |
+|---|---|
+| `api.votes_now(dataset, ...)` | برای هر نماد: سیگنال همان کندل + همهٔ الگوهایی که هم‌زمان شرط ورود داشتند |
+| `api.pattern_scorecard(journal_path)` | کارنامهٔ الگوها از ژورنال + `plan` (keep / drop / need_more) |
+| `api.v10_run(dataset, ...)` | بک‌تست V10 Pro با همان قرارداد `run` (metrics/by_symbol/trades) |
+| `api.v10_proximity(dataset)` | فاصلهٔ هر نماد تا سیگنال V10 (۰..۱۰۰) + سیگنال اگر برقرار است |
+
+قاعدهٔ حذف الگو: `n ≥ ۳۰` و `expectancy > 0` ⇒ نگه‌دار؛ `n ≥ ۳۰` و
+`expectancy ≤ 0` ⇒ نامزد حذف؛ `n < ۳۰` ⇒ حکم نمی‌دهیم. حذف خودکار وجود ندارد.
+
+در بستهٔ سبک (`exports/autotrade_core`) تابع `v10_*` و `pattern_scorecard` کار
+می‌کند؛ `votes_now` چون به لایه‌سازی کامل پروژه (`autoscan.build_layers`) نیاز
+دارد، صادقانه `votes.available=false` برمی‌گرداند.

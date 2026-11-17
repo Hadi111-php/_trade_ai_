@@ -54,12 +54,14 @@ VERSION = "1.0"
 
 #: پارامترهای «ثابتِ» پروپوزال (همان JSON که کاربر داد).
 PARAMS: Dict[str, float] = {
+    "rsi_period": 14,
     "rsi_oversold": 30.0,
     "rsi_overbought": 70.0,
     "volume_multiplier": 1.35,
     "bb_period": 20,
     "bb_std": 2.0,
     "atr_period": 14,
+    "vol_sma_period": 20,
     "rr_ratio": 2.5,
     "atr_buffer": 0.1,
     "time_stop_bars": 16,
@@ -98,9 +100,9 @@ def _arrays(candles: Sequence[Candle], p: Dict[str, float]) -> dict:
         "closes": closes,
         "vols": vols,
         "bb": bb,
-        "rsi": ind.rsi(closes, int(p["atr_period"])),
+        "rsi": ind.rsi(closes, int(p["rsi_period"])),
         "atr": ind.atr(candles, int(p["atr_period"])),
-        "vol_sma": _sma(vols, 20),
+        "vol_sma": _sma(vols, int(p["vol_sma_period"])),
     }
 
 
@@ -249,6 +251,139 @@ def _pattern_score(candles: Sequence[Candle], a: dict, i: int, side: str) -> flo
     if prev.close > bb[i - 1]["upper"] and cur.close < bb[i]["upper"] and cur.close < cur.open:
         return 100.0
     return 50.0 if prev.close > bb[i - 1]["upper"] else 0.0
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  خواندن settings.json پروپوزال (V10.1) — همان کلیدهای کاربر
+# ══════════════════════════════════════════════════════════════════════════
+SETTINGS_MAP = {
+    "bb_period": "bb_period", "bb_std": "bb_std",
+    "rsi_period": "rsi_period",
+    "rsi_oversold": "rsi_oversold", "rsi_overbought": "rsi_overbought",
+    "volume_multiplier": "volume_multiplier", "vol_sma_period": "vol_sma_period",
+    "atr_period": "atr_period", "atr_buffer": "atr_buffer",
+    "rr_ratio": "rr_ratio", "time_stop_bars": "time_stop_bars",
+    "fee_rate": "fee_rate", "slippage": "slippage",
+}
+
+
+def load_settings(path: str = "config/v10_settings.json") -> dict:
+    """پارامترها را از `settings.json` پروپوزال می‌خواند (اگر باشد).
+
+    چرا: کاربر فایل تنظیمات خودش را دارد؛ مجبور کردنش به نام‌های داخلی ما
+    یعنی دوباره‌کاری و خطا. کلیدهای ناشناس **بی‌صدا** نادیده گرفته می‌شوند و در
+    خروجی `ignored` گزارش می‌شوند تا معلوم باشد چه چیزی اعمال نشد.
+    """
+    out: Dict[str, float] = {}
+    ignored: List[str] = []
+    if not path or not os.path.exists(path):
+        return {"params": out, "ignored": ignored, "path": path, "found": False}
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, ValueError) as e:
+        return {"params": out, "ignored": ignored, "path": path, "found": False,
+                "error": f"{type(e).__name__}: {e}"}
+
+    src = dict(raw.get("v9_parameters") or {})
+    # فیلدهای سطح بالا هم پذیرفته می‌شوند (کارمزد و اسلیپیج در ریشهٔ فایل است)
+    for top in ("fee_rate", "slippage"):
+        if top in raw:
+            src[top] = raw[top]
+    for k, v in src.items():
+        if k in SETTINGS_MAP:
+            out[SETTINGS_MAP[k]] = v
+        elif k == "min_reward_filter_pct":
+            # پروپوزال کسری می‌دهد (0.0035)؛ ما درصد کار می‌کنیم (0.35)
+            try:
+                out["min_reward_pct"] = float(v) * 100.0
+            except (TypeError, ValueError):
+                ignored.append(k)
+        elif k == "round_trip_cost_pct":
+            try:
+                out["fee_rate"] = float(v) / 2.0      # نیمی از هزینهٔ رفت‌وبرگشت
+            except (TypeError, ValueError):
+                ignored.append(k)
+        else:
+            ignored.append(k)
+    return {"params": out, "ignored": ignored, "path": path, "found": True,
+            "symbols": raw.get("symbols"), "timeframe": raw.get("timeframe")}
+
+
+def apply_settings(path: str = "config/v10_settings.json") -> Dict[str, float]:
+    """پارامترهای پیش‌فرض ← تنظیمات فایل کاربر."""
+    r = load_settings(path)
+    return dict(PARAMS, **r["params"])
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  بایگانی فورنزیک سیگنال (شواهد تغییرناپذیر)
+# ══════════════════════════════════════════════════════════════════════════
+def archive_signals(candles: Sequence[Candle], symbol: str, out_dir: str,
+                    p: Optional[Dict] = None, limit: int = 200) -> dict:
+    """هر سیگنال را با شواهد کامل روی دیسک می‌نویسد.
+
+    چرا: بعد از این‌که معلوم شد کدام شرط سود می‌آورد، باید بتوانی **همان لحظه** را
+    بازبینی کنی. هر فایل شامل چهار جزء قاعده با مقدار واقعی‌شان است تا حذفِ یک شرط
+    (مثلاً «جهش حجم») با شاهد انجام شود، نه از حافظه.
+
+    خروجی: `{"dir": ..., "written": n, "files": [...]}`
+    """
+    p = dict(PARAMS, **(p or {}))
+    a = _arrays(candles, p)
+    d = os.path.join(out_dir, "signal_archives")
+    os.makedirs(d, exist_ok=True)
+    written = 0
+    files: List[str] = []
+    for s in scan_signals(candles, p):
+        i = s["i"]
+        if i < 1:
+            continue
+        bb_prev, bb_cur = a["bb"][i - 1], a["bb"][i]
+        prev, cur = candles[i - 1], candles[i]
+        components = {
+            "باند بولینگر": {
+                "prev_close": round(prev.close, 6),
+                "prev_band": round((bb_prev["lower"] if s["side"] == "LONG"
+                                    else bb_prev["upper"]) or 0.0, 6),
+                "close": round(cur.close, 6),
+                "band": round((bb_cur["lower"] if s["side"] == "LONG"
+                               else bb_cur["upper"]) or 0.0, 6),
+                "ok": True,
+            },
+            "RSI": {"prev": round(s["rsi_prev"], 2),
+                    "threshold": (p["rsi_oversold"] if s["side"] == "LONG"
+                                  else p["rsi_overbought"]), "ok": True},
+            "حجم": {"ratio": round(s["vol_ratio"], 3),
+                    "threshold": p["volume_multiplier"], "ok": True},
+            "کندل بازگشتی": {"open": round(cur.open, 6), "close": round(cur.close, 6),
+                             "ok": (cur.close > cur.open) if s["side"] == "LONG"
+                             else (cur.close < cur.open)},
+        }
+        payload = {
+            "schema": "mtflab.v10.signal.v1",
+            "algorithm": {"id": "v10pro", "label": "V10 Pro (BB+RSI+حجم)"},
+            "symbol": symbol,
+            "bar_ts": int(s["ts"]),
+            "bar_index": i,
+            "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "signal": s,
+            "components": components,
+            "params": {k: v for k, v in p.items() if k != "bb_mid_exit"},
+            "last_5_candles": [
+                {"ts": int(c.open_time_ms), "open": c.open, "high": c.high,
+                 "low": c.low, "close": c.close, "volume": c.volume}
+                for c in candles[max(0, i - 4):i + 1]],
+        }
+        name = f"v10_{symbol}_{int(s['ts'])}_{s['side']}.json"
+        path = os.path.join(d, name)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=1, default=str)
+        files.append(path)
+        written += 1
+        if written >= int(limit):
+            break
+    return {"dir": d, "written": written, "files": files}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -433,7 +568,8 @@ def summarize(res: dict) -> dict:
 #  مقایسه با الگوهای MTF موجود
 # ══════════════════════════════════════════════════════════════════════════
 def compare_with_mtf(universe: Dict[str, Sequence[Candle]], tf: str = "15m",
-                     risk_pct: float = 1.0, variant: str = "trend") -> dict:
+                     risk_pct: float = 1.0, variant: str = "trend",
+                     params: Optional[Dict] = None) -> dict:
     """V10 Pro را با موتور MTF روی **همان داده** می‌سنجد.
 
     هر دو با همان هزینه و همان سرمایه. خروجی برای پاسخ به «کدام الگو بهتر
@@ -441,7 +577,7 @@ def compare_with_mtf(universe: Dict[str, Sequence[Candle]], tf: str = "15m",
     """
     v10_trades: List[dict] = []
     for sym, cs in (universe or {}).items():
-        r = backtest(cs, entry="next_open", risk_pct=risk_pct, symbol=sym)
+        r = backtest(cs, params, entry="next_open", risk_pct=risk_pct, symbol=sym)
         v10_trades.extend(r["trades"])
     v10 = summarize({"trades": v10_trades,
                      "equity_curve": [1000.0]})
@@ -626,11 +762,24 @@ def v10_command(argv=None) -> int:
     p.add_argument("--same-bar", choices=["pessimistic", "optimistic"],
                    default="pessimistic")
     p.add_argument("--risk-pct", type=float, default=1.0)
+    p.add_argument("--settings", default=None,
+                   help="فایل تنظیمات پروپوزال (پیش‌فرض: config/v10_settings.json اگر باشد)")
+    p.add_argument("--archive", nargs="?", const="data", default=None,
+                   metavar="DIR",
+                   help="بایگانی فورنزیک سیگنال‌ها در DIR/signal_archives")
     p.add_argument("--lang", choices=["fa", "en"], default="fa")
     a = p.parse_args(argv)
 
     from .live import _default_symbols
     from .desk import load_universe
+
+    sett = load_settings(a.settings or "config/v10_settings.json")
+    params = dict(PARAMS, **sett["params"]) if sett.get("found") else dict(PARAMS)
+    if sett.get("found"):
+        print(f"⚙️  تنظیمات از {sett['path']} خوانده شد"
+              + (f" · ignored: {', '.join(sett['ignored'])}" if sett["ignored"] else ""))
+    elif a.settings:
+        print(f"⚠️  فایل تنظیمات خوانده نشد: {a.settings}")
 
     syms = a.symbols or _default_symbols()
     universe: Dict[str, List[Candle]] = {}
@@ -659,7 +808,7 @@ def v10_command(argv=None) -> int:
     if a.proximity or a.proximity_only:
         rows = []
         for sym, cs in universe.items():
-            pr = proximity(cs)
+            pr = proximity(cs, params)
             if pr:
                 pr["symbol"] = sym
                 rows.append(pr)
@@ -682,7 +831,7 @@ def v10_command(argv=None) -> int:
     all_trades: List[dict] = []
     per_symbol: Dict[str, dict] = {}
     for sym, cs in universe.items():
-        r = backtest(cs, entry=a.entry, same_bar=a.same_bar,
+        r = backtest(cs, params, entry=a.entry, same_bar=a.same_bar,
                      risk_pct=a.risk_pct, symbol=sym)
         # منحنی سرمایهٔ تجمعی برای سنجهٔ افت
         per_symbol[sym] = summarize(r)
@@ -697,7 +846,7 @@ def v10_command(argv=None) -> int:
     # نسخهٔ خوش‌بینانه (فرض پروپوزال) برای مقایسه
     alt_trades: List[dict] = []
     for sym, cs in universe.items():
-        alt_trades.extend(backtest(cs, entry="close", same_bar=a.same_bar,
+        alt_trades.extend(backtest(cs, params, entry="close", same_bar=a.same_bar,
                                    risk_pct=a.risk_pct, symbol=sym)["trades"])
     rep["alternative"] = summarize({"trades": alt_trades,
                                     "equity_curve": [1000.0]})
@@ -706,11 +855,19 @@ def v10_command(argv=None) -> int:
     # از سود را می‌بلعد (بردها را سقف‌دار می‌کند).
     nb_trades: List[dict] = []
     for sym, cs in universe.items():
-        nb_trades.extend(backtest(cs, {"bb_mid_exit": False}, entry=a.entry,
+        nb_trades.extend(backtest(cs, dict(params, bb_mid_exit=False), entry=a.entry,
                                   same_bar=a.same_bar, risk_pct=a.risk_pct,
                                   symbol=sym)["trades"])
     rep["no_bb_exit"] = summarize({"trades": nb_trades,
                                    "equity_curve": [1000.0]})
+
+    if a.archive:
+        total = 0
+        for sym, cs in universe.items():
+            ar = archive_signals(cs, sym, a.archive, params)
+            total += ar["written"]
+            print(f"🗄️  {sym}: {ar['written']} سیگنال بایگانی شد → {ar['dir']}")
+        rep["archive"] = {"dir": a.archive, "written": total}
 
     md = render(rep)
     print(md)
@@ -722,7 +879,7 @@ def v10_command(argv=None) -> int:
         json.dump(rep, f, ensure_ascii=False, indent=1, default=str)
 
     if a.compare:
-        cmp_ = compare_with_mtf(universe, a.tf, a.risk_pct)
+        cmp_ = compare_with_mtf(universe, a.tf, a.risk_pct, params=params)
         print("\n## مقایسه با الگوهای MTF\n")
         print("| موتور | معامله | نرخ برد | expectancy R | ضریب سود |")
         print("|---|---:|---:|---:|---:|")
