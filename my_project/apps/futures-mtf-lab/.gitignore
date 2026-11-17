@@ -11,6 +11,7 @@ results/trader_trades_*.jsonl
 results/*.tmp
 # اتوترید مجازی: وضعیت و ژورنال مالِ اجرای زندهٔ کاربر است، نه کد
 results/live/
+results/control/
 results/ops/
 results/live_report.*
 results/live_lab/

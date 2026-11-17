@@ -319,6 +319,8 @@ def health_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--state", default="results/live/state.json")
     p.add_argument("--journal", default="results/live/journal.jsonl")
     p.add_argument("--json", action="store_true")
+    p.add_argument("--lang", choices=["fa", "en"], default="fa",
+                   help="پذیرفته می‌شود تا run-auto --lang رد نشود؛ خروجی فارسی می‌ماند")
     a = p.parse_args(argv)
 
     cfg = load_config(["--data", "synthetic", "--quiet"])

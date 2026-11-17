@@ -35,6 +35,9 @@
 #   bash run-auto.sh --patterns                    # کارنامهٔ الگوها: کدام سیگنال بابت کدام الگو
 #   bash run-auto.sh --algorithms                  # کاتالوگ الگوریتم‌ها با فرمول و مقدار فعلی
 #   bash run-auto.sh --health                      # سلامت سیستم: چرا سیگنالی نیست؟
+#   bash run-auto.sh --control                     # گزارش کنترل: یک فایل برای فرستادن (چک‌لیست + هش)
+#   bash run-auto.sh --evaluate                    # همهٔ گام‌ها با هم: پروب → سینک → بک‌فیل → سلامت → گزارش
+#   bash run-auto.sh --evaluate --offline          # همان، بدون شبکه (روی کش موجود)
 #   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
 #   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
 #   bash run-auto.sh --ops --download --days 365   # دانلود یک‌ساله از Bybit
@@ -228,6 +231,60 @@ for a in "$@"; do
       for b in "${_A[@]+"${_A[@]}"}"; do case "$b" in --out-dir*) _OUT=1;; esac; done
       if [ "$_OUT" = "0" ]; then _A=(--out-dir results "${_A[@]+"${_A[@]}"}"); fi
       python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
+      exit $?
+      ;;
+    --evaluate|--eval)
+      # یک دستور برای «ارزیابی کامل + فایل گزارش»: پروب → سینک → بک‌فیل → سلامت → کنترل
+      _DATA="data"; _TF="4h"; _OFF="0"; _SYMS=""
+      _prev=""
+      for b in "$@"; do
+        case "$_prev" in
+          --data-dir) _DATA="$b" ;;
+          --tf) _TF="$b" ;;
+          --symbols) _SYMS="$b" ;;
+        esac
+        case "$b" in
+          --offline) _OFF="1" ;;
+        esac
+        _prev="$b"
+      done
+      _S=()
+      [ -n "$_SYMS" ] && _S=(--symbols "$_SYMS")
+      echo "════════ ارزیابی کامل — داده: $_DATA · تایم‌فریم: $_TF ════════"
+      if [ "$_OFF" = "1" ]; then
+        echo "۱/۵ دسترسی به داده — رد شد (--offline)"
+        echo "۲/۵ به‌روزرسانی داده — رد شد (--offline)"
+      else
+        echo "۱/۵ بررسی دسترسی به دادهٔ Bybit…"
+        python3 -m mtflab ops --probe --data-dir "$_DATA" \
+          || echo "⚠️ گام ۱ موفق نبود (شبکه/فیلتر IP) — ادامه می‌دهم با کش موجود"
+        echo "۲/۵ به‌روزرسانی داده (۳۰ روز، با ادغام)…"
+        python3 -m mtflab ops --sync --sync-days 30 --data-dir "$_DATA" "${_S[@]+"${_S[@]}"}" \
+          || echo "⚠️ گام ۲ موفق نبود — ادامه می‌دهم با کش موجود"
+      fi
+      echo "۳/۵ اتوترید مجازی تا آخرین کندل بسته (بک‌فیل ۴۰۰)…"
+      if [ "$_OFF" = "1" ]; then
+        python3 -m mtflab live --offline --backfill 400 --no-brain --data-dir "$_DATA" \
+          --tf "$_TF" --lang en "${_S[@]+"${_S[@]}"}" || echo "⚠️ گام ۳ با خطا تمام شد"
+      else
+        python3 -m mtflab live --backfill 400 --no-brain --data-dir "$_DATA" \
+          --tf "$_TF" --lang en "${_S[@]+"${_S[@]}"}" || echo "⚠️ گام ۳ با خطا تمام شد"
+      fi
+      echo "۴/۵ سلامت سیستم…"
+      python3 -m mtflab health --data-dir "$_DATA" --tf "$_TF" --lang en
+      echo "۵/۵ گزارش کنترل…"
+      python3 -m mtflab control --data-dir "$_DATA" --tf "$_TF" "${_S[@]+"${_S[@]}"}"
+      _RC=$?
+      echo "════════ تمام شد — فایل گزارش را همان‌طور که هست بفرست ════════"
+      exit $_RC
+      ;;
+    --control|--report)
+      _C=()
+      for b in "$@"; do
+        case "$b" in --control|--report) continue;; esac
+        _C+=("$b")
+      done
+      python3 -m mtflab control "${_C[@]+"${_C[@]}"}"
       exit $?
       ;;
     --health|--status)

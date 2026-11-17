@@ -168,8 +168,10 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
       <button class="act" id="opsDownload">⬇️ دانلود یک‌ساله</button>
       <button class="act" id="opsExitStyles">🧪 آزمایش خروج (ثابت/شناور)</button>
       <button class="ghost" id="opsDoctor">🩺 معاینهٔ نصب</button>
+      <button class="ghost" id="opsControl">📋 گزارش کنترل (یک فایل)</button>
     </div>
     <div id="opsMsg" class="mut" style="margin-top:6px"></div>
+    <div id="opsControlOut" class="mut" style="margin-top:8px"></div>
 
     <div id="opsJobs"></div>
     <div id="opsReports"></div>
@@ -708,6 +710,20 @@ $("#opsDownload").onclick = () => {
 };
 $("#opsExitStyles").onclick = () => opsRun("exitstyles", "&tf=auto&variant=base");
 $("#opsDoctor").onclick = () => opsRun("doctor");
+$("#opsControl").onclick = async () => {
+  const box = $("#opsControlOut");
+  box.textContent = "در حال ساخت گزارش…";
+  let r = null;
+  try { r = await api("/api/control"); } catch (e) { r = null; }
+  if (!r || r.error) { box.textContent = "⚠️ گزارش ساخته نشد" + (r && r.error ? ": " + r.error : ""); return; }
+  box.innerHTML =
+    '<div><b>' + (r.summary || "—") + '</b></div>' +
+    '<div style="margin-top:6px">📄 <a href="/api/control/file?fmt=md" download>دریافت گزارش .md</a>' +
+    ' · 🧾 <a href="/api/control/file?fmt=json" download>JSON</a></div>' +
+    '<pre style="white-space:pre-wrap;max-height:360px;overflow:auto;margin-top:8px;font-size:12px"></pre>';
+  const pre = box.querySelector("pre");
+  if (pre) pre.textContent = r.md_text || "";
+};
 
 /* ── کارنامهٔ الگوها ───────────────────────────────────────────────── */
 let PAT = {available: false};
@@ -1532,6 +1548,32 @@ def make_handler(lab):
                     self._json(lab.manual_signal(offline=(q.get("offline") == "1")))
                 elif path == "/api/system":
                     self._json(lab.system_health())
+                elif path == "/api/control":
+                    self._json(lab.control_report())
+                elif path == "/api/control/file":
+                    rep = lab.control_report()
+                    fmt = "json" if q.get("fmt") == "json" else "md"
+                    pth = ((rep.get("paths") or {}).get(fmt)
+                           or (rep.get("paths") or {}).get("md") or "")
+                    if not pth or not os.path.isfile(pth):
+                        self._err(404, "گزارش ساخته نشد")
+                    else:
+                        with open(pth, "rb") as fh:
+                            body = fh.read()
+                        ctype = ("application/json; charset=utf-8" if fmt == "json"
+                                 else "text/markdown; charset=utf-8")
+                        name = os.path.basename(pth)
+                        self.send_response(200)
+                        self.send_header("Content-Type", ctype)
+                        self.send_header("Content-Length", str(len(body)))
+                        self.send_header("Content-Disposition",
+                                         'attachment; filename="' + name + '"')
+                        self.send_header("Cache-Control", "no-store")
+                        self.end_headers()
+                        try:
+                            self.wfile.write(body)
+                        except (BrokenPipeError, ConnectionResetError):
+                            pass
                 elif path == "/api/ops":
                     self._json(lab.ops_status())
                 elif path == "/api/ops/start":

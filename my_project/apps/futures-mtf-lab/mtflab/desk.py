@@ -649,6 +649,29 @@ class Lab:
                                 "detail": f"{type(e).__name__}: {e}"},
                     "heartbeat": {}, "note": ""}
 
+    def control_report(self, write: bool = True) -> dict:
+        """گزارش کنترل: همان چک‌لیستِ قابل‌فرستادن. هیچ‌چیز را تغییر نمی‌دهد."""
+        from .control import collect, render_md
+        try:
+            rep = collect(self.universe(reload=True), self.base_cfg(),
+                          data_dir=getattr(self, "data_dir", "data"),
+                          state_path=self.state_path,
+                          journal_path=self.journal_path, write=write)
+            rep["md_text"] = render_md(rep)      # برای نمایش در داشبورد
+            rep["summary"] = self._control_summary(rep)
+            return rep
+        except Exception as e:                                     # noqa: BLE001
+            return {"ok": False, "checks": [], "health": {}, "data": {},
+                    "error": f"{type(e).__name__}: {e}"}
+
+    @staticmethod
+    def _control_summary(rep: dict) -> str:
+        v = (rep.get("health") or {}).get("verdict") or {}
+        bad = [c.get("name") for c in (rep.get("checks") or []) if c.get("ok") is False]
+        mark = "✅" if rep.get("ok") else "❌"
+        return (f"{mark} {v.get('label') or '—'}"
+                + (f" · ایراد: {', '.join(bad)}" if bad else " · هیچ ایرادی پیدا نشد"))
+
     # -- مدیریت کلان (مرکز عملیات: داده، آزمون‌های مستقل، معاینه) ----------
     def ops_status(self) -> dict:
         """وضعیت داده + کارهای پس‌زمینه + گزارش‌های مستقل."""
