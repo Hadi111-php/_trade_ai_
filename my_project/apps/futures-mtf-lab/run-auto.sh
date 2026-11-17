@@ -34,7 +34,11 @@
 #   bash run-auto.sh --v10 --compare               # مقایسهٔ V10 با الگوهای MTF
 #   bash run-auto.sh --patterns                    # کارنامهٔ الگوها: کدام سیگنال بابت کدام الگو
 #   bash run-auto.sh --algorithms                  # کاتالوگ الگوریتم‌ها با فرمول و مقدار فعلی
-#   bash run-auto.sh --exit-styles                 # ثابت درصدی در برابر شناور (ATR+تریل) روی همان ورودی‌ها
+#   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
+#   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
+#   bash run-auto.sh --ops --download --days 365   # دانلود یک‌ساله از Bybit
+#   bash run-auto.sh --ops --exitstyles            # آزمایش خروج از همین‌جا (گزارش مستقل)
+#   bash run-auto.sh --exit-styles                 # همان آزمایش، خروجی مستقیم روی ترمینال
 #   bash run-auto.sh --shadow                      # دفتر خبر: کارنامهٔ اعتبار منبع (بی‌اثر روی سیستم)
 #   bash run-auto.sh --shadow --open BTCUSDT --side LONG --note "خبر"   # ثبت سیگنال خبری
 #   bash run-auto.sh --brain          # آزمون «مغز دوم» روی دادهٔ ذخیره‌شده
@@ -225,7 +229,16 @@ for a in "$@"; do
       python3 -m mtflab algorithms "${_A[@]+"${_A[@]}"}"
       exit $?
       ;;
-    --exit-styles|--exitstyles|--stops)
+    --ops|--manage)
+      _O=()
+      for b in "$@"; do
+        case "$b" in --ops|--manage) continue;; esac
+        _O+=("$b")
+      done
+      python3 -m mtflab ops "${_O[@]+"${_O[@]}"}"
+      exit $?
+      ;;
+    --exit-styles|--stops)
       _E=()
       for b in "$@"; do
         case "$b" in --exit-styles|--exitstyles|--stops) continue;; esac

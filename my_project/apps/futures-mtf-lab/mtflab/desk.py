@@ -634,6 +634,63 @@ class Lab:
         self.universe(reload=True)
         return out
 
+    # -- مدیریت کلان (مرکز عملیات: داده، آزمون‌های مستقل، معاینه) ----------
+    def ops_status(self) -> dict:
+        """وضعیت داده + کارهای پس‌زمینه + گزارش‌های مستقل."""
+        from .ops import status as ops_status
+        try:
+            return ops_status(self.data_dir)
+        except Exception as e:                                     # noqa: BLE001
+            return {"jobs": [], "reports": [], "running": [], "data": {},
+                    "error": f"{type(e).__name__}: {e}"}
+
+    def _ops_symbols(self, symbols: Optional[Sequence[str]] = None) -> list:
+        from .ops import DEFAULT_SYMBOLS
+        if symbols:
+            return [str(x).upper() for x in symbols]
+        cached = sorted(self.universe().keys())
+        return cached or list(DEFAULT_SYMBOLS)
+
+    def ops_start(self, kind: str, days: int = 365, sync_days: int = 30,
+                  tf: str = "auto", variant: str = "base",
+                  symbols: Optional[Sequence[str]] = None,
+                  tfs: Optional[Sequence[str]] = None) -> dict:
+        """شروع یک کار پس‌زمینه (UI قفل نمی‌شود)."""
+        from .ops import (DEFAULT_TFS, job_doctor, job_download, job_exitstyles,
+                          job_probe, job_sync, start)
+        syms = self._ops_symbols(symbols)
+        these = list(tfs or DEFAULT_TFS)
+        try:
+            if kind == "probe":
+                job = start("probe", "بررسی دسترسی به دادهٔ بازار", job_probe())
+            elif kind == "download":
+                job = start("download", f"دانلود {days} روز دادهٔ واقعی",
+                            job_download(syms, these, days, self.data_dir),
+                            {"symbols": syms, "tfs": these, "days": days})
+            elif kind == "sync":
+                job = start("sync", f"به‌روزرسانی {sync_days} روز اخیر",
+                            job_sync(syms, these, sync_days, self.data_dir),
+                            {"symbols": syms, "tfs": these, "days": sync_days})
+            elif kind == "exitstyles":
+                job = start("exitstyles", "آزمایش خروج: ثابت در برابر شناور",
+                            job_exitstyles(tf, variant, self.data_dir),
+                            {"tf": tf, "variant": variant})
+            elif kind == "doctor":
+                job = start("doctor", "معاینهٔ نصب", job_doctor())
+            else:
+                return {"ok": False, "note": f"نوع کار ناشناس: {kind}"}
+        except RuntimeError as e:                 # کار تکراری در حال اجرا
+            return {"ok": False, "note": str(e)}
+        return {"ok": True, "job": job,
+                "note": "کار در پس‌زمینه شروع شد؛ صفحه قفل نمی‌شود."}
+
+    def ops_report(self, rid: str) -> dict:
+        from .ops import read_report
+        try:
+            return read_report(rid)
+        except KeyError as e:
+            return {"error": str(e).strip("'"), "text": ""}
+
     # -- دفتر سایهٔ خبر (اعتبارسنجی منبع، بی‌اثر روی سیستم) ---------------
     @property
     def shadow_path(self) -> str:

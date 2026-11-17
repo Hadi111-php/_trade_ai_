@@ -78,6 +78,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="live" class="on">زنده</button>
   <button data-tab="signals">سیگنال‌ها</button>
   <button data-tab="shadow">دفتر خبر</button>
+  <button data-tab="ops">مدیریت کلان</button>
   <button data-tab="lab">آزمایشگاه</button>
   <button data-tab="runs">آزمایش‌ها</button>
   <button data-tab="watch">شکار زنده</button>
@@ -148,6 +149,29 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
     <div id="shResult"></div>
     <div id="shScore"></div>
     <div id="shTable"></div>
+  </section>
+  <section id="tab-ops">
+    <div class="card" style="margin-bottom:10px">
+      <div class="k">🗄️ مدیریت کلان — دادهٔ واقعی، آزمون‌های مستقل، معاینهٔ نصب</div>
+      <div class="mut" style="margin-top:6px;line-height:1.8">
+        کارهای سنگین این‌جا در <b>پس‌زمینه</b> اجرا می‌شوند تا صفحه قفل نشود.
+        هر اجرا گزارش مستقل خودش را در <code>results/ops/</code> می‌نویسد و
+        <b>هیچ‌چیز</b> در ژورنال معاملات، سرمایه یا آمار اعتبارسنجی نمی‌نویسد.
+      </div>
+      <div id="opsData" style="margin-top:8px;font-size:13px"></div>
+    </div>
+
+    <div class="row">
+      <button class="ghost" id="opsProbe">🌐 بررسی دسترسی به داده</button>
+      <button class="act" id="opsSync">♻️ به‌روزرسانی داده (۳۰ روز)</button>
+      <button class="act" id="opsDownload">⬇️ دانلود یک‌ساله</button>
+      <button class="act" id="opsExitStyles">🧪 آزمایش خروج (ثابت/شناور)</button>
+      <button class="ghost" id="opsDoctor">🩺 معاینهٔ نصب</button>
+    </div>
+    <div id="opsMsg" class="mut" style="margin-top:6px"></div>
+
+    <div id="opsJobs"></div>
+    <div id="opsReports"></div>
   </section>
   <section id="tab-lab">
     <div class="note">اینجا می‌توانی تنظیمات را عوض کنی و <b>روی همان داده</b> نتیجه را ببینی.
@@ -385,6 +409,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "patterns") loadPatterns();
   if (b.dataset.tab === "algos") loadAlgos();
   if (b.dataset.tab === "shadow") loadShadow();
+  if (b.dataset.tab === "ops") loadOps();
   if (b.dataset.tab === "signals") loadValidation();
 });
 
@@ -542,6 +567,91 @@ async function shadowClose(id) {
 $("#shBuy").onclick = () => shadowTake("LONG");
 $("#shSell").onclick = () => shadowTake("SHORT");
 $("#shReload").onclick = loadShadow;
+
+
+/* ── مدیریت کلان (داده + آزمون‌های مستقل) ─────────────────────────── */
+let OPS = null, OPS_TIMER = null;
+function _kb(n) { return n == null ? "—" : (n / 1024).toFixed(0) + " KB"; }
+function renderOps() {
+  const d = (OPS && OPS.data) || {};
+  const net = OPS && OPS.network;
+  $("#opsData").innerHTML = `
+    <div>فایل داده: <b>${d.files || 0}</b> · نمادها: <b>${(d.symbols || []).length}</b>
+      · بازه: <b>${d.oldest || "—"} → ${d.newest || "—"}</b> · حجم: <b>${_kb(d.bytes)}</b>
+      ${d.by_tf && Object.keys(d.by_tf).length ? " · " + Object.entries(d.by_tf).map(([k, v]) => `${k}×${v}`).join("، ") : ""}</div>
+    <div style="margin-top:4px">دسترسی به دادهٔ بازار:
+      <b class="${net ? "ok" : "mut"}">${net ? "آخرین اجرا سالم بود" : "بررسی نشده / ناموفق"}</b>
+      ${net ? ` <span class="mut">(${esc(net)})</span>` : ""}</div>`;
+
+  const jobs = (OPS && OPS.jobs) || [];
+  $("#opsJobs").innerHTML = jobs.length ? `<div class="card" style="margin:10px 0">
+    <div class="k">کارها</div>
+    <table style="margin-top:6px"><thead><tr><th>کار</th><th>وضعیت</th><th>زمان</th>
+    <th>خلاصه</th></tr></thead><tbody>
+    ${jobs.slice(0, 10).map(j => `<tr>
+      <td><b>${esc(j.title || j.kind)}</b><div class="mut" style="font-size:11px">${esc(j.started_utc || "")}</div></td>
+      <td>${j.status === "done" ? '<span class="ok">تمام</span>'
+        : (j.status === "error" ? '<span class="bad">خطا</span>' : '<span class="mut">در حال اجرا…</span>')}</td>
+      <td class="num">${j.duration_s == null ? "—" : j.duration_s + "s"}</td>
+      <td style="font-size:12px">${esc(_opsSummary(j))}
+        ${(j.log || []).length ? `<details style="margin-top:4px"><summary class="mut">گزارش اجرا</summary>
+          <pre style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto">${esc((j.log || []).join("\n"))}</pre></details>` : ""}
+      </td></tr>`).join("")}
+    </tbody></table></div>` : "";
+
+  const reps = (OPS && OPS.reports) || [];
+  $("#opsReports").innerHTML = reps.length ? `<div class="card" style="margin:10px 0">
+    <div class="k">گزارش‌های مستقل</div>
+    <div class="mut" style="font-size:11px;margin-top:4px">هر اجرا یک فایل جدا؛ روی نام بزن تا محتوایش باز شود.</div>
+    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+      ${reps.map(r => `<button class="ghost opsrep" data-id="${esc(r.id)}"
+        style="font-size:11px">📄 ${esc(r.name)}</button>`).join("")}
+    </div>
+    <pre id="opsReportText" style="white-space:pre-wrap;font-size:11px;max-height:420px;overflow:auto;margin-top:8px"></pre>
+    </div>` : `<div class="card mut" style="margin:10px 0">هنوز گزارشی ساخته نشده.</div>`;
+  document.querySelectorAll(".opsrep").forEach(b => b.onclick = () => showOpsReport(b.dataset.id));
+
+  if ((OPS && (OPS.running || []).length) && !OPS_TIMER) {
+    OPS_TIMER = setTimeout(async () => { OPS_TIMER = null; await loadOps(); }, 2500);
+  }
+}
+function _opsSummary(j) {
+  const s = j.summary || {};
+  if (j.status === "error") return j.error || "خطا";
+  if (s.total_bars != null) return `${s.total_bars} کندل در ${(s.saved || []).length} فایل`;
+  if (s.updated) return `${s.updated.reduce((a, x) => a + (x.added || 0), 0)} کندل تازه`;
+  if (s.entries != null) return `${s.entries} ورود مشترک · ${s.policies} سیاست · صدر: ${(s.top || {}).label || "—"}`;
+  if (s.ok != null && s.checks != null) return s.ok ? "همه‌چیز سالم" : "مشکل پیدا شد (گزارش را ببین)";
+  if (s.base_url) return "دسترسی سالم";
+  return "";
+}
+async function loadOps() {
+  try { OPS = await api("/api/ops"); } catch (e) { OPS = null; }
+  renderOps();
+}
+async function opsRun(kind, q) {
+  const msg = $("#opsMsg");
+  msg.textContent = "در حال شروع…";
+  let r = null;
+  try { r = await api("/api/ops/start?kind=" + encodeURIComponent(kind) + (q || "")); }
+  catch (e) { r = {ok: false, note: "خطای شبکه"}; }
+  msg.textContent = r.ok ? (r.note || "شروع شد") : ("⚠️ " + (r.note || "شروع نشد"));
+  await loadOps();
+}
+async function showOpsReport(id) {
+  let r = null;
+  try { r = await api("/api/ops/report?id=" + encodeURIComponent(id)); }
+  catch (e) { r = {text: "خطا در خواندن گزارش"}; }
+  $("#opsReportText").textContent = r.text || r.error || "";
+}
+$("#opsProbe").onclick = () => opsRun("probe");
+$("#opsSync").onclick = () => opsRun("sync", "&sync_days=30");
+$("#opsDownload").onclick = () => {
+  if (!confirm("دانلود یک‌ساله از Bybit شروع شود؟ (چند دقیقه طول می‌کشد و در پس‌زمینه اجرا می‌شود)")) return;
+  opsRun("download", "&days=365");
+};
+$("#opsExitStyles").onclick = () => opsRun("exitstyles", "&tf=auto&variant=base");
+$("#opsDoctor").onclick = () => opsRun("doctor");
 
 /* ── کارنامهٔ الگوها ───────────────────────────────────────────────── */
 let PAT = {available: false};
@@ -1364,6 +1474,20 @@ def make_handler(lab):
                 elif path == "/api/manual_signal":
                     # یک قدم واقعی؛ `?offline=1` فقط برای تست/دمو (بدون شبکه)
                     self._json(lab.manual_signal(offline=(q.get("offline") == "1")))
+                elif path == "/api/ops":
+                    self._json(lab.ops_status())
+                elif path == "/api/ops/start":
+                    _syms = [x for x in (q.get("symbols", "") or "").split(",") if x.strip()]
+                    _tfs = [x for x in (q.get("tfs", "") or "").split(",") if x.strip()]
+                    self._json(lab.ops_start(
+                        kind=q.get("kind", ""),
+                        days=int(q.get("days", 365) or 365),
+                        sync_days=int(q.get("sync_days", 30) or 30),
+                        tf=q.get("tf", "auto") or "auto",
+                        variant=q.get("variant", "base") or "base",
+                        symbols=_syms or None, tfs=_tfs or None))
+                elif path == "/api/ops/report":
+                    self._json(lab.ops_report(q.get("id", "")))
                 elif path == "/api/shadow":
                     self._json(lab.shadow_payload())
                 elif path == "/api/shadow_open":

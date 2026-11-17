@@ -30,6 +30,7 @@
   algorithms کاتالوگ الگوریتم‌ها: فرمول هر الگو با مقدار فعلی پارامترها
   shadow     دفتر خبر: سیگنال خبری کاغذی + کارنامهٔ اعتبار منبع (بی‌اثر روی سیستم)
   exitstyles حد ضرر/سود ثابت درصدی در برابر شناور (ATR+تریل) روی همان ورودی‌ها
+  ops        مدیریت کلان: دانلود/به‌روزرسانی دادهٔ واقعی + آزمون‌های مستقل + معاینه
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
   selftest   خودآزمایی (تست‌ها + علی‌بودن + نشتی + فیلتر هزینه)
@@ -185,6 +186,9 @@ def main(argv=None) -> int:
     if cmd in ("patterns", "pattern-scorecard", "attribution"):
         from .attribution import patterns_command
         return patterns_command(rest)
+    if cmd in ("ops", "manage", "مدیریت"):
+        from .ops import ops_command
+        return ops_command(rest)
     if cmd in ("exitstyles", "exit-styles", "exits-compare"):
         from .exitstyles import exitstyles_command
         return exitstyles_command(rest)

@@ -249,9 +249,11 @@ def metrics(trades: Sequence[dict], risk_pct: float = 1.0,
     closed = [t for t in trades if t.get("status") == "closed"]
     n = len(closed)
     if not n:
+        # همهٔ کلیدها باید باشند: گزارش‌دهی به کلیدِ غایب نباید بشکند
         return {"n": 0, "wins": 0, "win_rate": None, "expectancy_r": None,
                 "r_sum": 0.0, "profit_factor": None, "equity_multiple": None,
                 "max_dd_pct": None, "avg_bars": None, "avg_net_pct": None,
+                "avg_stop_pct": None,
                 "open_at_end": sum(1 for t in trades if t.get("status") == "open_at_end")}
     rs = [float(t["r_multiple"]) for t in closed]
     wins = [r for r in rs if r > 0]
@@ -459,9 +461,9 @@ def render_text(res: dict) -> str:
         v = r.get("verdict") or {}
         L.append(f"| {r['policy']['label']} | {a['n']} | "
                  f"{a['win_rate'] if a['win_rate'] is not None else '—'}٪ | "
-                 f"{a['avg_stop_pct'] if a['avg_stop_pct'] is not None else '—'} | "
+                 f"{a.get('avg_stop_pct') if a.get('avg_stop_pct') is not None else '—'} | "
                  f"{a['expectancy_r'] if a['expectancy_r'] is not None else '—'} | "
-                 f"{a['r_sum']} | {a['profit_factor'] if a['profit_factor'] is not None else '—'} | "
+                 f"{a.get('r_sum', 0)} | {a.get('profit_factor') if a.get('profit_factor') is not None else '—'} | "
                  f"{a['equity_multiple'] if a['equity_multiple'] is not None else '—'}× | "
                  f"{a['max_dd_pct'] if a['max_dd_pct'] is not None else '—'}٪ | "
                  f"{a['avg_bars'] if a['avg_bars'] is not None else '—'} | "
@@ -475,7 +477,7 @@ def render_text(res: dict) -> str:
         a = r["ind_all"]
         L.append(f"| {r['policy']['label']} | {a['n']} | "
                  f"{a['win_rate'] if a['win_rate'] is not None else '—'}٪ | "
-                 f"{a['avg_stop_pct'] if a['avg_stop_pct'] is not None else '—'} | "
+                 f"{a.get('avg_stop_pct') if a.get('avg_stop_pct') is not None else '—'} | "
                  f"{a['expectancy_r'] if a['expectancy_r'] is not None else '—'} | "
                  f"{a['r_sum']} | {a['profit_factor'] if a['profit_factor'] is not None else '—'} |")
     L.append("")
