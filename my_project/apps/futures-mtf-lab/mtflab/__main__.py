@@ -34,6 +34,7 @@
   health     سلامت سیستم: آخرین کندل، تازگی داده، warmup و «چرا سیگنالی نیست»
   control    گزارش کنترل در یک فایل: چک‌لیست + نمادها + ژورنال + هش sha256
   gate       دروازهٔ پذیرش: چرا FAIL شد و برای عبور چه لازم است
+  dataset    دادهٔ چندساله در یک فایل JSON (دانلود/صادرات/ورود)
   pack       ZIP از پروژه + کپی به پوشهٔ Download گوشی
   archive    ساخت شناسنامهٔ کوچک از داده برای بایگانی در گیت (بدون شبکه)
   data-index فهرست بسته‌های دادهٔ ذخیره‌شده (بدون دانلود) + بازبینی صحت
@@ -227,6 +228,9 @@ def main(argv=None) -> int:
     if cmd in ("health", "status", "سلامت"):
         from .health import health_command
         return health_command(rest)
+    if cmd in ("dataset", "data-pack", "داده"):
+        from .dataset import dataset_command
+        return dataset_command(rest)
     if cmd in ("pack", "zip", "بسته"):
         from .pack import pack_command
         return pack_command(rest)

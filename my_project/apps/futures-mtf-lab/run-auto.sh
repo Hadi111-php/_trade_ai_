@@ -43,6 +43,7 @@
 #   bash run-auto.sh --gate                        # دروازهٔ پذیرش: چرا FAIL شد و برای عبور چه لازم است
 #   bash run-auto.sh --year                        # یک سال دادهٔ واقعی + اعتبارسنجی + دروازه (یک دستور، لاگ‌دار)
 #   bash run-auto.sh --zip                         # ZIP از پروژه + کپی به پوشهٔ Download گوشی
+#   bash run-auto.sh --dataset --download --days 1460   # دادهٔ ۴ ساله در یک فایل JSON (برای فرستادن)
 #   bash run-auto.sh --year --days 730 --symbols A,B,C   # همان، با بازه/نماد دلخواه
 #   bash run-auto.sh --ops                         # مدیریت کلان: وضعیت داده/گزارش‌ها
 #   bash run-auto.sh --ops --sync                  # به‌روزرسانی دادهٔ واقعی (ادغام با کش)
@@ -407,6 +408,15 @@ for a in "$@"; do
       _RC=$?
       echo "════════ تمام شد — فایل گزارش را همان‌طور که هست بفرست ════════"
       exit $_RC
+      ;;
+    --dataset|--data-pack)
+      _D=()
+      for b in "$@"; do
+        case "$b" in --dataset|--data-pack) continue;; esac
+        _D+=("$b")
+      done
+      python3 -m mtflab dataset "${_D[@]+"${_D[@]}"}"
+      exit $?
       ;;
     --zip|--pack)
       _Z=()
