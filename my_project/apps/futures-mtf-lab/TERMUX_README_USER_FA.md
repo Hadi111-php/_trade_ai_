@@ -1492,6 +1492,7 @@ bash run-auto.sh
 | `cd: .../futures-mtf-lab: No such file` | کلونِ قدیمی از شاخهٔ `main` است و این پوشه در آن وجود ندارد → با `-b` کلون کنید |
 | نام پوشه با `*` نشان داده می‌شود | `_trade_ai_` در متن‌های فرمت‌دار به‌صورت ایتالیک رندر می‌شود و زیرخط‌ها گم می‌شوند. کلون را با نام ساده بگیرید: `... .git lab` |
 | `fatal: destination path 'lab' already exists` | قبلاً کلون کرده‌اید. کلون نکن؛ `cd ~/lab/my_project/apps/futures-mtf-lab && bash run-auto.sh --update` |
+| `unrecognized arguments: --lang en` | `run-auto.sh` روی ترمکس خودش `--lang` می‌فرستد؛ در نسخهٔ قدیمی برخی دستورها (`pack`، `gate`، `ops`) آن را نمی‌شناختند. `bash run-auto.sh --update` و دوباره همان دستور |
 | خودآزمایی چند دقیقه هیچ چیزی چاپ نمی‌کند | ساکت است، نه مانده: خط `… 45s · N خط خروجی` باید هر ۳ ثانیه بیاید. عجله داری: `--quick` |
 | `No module named mtflab` | از پوشهٔ اشتباه اجرا کرده‌اید. از ریشهٔ پروژه: `bash run-auto.sh` |
 | `python3 نصب نیست` | `pkg install python -y` |

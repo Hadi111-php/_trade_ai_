@@ -1,6 +1,6 @@
 # SUMMARY — چه کاری انجام شد، با چه فرضیاتی، و چه چیزی نیاز به بازبینی انسانی دارد
 
-نسخه: `2026-10-28.8` · اپ: `apps/futures-mtf-lab` · برنچ: `arena/444f3300-trade-ai`
+نسخه: `2026-10-28.9` · اپ: `apps/futures-mtf-lab` · برنچ: `arena/444f3300-trade-ai`
 
 ---
 
@@ -2001,3 +2001,28 @@ bash run-auto.sh --year --offline  # فقط روی کش موجود
 ماندنِ کد/مستند/`PACK_INFO`، نامِ امن با `/` در شاخه، تطابق sha256 با فایل،
 سوییچ‌های `--with-data`/`--full`، کپی به Download + رفتار پوشهٔ ناموجود،
 CLI و یادآوری `termux-setup-storage`. جمع پروژه: **۵۴۶/۵۴۶**.
+
+## ۴۸) باگ `--lang` (دیده‌شده در اسکرین‌شات): یک فیلتر سراسری
+
+روی گوشی، `bash run-auto.sh --zip` این را داد:
+
+```
+mtflab pack: error: unrecognized arguments: --lang en
+```
+
+علت: `run-auto.sh` روی Termux خودش `--lang en` را به **همهٔ** دستورها اضافه
+می‌کند (چون فارسی در ترمینال برعکس است). بعضی دستورها این پرچم را دارند
+(`autoscan`، `live`، `control`، `health` …) و بعضی نه (`pack`، `gate`، `ops`،
+`exitstyles`، `shadow`). نتیجه: هر دستورِ تازه یک باگ تکراری می‌ساخت — قبلاً
+`health` و `control` را جدا وصله کرده بودم؛ این‌بار **ریشه** بسته شد.
+
+- `mtflab/__main__.py`: `_LANG_COMMANDS` (فهرست دستورهایی که خودشان `--lang` را
+  می‌شناسند) + `strip_lang_args(cmd, args)` که برای بقیه، `--lang X` و `--lang=X`
+  را حذف می‌کند. یک خط در `main()`: `rest = strip_lang_args(cmd, rest)`.
+- پس دیگر لازم نیست هر ماژول تازه `--lang` را «تحمل» کند.
+
+### آزمون‌ها
+
+`tests/test_main_lang.py` (۵ تست): حذف هر دو شکل، دست‌نزدن به دستورهایی که
+پشتیبانی می‌کنند، و اجرای واقعیِ `pack`/`ops --status`/`gate` با `--lang en`.
+جمع پروژه: **۵۵۱/۵۵۱**.

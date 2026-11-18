@@ -62,6 +62,39 @@ from . import __version__
 
 USAGE = __doc__
 
+#: دستورهایی که خودشان `--lang` را می‌شناسند. بقیه (ops, gate, pack, exitstyles,
+#: shadow …) نمی‌شناسند و argparse با «unrecognized arguments: --lang en» می‌افتد.
+#: `run-auto.sh` روی Termux این پرچم را خودکار به **همهٔ** دستورها اضافه می‌کند،
+#: پس یک بار همین‌جا و برای همه‌ٔ دستورها فیلتر می‌شود.
+_LANG_COMMANDS = {
+    "archive", "data-index", "verify-archive",
+    "autoscan", "scan", "comove", "sweep", "execscan", "exec-scan",
+    "attribution", "patterns", "pattern-scorecard",
+    "brain", "brain-view", "view", "model", "bundle", "doctor", "eye",
+    "control", "report", "گزارش", "health", "status", "سلامت",
+    "hunter", "hunt", "live", "pumpdump", "pump", "trades", "trade-lab",
+    "v10", "v10pro", "watch", "watch-loop", "desk",
+}
+
+
+def strip_lang_args(cmd: str, args) -> list:
+    """حذف `--lang X` / `--lang=X` برای دستورهایی که این پرچم را ندارند."""
+    args = list(args or [])
+    if cmd in _LANG_COMMANDS:
+        return args
+    out, skip = [], False
+    for a in args:
+        if skip:
+            skip = False
+            continue
+        if a == "--lang":
+            skip = True
+            continue
+        if a.startswith("--lang="):
+            continue
+        out.append(a)
+    return out
+
 
 def main(argv=None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
@@ -70,6 +103,7 @@ def main(argv=None) -> int:
         return 0
     cmd = argv[0] if argv and not argv[0].startswith("-") else "run"
     rest = argv[1:] if argv and not argv[0].startswith("-") else argv
+    rest = strip_lang_args(cmd, rest)
 
     if cmd in ("-h", "--help", "help"):
         print(USAGE)
