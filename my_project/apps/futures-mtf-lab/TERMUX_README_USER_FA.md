@@ -1794,4 +1794,77 @@ python3 -m mtflab gate results/auto_scan_year365.json
 
 ---
 
+## ۴۲) بستنِ کل پروژه در یک ZIP و کپی به Download (ترمکس)
+
+### ۴۲.۱) اول: مطمئن شو روی شاخهٔ درست هستی
+
+کل این پروژه روی شاخهٔ `arena/444f3300-trade-ai` است. اگر کلون بدون `-b` زده باشی،
+روی `main` هستی و کدِ قدیمی داخل ZIP می‌رود. چک:
+
+```bash
+cd ~/lab2
+git status -sb          # خط اول: ## arena/444f3300-trade-ai ...
+```
+
+اگر `main` دیدی، همین را بزن (کاری را پاک نمی‌کند؛ فقط شاخه را جابه‌جا می‌کند):
+
+```bash
+git fetch origin arena/444f3300-trade-ai --depth 1
+git checkout -B arena/444f3300-trade-ai FETCH_HEAD
+```
+
+### ۴۲.۲) دسترسی به پوشهٔ Download (یک‌بار)
+
+```bash
+termux-setup-storage     # اجازه بده؛ بعدش ~/storage/downloads ساخته می‌شود
+ls ~/storage/downloads
+```
+
+### ۴۲.۳) ساخت ZIP + کپی خودکار
+
+```bash
+cd ~/lab2/my_project/apps/futures-mtf-lab
+bash run-auto.sh --zip
+```
+
+خروجی نمونه:
+
+```
+📦 پروژه: /data/data/com.termux/files/home/lab2
+   شاخه: arena/444f3300-trade-ai · کد: db185d5
+✅ ZIP ساخته شد: …/mtf-lab-arena-444f3300-trade-ai-db185d5-20261117T101500Z.zip
+   194 فایل · 1.3 مگابایت · 8 مورد رد شد
+🔐 sha256 = 1c11486b…
+📥 کپی شد در: /data/data/com.termux/files/home/storage/downloads/mtf-lab-….zip
+```
+
+حالا فایل در **Files → Download** گوشی است.
+
+### ۴۲.۴) چه چیزی داخل ZIP است و چه چیزی نه
+
+| داخل | بیرون |
+|---|---|
+| کد `mtflab/`، تست‌ها، `run-auto.sh`، مستندات، config | `.git/` · `results/` · `data/` · `__pycache__` · فایل‌های `.csv` · هر فایل >۸MB |
+
+یعنی برای «فرستادن کد» سبک است. اگر پشتیبان کامل می‌خواهی:
+
+```bash
+bash run-auto.sh --zip --full         # با .git (تاریخچه)
+bash run-auto.sh --zip --with-data    # با results/ و data/
+```
+
+### ۴۲.۵) اگر خودکار کپی نشد
+
+```bash
+cp results/../mtf-lab-*.zip ~/storage/downloads/     # اگر ZIP کنار مخزن است
+# یا مسیری که ابزار چاپ کرده:
+cp "<مسیر چاپ‌شده>" ~/storage/downloads/
+```
+
+بدون `zip` هم کار می‌کند: بسته‌بندی با کتابخانهٔ استاندارد پایتون انجام می‌شود،
+پس `pkg install zip` لازم نیست.
+
+
+---
+
 _این ابزار فقط بک‌تست است (PAPER). هیچ سفارشی به صرافی فرستاده نمی‌شود._

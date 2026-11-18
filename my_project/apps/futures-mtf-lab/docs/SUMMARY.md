@@ -1,6 +1,6 @@
 # SUMMARY — چه کاری انجام شد، با چه فرضیاتی، و چه چیزی نیاز به بازبینی انسانی دارد
 
-نسخه: `2026-10-28.7` · اپ: `apps/futures-mtf-lab` · برنچ: `arena/444f3300-trade-ai`
+نسخه: `2026-10-28.8` · اپ: `apps/futures-mtf-lab` · برنچ: `arena/444f3300-trade-ai`
 
 ---
 
@@ -1973,3 +1973,31 @@ bash run-auto.sh --year --offline  # فقط روی کش موجود
 
 ۲ تست تازه برای «گزارش خالی ≠ FAIL» و ۱ تست برای ترتیب هفت گام/پیش‌پرواز/
 تبدیل نمادها. جمع پروژه: **۵۳۸/۵۳۸**.
+
+## ۴۷) `--zip`: بستنِ پروژه در یک ZIP و کپی به Download گوشی
+
+کاربر می‌خواست کل پروژه را در یک فایل داشته باشد و از گوشی بفرستد. با
+`zip`/`tar` دستی دو مشکل پیش می‌آمد: حجم (اگر `.git/` و `results/` و `data/`
+داخل بیایند) و شکست ساکت وقتی پوشهٔ Download در دسترس نیست.
+
+`mtflab/pack.py` (جدید، فقط stdlib — `pkg install zip` لازم نیست):
+
+- `make_zip(root, out_dir, with_data, with_git)` با فهرست صریحِ ردشدنی‌ها:
+  `.git/`، `results/`، `data/`، `__pycache__/`، `node_modules/`، `.csv`،
+  `.log`، هر فایل > ۸MB — و `PACK_INFO.txt` با شاخه/کد/تعداد فایل داخل ZIP.
+- `repo_root` و `git_info` (شاخه، کد، تغییر ذخیره‌نشده)؛ اگر شاخه `main` بود
+  هشدار می‌دهد: کارِ این پروژه روی `arena/444f3300-trade-ai` است.
+- `copy_to_download` → `~/storage/downloads` یا `/sdcard/Download`؛ اگر نبود،
+  `termux-setup-storage` را یادآوری می‌کند و دستور `cp` را چاپ می‌کند.
+- `pack_command` + `bash run-auto.sh --zip` (+ `--full`، `--with-data`، `--no-copy`)
+
+**باگ واقعی که در آزمون پیدا شد:** نام شاخه `arena/444f3300-trade-ai` است؛
+`/` داخل نام فایل، مسیر را می‌شکند و `zipfile` با `FileNotFoundError` می‌افتد.
+حالا نام امن می‌شود (`arena-444f3300-trade-ai`) و تست مخصوصش هست.
+
+### آزمون‌ها
+
+۸ تست در `tests/test_pack.py`: رد شدنِ `.git/results/data/__pycache__/csv`،
+ماندنِ کد/مستند/`PACK_INFO`، نامِ امن با `/` در شاخه، تطابق sha256 با فایل،
+سوییچ‌های `--with-data`/`--full`، کپی به Download + رفتار پوشهٔ ناموجود،
+CLI و یادآوری `termux-setup-storage`. جمع پروژه: **۵۴۶/۵۴۶**.
