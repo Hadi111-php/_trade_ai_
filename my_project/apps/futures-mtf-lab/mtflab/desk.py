@@ -649,6 +649,14 @@ class Lab:
                                 "detail": f"{type(e).__name__}: {e}"},
                     "heartbeat": {}, "note": ""}
 
+    def pump_report(self) -> dict:
+        """آخرین گزارش پامپ‌دامپ (فقط خواندن؛ هیچ محاسبه‌ای انجام نمی‌شود)."""
+        from .pumpdump import latest
+        try:
+            return latest(self.report_dir)
+        except Exception as e:                                     # noqa: BLE001
+            return {"available": False, "hint": f"{type(e).__name__}: {e}"}
+
     def control_report(self, write: bool = True) -> dict:
         """گزارش کنترل: همان چک‌لیستِ قابل‌فرستادن. هیچ‌چیز را تغییر نمی‌دهد."""
         from .control import collect, render_md

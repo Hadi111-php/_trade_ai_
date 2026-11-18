@@ -85,6 +85,7 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
   <button data-tab="exit">خروج زودهنگام</button>
   <button data-tab="v10">V10 Pro</button>
   <button data-tab="patterns">کارنامهٔ الگوها</button>
+  <button data-tab="pump">پامپ و دامپ</button>
   <button data-tab="algos">الگوریتم‌ها</button>
   <button data-tab="brain">مغز دوم</button>
   <button data-tab="help">راهنما</button>
@@ -175,6 +176,16 @@ pre{background:#0f1520;border:1px solid var(--line);border-radius:10px;padding:1
 
     <div id="opsJobs"></div>
     <div id="opsReports"></div>
+  </section>
+  <section id="tab-pump">
+    <div class="note">این سیستم <b>مستقل</b> است: رویداد پامپ/دامپ را تشخیص می‌دهد و
+      واکنش بعدش را می‌سنجد — هیچ سیگنالی برای معامله نمی‌سازد و در ژورنال/سرمایهٔ
+      فیوچرز نمی‌نویسد. اعداد این‌جا از فایل گزارش خوانده می‌شوند، دوباره حساب نمی‌شوند.</div>
+    <div class="row"><span id="pumpMeta" class="mut"></span></div>
+    <div class="cards" id="pumpCards"></div>
+    <div id="pumpTable"></div>
+    <div class="note">ساخت/تازه‌سازی: <code>bash run-auto.sh --pump --download --days 180</code>
+      · روی کش موجود: <code>bash run-auto.sh --pump</code></div>
   </section>
   <section id="tab-lab">
     <div class="note">اینجا می‌توانی تنظیمات را عوض کنی و <b>روی همان داده</b> نتیجه را ببینی.
@@ -404,6 +415,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("section").forEach(x => x.classList.remove("on"));
   b.classList.add("on"); $("#tab-" + b.dataset.tab).classList.add("on");
   if (b.dataset.tab === "live") loadSystem();
+  if (b.dataset.tab === "pump") loadPump();
   if (b.dataset.tab === "signals") loadSignals();
   if (b.dataset.tab === "runs") loadRuns();
   if (b.dataset.tab === "brain") loadBrain();
@@ -725,6 +737,47 @@ $("#opsControl").onclick = async () => {
   if (pre) pre.textContent = r.md_text || "";
 };
 
+/* ── پامپ و دامپ (فقط خواندن گزارش) ──────────────────────────────── */
+let PUMP = {available: false, hint: ""};
+async function loadPump() {
+  try { PUMP = await api("/api/pump"); }
+  catch (e) { PUMP = {available: false, hint: "خطا در خواندن گزارش پامپ‌دامپ"}; }
+  renderPump();
+}
+function _pctP(x) { return (x == null) ? "—" : (x * 100).toFixed(2) + "%"; }
+function renderPump() {
+  const D = PUMP, meta = $("#pumpMeta"), cards = $("#pumpCards"), tbl = $("#pumpTable");
+  if (!D.available) {
+    meta.textContent = " · گزارشی نیست";
+    cards.innerHTML = "";
+    tbl.innerHTML = '<div class="mut" style="padding:10px">' + (D.hint || "") + "</div>";
+    return;
+  }
+  const hz = String(D.primary_horizon || D.horizon || 6);
+  const prim = (D.by_horizon || {})[hz] || {};
+  const base = ((D.baseline || {})[hz] || {}).median;
+  const lift = D.lift_primary;
+  meta.textContent = " · " + (D.generated_utc || "") + " · " + (D.scenario_fa || D.scenario || "")
+    + " · نماد " + ((D.symbols || []).length) + " · کندل " + (D.n_bars || 0);
+  cards.innerHTML =
+    '<div class="card"><div class="k">رویداد مستقل</div><div class="v">' + (D.n_independent ?? "—") + "</div></div>" +
+    '<div class="card"><div class="k">میانهٔ خالص رویداد</div><div class="v">' + _pctP(prim.median) + "</div></div>" +
+    '<div class="card"><div class="k">خط پایه</div><div class="v">' + _pctP(base) + "</div></div>" +
+    '<div class="card"><div class="k">اختلاف (lift)</div><div class="v ' + (lift > 0 ? "pos" : "neg") + '">' + _pctP(lift) + "</div></div>" +
+    '<div class="card"><div class="k">دروازه</div><div class="v">' + (D.passed ? "✅ پاس" : "❌ پاس نشد") + "</div></div>";
+  const bySym = D.by_symbol || {}, keys = Object.keys(bySym).sort();
+  if (!keys.length) {
+    tbl.innerHTML = '<div class="card"><div class="mut" style="padding:8px">تفکیک نمادی در گزارش نیست.</div></div>';
+    return;
+  }
+  let html = '<div class="card"><div class="k">رویدادها به تفکیک نماد</div>' +
+    '<table class="tbl"><tr><th>نماد</th><th>رویداد</th><th>میانه</th></tr>';
+  for (const k of keys) {
+    const v = bySym[k] || {};
+    html += "<tr><td>" + k + "</td><td>" + (v.n ?? "—") + "</td><td>" + _pctP(v.median) + "</td></tr>";
+  }
+  tbl.innerHTML = html + "</table></div>";
+}
 /* ── کارنامهٔ الگوها ───────────────────────────────────────────────── */
 let PAT = {available: false};
 function _pct(x) { return x == null ? "—" : x.toFixed(1) + "٪"; }
@@ -1548,6 +1601,8 @@ def make_handler(lab):
                     self._json(lab.manual_signal(offline=(q.get("offline") == "1")))
                 elif path == "/api/system":
                     self._json(lab.system_health())
+                elif path == "/api/pump":
+                    self._json(lab.pump_report())
                 elif path == "/api/control":
                     self._json(lab.control_report())
                 elif path == "/api/control/file":

@@ -852,6 +852,39 @@ def render(rep: dict, lang: str = "fa") -> str:
 # ══════════════════════════════════════════════════════════════════════════
 #  CLI
 # ══════════════════════════════════════════════════════════════════════════
+def latest(out_dir: str = "results") -> dict:
+    """آخرین گزارش پامپ‌دامپ روی دیسک (برای داشبورد) — بدون محاسبهٔ تازه.
+
+    اگر فایلی نبود، `{"available": False, "hint": ...}` برمی‌گرداند تا داشبورد
+    به‌جای خطا، روشن بگوید «گزارشی نیست و چطور بسازی».
+    """
+    js = os.path.join(out_dir, "pumpdump_report.json")
+    sc = os.path.join(out_dir, "pumpdump_scenarios.md")
+    md = os.path.join(out_dir, "pumpdump_report.md")
+    if not os.path.isfile(js):
+        return {"available": False, "hint":
+                "گزارشی نیست. بساز: bash run-auto.sh --pump --download --days 180 "
+                "(یا روی کش موجود: bash run-auto.sh --pump)"}
+    try:
+        with open(js, encoding="utf-8") as f:
+            rep = json.load(f)
+    except (OSError, ValueError) as e:                              # noqa: BLE001
+        return {"available": False, "hint": f"فایل گزارش خوانده نشد: {e}"}
+    rep = dict(rep)
+    rep["available"] = True
+    # داشبورد به «افق اصلی» نیاز دارد؛ در فایل زیر `params` ذخیره شده است.
+    rep["primary_horizon"] = (rep.get("params") or {}).get("primary_horizon") \
+        or rep.get("primary_horizon")
+    rep["paths"] = {"json": js, "md": md if os.path.isfile(md) else "",
+                    "scenarios": sc if os.path.isfile(sc) else ""}
+    try:
+        rep["generated_utc"] = time.strftime(
+            "%Y-%m-%dT%H:%M:%SZ", time.gmtime(os.path.getmtime(js)))
+    except OSError:
+        rep["generated_utc"] = ""
+    return rep
+
+
 def pumpdump_command(argv=None) -> int:
     import argparse
     p = argparse.ArgumentParser(
