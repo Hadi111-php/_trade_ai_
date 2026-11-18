@@ -204,3 +204,56 @@ def test_cli_never_writes_empty_dataset():
             assert "خالی" in buf.getvalue()
     finally:
         restore()
+
+
+def test_parallel_download_keeps_every_file_and_is_faster():
+    """۲۴ فایل با jobs=6 باید هم کامل باشند و هم از حالت سریال سریع‌تر."""
+    import time as _t
+
+    def fake_fetch(symbol, tf, days, data_dir, base_url, **kw):
+        _t.sleep(0.02)                       # شبکهٔ ساختگی
+        p = dataset.cache_path(data_dir, symbol, tf)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"meta": {"symbol": symbol, "tf": tf},
+                       "candles": [[1_700_000_000_000 + i * 60_000, 1, 1, 1, 1, 1]
+                                   for i in range(3)]}, f)
+        return [object()], {}
+
+    restore = _patch_autoscan(fetch=fake_fetch,
+                              pick=lambda candidates=None, progress=True: "https://api.bybit.com")
+    syms = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"]
+    tfs = ["1d", "4h", "1h"]
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            t0 = _t.time()
+            serial = dataset.download(syms, tfs, 30, td, progress=False, jobs=1)
+            t_serial = _t.time() - t0
+            with tempfile.TemporaryDirectory() as td2:
+                t0 = _t.time()
+                par = dataset.download(syms, tfs, 30, td2, progress=False, jobs=6)
+                t_par = _t.time() - t0
+    finally:
+        restore()
+    assert len(serial) == len(par) == 4
+    for s in syms:
+        assert set(par[s.upper()]) == set(tfs), par[s]
+    assert len(par["BTCUSDT"]["4h"]["candles"]) == 3
+    assert t_par < t_serial, f"موازی سریع‌تر نبود: {t_par:.2f} vs {t_serial:.2f}"
+
+
+def test_jobs_is_clamped_and_parallel_aborts_on_total_failure():
+    def boom(*a, **kw):
+        raise ValueError("unknown url type: '/v5/market/kline'")
+
+    restore = _patch_autoscan(fetch=boom,
+                              pick=lambda candidates=None, progress=True: "https://api.bybit.com")
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                dataset.download(["BTCUSDT"] * 4, ["1d"], 30, td, progress=False, jobs=99)
+                raise AssertionError("باید RuntimeError می‌داد")
+            except RuntimeError as e:
+                assert "سه تلاش" in str(e)
+    finally:
+        restore()

@@ -21,6 +21,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import threading
 import time
 from typing import Dict, List, Optional, Sequence
 
@@ -158,41 +159,91 @@ def resolve_base_url(base_url: str = "", progress: bool = True) -> str:
     return b
 
 
+def _download_one(symbol: str, tf: str, days: int, data_dir: str,
+                  refresh: bool, base_url: str, progress: bool):
+    """یک (نماد×تایم‌فریم) را می‌گیرد و payload کش را برمی‌گرداند (یا None)."""
+    from .autoscan import fetch_or_load
+    cs, _meta = fetch_or_load(symbol, tf, days, data_dir, base_url=base_url,
+                              refresh=refresh, progress=progress)
+    if not cs:
+        return None
+    path = cache_path(data_dir, symbol, tf)
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
 def download(symbols: Sequence[str], tfs: Sequence[str], days: int,
              data_dir: str, refresh: bool = False,
-             base_url: str = "", progress: bool = True) -> Dict[str, Dict[str, dict]]:
-    """دانلود ادامه‌پذیر با همان مسیر موجود (`fetch_or_load`)."""
-    from .autoscan import fetch_or_load
+             base_url: str = "", progress: bool = True,
+             jobs: int = 3) -> Dict[str, Dict[str, dict]]:
+    """دانلود ادامه‌پذیر با همان مسیر موجود (`fetch_or_load`).
+
+    :param jobs: تعداد دانلود هم‌زمان. روی گوشی هر درخواست ~۰٫۵–۱ ثانیه است و
+        ۴ سال × ۳ تایم‌فریم × ۲۰ نماد ≈ ۲۱۰۰ درخواست می‌شود؛ سریال یعنی ~۳۰
+        دقیقه، با `jobs=3` یعنی ~۱۰ دقیقه. سقف ۶ است تا سقف نرخ Bybit نخورد.
+    """
+    from .autoscan import fetch_or_load                      # noqa: F401
     base_url = resolve_base_url(base_url, progress=progress)
+    pairs = [(s, t) for s in symbols for t in tfs]
+    jobs = max(1, min(int(jobs or 1), 6))
     if progress:
-        print(f"🌐 منبع: {base_url}")
+        print(f"🌐 منبع: {base_url} · هم‌زمانی: {jobs}")
+        if jobs > 1:
+            print(f"   ({len(pairs)} فایل؛ سریال ~۳۰ دقیقه، با {jobs} جریان "
+                  f"~{max(1, 30 // jobs)} دقیقه)")
+
     out: Dict[str, Dict[str, dict]] = {}
     errors: List[str] = []
-    for sym in symbols:
-        for tf in tfs:
-            try:
-                cs, meta = fetch_or_load(sym, tf, days, data_dir, base_url=base_url,
-                                         refresh=refresh, progress=progress)
-            except Exception as e:                                  # noqa: BLE001
-                errors.append(f"{sym} {tf}: {type(e).__name__}: {str(e)[:90]}")
+    lock = threading.Lock()
+    quiet = jobs > 1                     # در حالت موازی، خط‌ها قفل می‌شوند
+
+    def _record(sym: str, tf: str, payload, err: str = "") -> None:
+        with lock:
+            if err:
+                errors.append(err)
                 if progress:
-                    print(f"⚠️ {sym} {tf}: {type(e).__name__}: {str(e)[:90]}")
-                # سه شکست پشت‌سرهم و هیچ موفقیتی = مشکل تنظیمات/شبکه، نه نماد.
-                # ادامه‌دادن فقط یک فایل صفر-کندلی می‌سازد و وقت کاربر را می‌برد.
+                    print(f"⚠️ {sym} {tf}: {err}")
+            elif payload:
+                out.setdefault(sym.upper(), {})[tf] = payload
+                if progress and quiet:
+                    n = len(payload.get("candles") or [])
+                    print(f"   ✅ {sym} {tf}: {n} کندل")
+
+    def _abort_hint() -> RuntimeError:
+        return RuntimeError(
+            "سه تلاش اول شکست خورد و هیچ داده‌ای نیامد؛ ادامه بی‌فایده است. "
+            f"آخرین خطا: {errors[-1] if errors else 'نامعلوم'}")
+
+    if jobs == 1:
+        for sym, tf in pairs:
+            try:
+                payload = _download_one(sym, tf, days, data_dir, refresh, base_url, progress)
+            except Exception as e:                              # noqa: BLE001
+                _record(sym, tf, None, f"{type(e).__name__}: {str(e)[:90]}")
                 if len(errors) >= 3 and not out:
-                    raise RuntimeError(
-                        "سه تلاش اول شکست خورد و هیچ داده‌ای نیامد؛ ادامه بی‌فایده است. "
-                        f"آخرین خطا: {errors[-1]}")
+                    raise _abort_hint()
                 continue
-            if not cs:
-                continue
-            p = cache_path(data_dir, sym, tf)
-            if os.path.isfile(p):
+            _record(sym, tf, payload)
+    else:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            futs = {pool.submit(_download_one, s, t, days, data_dir, refresh,
+                                base_url, False): (s, t) for s, t in pairs}
+            for fut in as_completed(futs):
+                sym, tf = futs[fut]
                 try:
-                    with open(p, encoding="utf-8") as f:
-                        out.setdefault(sym.upper(), {})[tf] = json.load(f)
-                except (OSError, ValueError):
-                    continue
+                    payload = fut.result()
+                except Exception as e:                          # noqa: BLE001
+                    _record(sym, tf, None, f"{type(e).__name__}: {str(e)[:90]}")
+                else:
+                    _record(sym, tf, payload)
+                if len(errors) >= 3 and not out:
+                    for f in futs:
+                        f.cancel()
+                    raise _abort_hint()
+
     if progress:
         files = sum(len(v) for v in out.values())
         line = f"📊 داده: {files} فایل (نماد×تایم‌فریم)"
@@ -216,6 +267,8 @@ def dataset_command(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--download", action="store_true", help="از Bybit دانلود کن (ادامه‌پذیر)")
     p.add_argument("--refresh", action="store_true", help="کش را نادیده بگیر")
     p.add_argument("--base-url", default="")
+    p.add_argument("--jobs", type=int, default=3,
+                   help="دانلود هم‌زمان (۱=سریال، سقف ۶)؛ پیش‌فرض ۳")
     p.add_argument("--export", default="", help="مسیر فایل خروجی .json")
     p.add_argument("--import", dest="import_path", default="",
                    help="فایل .json را به کش برگردان")
@@ -241,7 +294,7 @@ def dataset_command(argv: Optional[List[str]] = None) -> int:
         print(f"⬇️ دانلود {a.days} روز · {len(symbols)} نماد · {'/'.join(tfs)} …")
         try:
             data = download(symbols, tfs, a.days, a.data_dir, refresh=a.refresh,
-                            base_url=a.base_url)
+                            base_url=a.base_url, jobs=a.jobs)
         except (ValueError, RuntimeError) as e:
             print(f"❌ {e}")
             print("   تشخیص: python3 -m mtflab autoscan --probe-only")

@@ -1929,10 +1929,13 @@ cd ~/lab2/my_project/apps/futures-mtf-lab
 bash run-auto.sh --update
 termux-wake-lock
 
-bash run-auto.sh --dataset --download --days 1460 --tfs 1h,4h,1d
+bash run-auto.sh --dataset --download --days 1460 --tfs 1h,4h,1d --jobs 4
 ```
 
 - پیش‌فرض: همان ۲۰ نماد پروژه · ۱۴۶۰ روز · سه تایم‌فریم
+- `--jobs` = تعداد دانلود هم‌زمان (پیش‌فرض ۳، سقف ۶). ۴ سال × ۳ تایم‌فریم ×
+  ۲۰ نماد ≈ ۲۱۰۰ درخواست است: سریال ~۳۰–۹۰ دقیقه، با `--jobs 4` حدود
+  **۱۰–۲۰ دقیقه**. اگر VPN/شبکه ناپایدار بود `--jobs 2` بگذار.
 - ادامه‌پذیر است: اگر قطع شد، همان دستور را دوباره بزن
 - خروجی: `exports/dataset_1460d_<تاریخ>.json` + چاپ `sha256` و حجم
 - حجم تقریبی: **۳۵–۵۵ مگابایت** (فشرده با ZIP ≈ ۱۰ مگابایت)
