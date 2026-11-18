@@ -114,7 +114,7 @@ def import_dataset(path: str, data_dir: str) -> dict:
     with open(path, encoding="utf-8") as f:
         payload = json.load(f)
     if payload.get("schema") != SCHEMA:
-        raise ValueError(f"Aین فایل مجموعه‌دادهٔ {SCHEMA} نیست "
+        raise ValueError(f"این فایل مجموعه‌دادهٔ {SCHEMA} نیست "
                          f"(schema={payload.get('schema')!r})")
     written, skipped = [], []
     for sym, per_tf in (payload.get("data") or {}).items():
@@ -139,20 +139,50 @@ def import_dataset(path: str, data_dir: str) -> dict:
                 {s.split("_")[0] for s in written})}
 
 
+def resolve_base_url(base_url: str = "", progress: bool = True) -> str:
+    """آدرس پایهٔ Bybit را قطعی می‌کند.
+
+    باگ واقعی روی گوشی: `--base-url` خالی به `fetch_klines_range` می‌رسید و
+    `urlopen("/v5/market/kline?...")` با `unknown url type` می‌شکست؛ نتیجه‌اش
+    یک «مجموعه‌دادهٔ صفر-کندلی» بود که هش هم داشت و شبیه موفقیت به‌نظر می‌رسید.
+    پس آدرس **هرگز** خالی یا بی‌scheme رد نمی‌شود.
+    """
+    b = (base_url or "").strip().rstrip("/")
+    if not b:
+        from .autoscan import pick_base_url
+        return pick_base_url(progress=progress).rstrip("/")
+    if not b.startswith(("http://", "https://")):
+        raise ValueError(
+            f"آدرس نامعتبر: {base_url!r} — باید با https:// شروع شود "
+            "(مثال: https://api.bybit.com)")
+    return b
+
+
 def download(symbols: Sequence[str], tfs: Sequence[str], days: int,
              data_dir: str, refresh: bool = False,
              base_url: str = "", progress: bool = True) -> Dict[str, Dict[str, dict]]:
     """دانلود ادامه‌پذیر با همان مسیر موجود (`fetch_or_load`)."""
     from .autoscan import fetch_or_load
+    base_url = resolve_base_url(base_url, progress=progress)
+    if progress:
+        print(f"🌐 منبع: {base_url}")
     out: Dict[str, Dict[str, dict]] = {}
+    errors: List[str] = []
     for sym in symbols:
         for tf in tfs:
             try:
                 cs, meta = fetch_or_load(sym, tf, days, data_dir, base_url=base_url,
                                          refresh=refresh, progress=progress)
             except Exception as e:                                  # noqa: BLE001
+                errors.append(f"{sym} {tf}: {type(e).__name__}: {str(e)[:90]}")
                 if progress:
                     print(f"⚠️ {sym} {tf}: {type(e).__name__}: {str(e)[:90]}")
+                # سه شکست پشت‌سرهم و هیچ موفقیتی = مشکل تنظیمات/شبکه، نه نماد.
+                # ادامه‌دادن فقط یک فایل صفر-کندلی می‌سازد و وقت کاربر را می‌برد.
+                if len(errors) >= 3 and not out:
+                    raise RuntimeError(
+                        "سه تلاش اول شکست خورد و هیچ داده‌ای نیامد؛ ادامه بی‌فایده است. "
+                        f"آخرین خطا: {errors[-1]}")
                 continue
             if not cs:
                 continue
@@ -163,6 +193,12 @@ def download(symbols: Sequence[str], tfs: Sequence[str], days: int,
                         out.setdefault(sym.upper(), {})[tf] = json.load(f)
                 except (OSError, ValueError):
                     continue
+    if progress:
+        files = sum(len(v) for v in out.values())
+        line = f"📊 داده: {files} فایل (نماد×تایم‌فریم)"
+        if errors:
+            line += f" · شکست: {len(errors)}"
+        print(line)
     return out
 
 
@@ -203,8 +239,14 @@ def dataset_command(argv: Optional[List[str]] = None) -> int:
 
     if a.download:
         print(f"⬇️ دانلود {a.days} روز · {len(symbols)} نماد · {'/'.join(tfs)} …")
-        data = download(symbols, tfs, a.days, a.data_dir, refresh=a.refresh,
-                        base_url=a.base_url)
+        try:
+            data = download(symbols, tfs, a.days, a.data_dir, refresh=a.refresh,
+                            base_url=a.base_url)
+        except (ValueError, RuntimeError) as e:
+            print(f"❌ {e}")
+            print("   تشخیص: python3 -m mtflab autoscan --probe-only")
+            print("   یا آدرس دستی: --base-url https://api.bybit.com")
+            return 2
     else:
         data = load_from_cache(a.data_dir, symbols, tfs)
         if not data:
@@ -212,6 +254,13 @@ def dataset_command(argv: Optional[List[str]] = None) -> int:
             return 2
 
     payload = build(data, days=a.days, tfs=tfs)
+    if not payload.get("n_candles"):
+        # فایل صفر-کندلی با هش معتبر، بدترین خروجی ممکن است: کاربر فکر می‌کند
+        # داده گرفته. پس نوشته نمی‌شود و کد خروج غیرصفر است.
+        print("❌ هیچ کندلی جمع نشد — فایل خالی نوشته نشد.")
+        if a.download:
+            print("   خطاهای دانلود بالا را ببین؛ معمولاً فیلتر شبکه/VPN است.")
+        return 2
     out = a.export or os.path.join(
         "exports", f"dataset_{a.days}d_{time.strftime('%Y%m%d', time.gmtime())}.json")
     rep = write_dataset(payload, out)

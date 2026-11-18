@@ -111,3 +111,96 @@ def test_run_auto_dataset_flag():
     assert "--dataset|--data-pack)" in sh and "-m mtflab dataset" in sh
     mn = open(os.path.join(root, "mtflab", "__main__.py"), encoding="utf-8").read()
     assert '"dataset", "data-pack"' in mn
+
+
+# ── رگرسیون باگ واقعی گوشی (۱۴۰۴/۰۸/۲۸) ──────────────────────────────────────
+# نشانه: «ValueError: unknown url type: '/v5/market/kline?...'» برای هر نماد،
+# سپس یک فایل dataset با ۰ کندل و هش معتبر. علت: `--base-url` خالی مستقیم به
+# `urlopen` می‌رسید. این تست‌ها همان مسیر را قفل می‌کنند.
+
+def _patch_autoscan(fetch=None, pick=None):
+    from mtflab import autoscan
+    old_f, old_p = autoscan.fetch_or_load, autoscan.pick_base_url
+    if fetch is not None:
+        autoscan.fetch_or_load = fetch
+    if pick is not None:
+        autoscan.pick_base_url = pick
+    return lambda: (setattr(autoscan, "fetch_or_load", old_f),
+                    setattr(autoscan, "pick_base_url", old_p))
+
+
+def test_download_resolves_empty_base_url_before_request():
+    seen = {}
+
+    def fake_fetch(symbol, tf, days, data_dir, base_url, **kw):
+        seen.setdefault("urls", set()).add(base_url)
+        return [], {}
+
+    restore = _patch_autoscan(fetch=fake_fetch,
+                              pick=lambda candidates=None, progress=True: "https://api.bybit.com")
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            dataset.download(["BTCUSDT", "ETHUSDT"], ["4h"], 30, td, progress=False)
+    finally:
+        restore()
+    assert seen["urls"] == {"https://api.bybit.com"}, seen
+
+
+def test_download_rejects_relative_base_url():
+    called = {"n": 0}
+
+    def fake_fetch(*a, **kw):
+        called["n"] += 1
+        return [], {}
+
+    restore = _patch_autoscan(fetch=fake_fetch)
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                dataset.download(["BTCUSDT"], ["4h"], 30, td, base_url="/v5/market/kline",
+                                 progress=False)
+                raise AssertionError("باید ValueError می‌داد")
+            except ValueError as e:
+                assert "https://" in str(e)
+    finally:
+        restore()
+    assert called["n"] == 0
+
+
+def test_download_fails_fast_when_nothing_works():
+    def boom(*a, **kw):
+        raise ValueError("unknown url type: '/v5/market/kline'")
+
+    restore = _patch_autoscan(fetch=boom,
+                              pick=lambda candidates=None, progress=True: "https://api.bybit.com")
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                dataset.download(["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"], ["4h"],
+                                 30, td, progress=False)
+                raise AssertionError("باید RuntimeError می‌داد")
+            except RuntimeError as e:
+                assert "سه تلاش" in str(e)
+    finally:
+        restore()
+
+
+def test_cli_never_writes_empty_dataset():
+    import contextlib
+    import io
+
+    restore = _patch_autoscan(fetch=lambda *a, **kw: ([], {}),
+                              pick=lambda candidates=None, progress=True: "https://api.bybit.com")
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            out = os.path.join(td, "empty.json")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = dataset.dataset_command(["--data-dir", td, "--download",
+                                              "--days", "30", "--tfs", "4h",
+                                              "--symbols", "BTCUSDT", "--export", out])
+            assert rc == 2, buf.getvalue()
+            assert not os.path.exists(out), "فایل صفر-کندلی نباید نوشته شود"
+            assert "خالی" in buf.getvalue()
+    finally:
+        restore()
