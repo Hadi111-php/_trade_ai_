@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '../core/config.js';
 import { readJson, uid, writeJson } from '../core/utils.js';
+import { learnAdaptiveHunter } from './adaptive-hunter.js';
 
 export class PaperBroker {
   constructor(settings, logger) {
@@ -19,6 +20,8 @@ export class PaperBroker {
       realOrders: [],
       lastCooldown: {},
       profileStarts: {},
+      hunterWeights: {},
+      hunterUpdates: [],
       feesPaid: 0,
       day: new Date().toDateString(),
       dayStartEquity: equity
@@ -137,6 +140,11 @@ export class PaperBroker {
       openedAt: Date.now(),
       reason,
       score: signal.score,
+      baseSide: signal.baseSide || signal.side,
+      baseScore: Number(signal.baseScore ?? signal.score),
+      hunterScore: signal.hunterScore,
+      hunterVotes: Array.isArray(signal.hunterVotes) ? signal.hunterVotes : [],
+      scoringMode: signal.scoringMode || 'base',
       riskProfile,
       signalId: signal.signalId,
       source: signal.source,
@@ -159,10 +167,20 @@ export class PaperBroker {
   close(position, mark, reason = 'manual') {
     const exit = Number(mark);
     if (!Number.isFinite(exit) || exit <= 0) return false;
+    // A resolved paper outcome (and its learning update) is applied once only.
+    if (!this.state.paperPositions.some(item => item.id === position.id)) return false;
     const gross = this.grossPnl(position, exit);
     const feeClose = this.closeFee(position, exit);
     const feeOpen = Number(position.openFee || 0);
     const net = gross - feeOpen - feeClose;
+    let hunterUpdates = [];
+    if (position.scoringMode === 'adaptive_hunter' && position.hunterVotes?.length) {
+      const learned = learnAdaptiveHunter(this.state.hunterWeights, position.hunterVotes,
+        position.side, net, position.notional, Date.now());
+      this.state.hunterWeights = learned.weights;
+      hunterUpdates = learned.updates;
+      this.state.hunterUpdates = [...(this.state.hunterUpdates || []), ...hunterUpdates].slice(-1000);
+    }
 
     // openFee has already been charged; here we settle gross PnL and exit fee.
     this.state.paperEquity += gross - feeClose;
@@ -181,6 +199,11 @@ export class PaperBroker {
       pnl: net,
       reason,
       score: position.score,
+      baseSide: position.baseSide || position.side,
+      baseScore: Number(position.baseScore ?? position.score),
+      hunterScore: position.hunterScore ?? null,
+      scoringMode: position.scoringMode || 'base',
+      hunterUpdates,
       riskProfile: position.riskProfile || this.s.value.riskProfile || 'legacy',
       source: position.source,
       durationSec: Math.max(0, Math.round((Date.now() - Number(position.openedAt)) / 1000))

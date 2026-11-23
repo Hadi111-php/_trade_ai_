@@ -39,6 +39,33 @@ def write_markdown(report: dict, path: str):
         L.append(f"\nحاشیهٔ روش برتر نسبت به کنترل تصادفی: "
                  f"{best['avg_net_bps'] - ctl.get('avg_net_bps', 0):+.2f} bps به‌ازای هر سیگنال.")
     L.append("")
+    hunter = report.get("adaptive_hunter", {})
+    comparison = hunter.get("comparison", {})
+    L.append("## Adaptive Hunter — مقایسهٔ walk-forward\n")
+    if hunter.get("enabled"):
+        base_id = comparison.get("baseline_method") or "—"
+        base = comparison.get("baseline", {})
+        hm = comparison.get("adaptive_hunter", {})
+        ctl = comparison.get("random_control", {})
+        L.append("Hunter فقط از برچسب‌هایی یاد می‌گیرد که افق‌شان کامل شده؛ هر دو طرف "
+                 "کارمزد در بازده خالص محاسبه شده‌اند. این مقایسه برآورد تاریخی است، نه تضمین.")
+        L.append("\n| روش | n | expectancy خالص (bps) | اختلاف با کنترل (bps) |")
+        L.append("|---|---:|---:|---:|")
+        for name, metric in ((base_id + " (baseline)", base),
+                             ("adaptive_hunter", hm), ("random_control", ctl)):
+            if metric.get("n"):
+                delta = (metric.get("avg_net_bps", 0) - ctl.get("avg_net_bps", 0)
+                         if ctl.get("n") else 0)
+                L.append(f"| {name} | {metric['n']} | {metric.get('avg_net_bps', 0):+.2f} | {delta:+.2f} |")
+        L.append(f"\nHunter − baseline: {comparison.get('hunter_minus_baseline_avg_net_bps') or '—'} bps/سیگنال؛ "
+                 f"Hunter − random_control: {comparison.get('hunter_minus_control_avg_net_bps') or '—'} bps/سیگنال.")
+        count_updates = sum(len(v.get("updates", [])) for v in hunter.get("per_seed", {}).values())
+        L.append(f"\nبه‌روزرسانی‌های وزن پس از outcome: **{count_updates}**؛ "
+                 f"آستانهٔ هم‌جهتی: {hunter.get('min_score', 0):.2f}.")
+    else:
+        L.append("غیرفعال است (پیش‌فرض). برای مقایسه فعالش کنید: `--adaptive-hunter`. "
+                 "خط مبنای مدل‌ها و `random_control` همچنان گزارش می‌شوند.")
+    L.append("")
     L.append("## کالیبراسیون: آیا confidence بالاتر یعنی hit بالاتر؟\n")
     L.append("| بازهٔ conf | n | hit_net |")
     L.append("|---|---|---|")

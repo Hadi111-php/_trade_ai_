@@ -1,4 +1,4 @@
-const CACHE = 'scalp-lab-v6-direct-bybit';
+const CACHE = 'scalp-lab-v7-adaptive-hunter';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   './src/js/services/settings-store.js',
   './src/js/services/market-client.js',
   './src/js/services/strategy.js',
+  './src/js/services/adaptive-hunter.js',
   './src/js/services/paper-broker.js',
   './src/js/services/real-broker.js',
   './src/js/services/performance-report.js',

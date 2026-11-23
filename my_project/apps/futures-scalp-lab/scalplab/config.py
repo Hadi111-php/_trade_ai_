@@ -31,6 +31,8 @@ class LabConfig:
     fee_bps: float = 4.0                  # کارمزد هر طرف (bps)
     cooldown: int = 5                     # حداقل فاصلهٔ بین دو سیگنال یک مدل
     agree_min: int = 2                    # حداقل توافق برای ensemble
+    adaptive_hunter: bool = False          # لایهٔ اختیاری؛ یادگیری فقط بعد از outcome
+    hunter_min_score: float = 0.55         # حداقل هم‌جهتی وزنی (۰ تا ۱)
 
     # خروجی
     out_dir: str = "results"
@@ -57,6 +59,10 @@ class LabConfig:
     sweep_tfs: list = None
     sweep_horizons: list = None
 
+    def __post_init__(self):
+        if not 0.0 <= self.hunter_min_score <= 1.0:
+            raise ValueError("hunter_min_score باید بین ۰ و ۱ باشد")
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -76,6 +82,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--fee-bps", dest="fee_bps", type=float, default=None)
     p.add_argument("--cooldown", type=int, default=None)
     p.add_argument("--agree-min", dest="agree_min", type=int, default=None)
+    p.add_argument("--adaptive-hunter", action="store_true", default=None,
+                   help="فعال‌سازی Adaptive Hunter walk-forward (اختیاری)")
+    p.add_argument("--hunter-min-score", type=float, default=None,
+                   help="آستانهٔ هم‌جهتی وزنی Hunter بین ۰ و ۱")
     p.add_argument("--out", dest="out_dir", default=None)
     p.add_argument("--run-id", dest="run_id", default=None)
     p.add_argument("--max-ticks", dest="max_ticks", type=int, default=None,
@@ -122,6 +132,7 @@ def load_config(argv=None) -> LabConfig:
 
     for key in ("data_mode", "symbol", "timeframe", "candles", "csv_path",
                 "seeds", "horizon", "fee_bps", "cooldown", "agree_min",
+                "adaptive_hunter", "hunter_min_score",
                 "out_dir", "run_id", "max_ticks", "interval", "live", "forever", "light",
                 "trade", "trade_size_quote", "leverage", "max_concurrent",
                 "cb_losses", "stop_pct", "trail_pct",

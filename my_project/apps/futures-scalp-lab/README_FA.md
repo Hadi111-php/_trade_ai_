@@ -45,6 +45,26 @@ python3 -m scalplab --data binance --symbol BTCUSDT --tf 1m --candles 1000
 همهٔ پارامترها از CLI/`--config config.json`: `--data --symbol --tf --candles
 --seeds --horizon --fee-bps --cooldown --agree-min --out --run-id`.
 
+### Adaptive Hunter (اختیاری؛ فقط امتیازدهی)
+
+```bash
+python3 -m scalplab --data synthetic --seed 42 --candles 2500 \
+  --horizon 8 --fee-bps 4 --adaptive-hunter --run-id hunter-demo
+```
+
+Hunter با وزن‌های آغازین برابر، رأی مدل‌های پایه را امتیازدهی می‌کند. وزن یک مدل
+فقط وقتی به‌روزرسانی می‌شود که افق کاملِ پیش‌بینی آن مدل سپری شده باشد؛ بازده
+خالصِ شامل کارمزد ورود و خروج مبنای به‌روزرسانی است. در هر کندل ابتدا پیامدهای
+رسیده پردازش و سپس سیگنال جدید امتیازدهی می‌شود. گزارش JSON/Markdown زمان
+سیگنال، زمان outcome، وزن قبل/بعد و مقایسهٔ expectancy خالص Hunter با بهترین
+مدل پایه و `random_control` را درج می‌کند. پایه و random_control بدون تغییر
+اجرا می‌شوند؛ Hunter به‌صورت پیش‌فرض خاموش است. این ویژگی فقط در replay/lab
+سیگنال می‌سازد و هیچ مسیر سفارش/اجرای واقعی اضافه نمی‌کند.
+
+آستانهٔ هم‌جهتی قابل تنظیم است (۰ تا ۱): `--hunter-min-score 0.55`. آزمون
+`selftest` تأخیر یادگیری تا رسیدن outcome، برابری خروجی پایه و کنترل در حالت
+روشن/خاموش و علیت اندیکاتورها را بررسی می‌کند.
+
 ## ۳) تضمین علمی (walk-forward)
 
 - اسنپ‌شات t فقط از دادهٔ `<= t` ساخته می‌شود؛ خودآزمایی «causality» این را با

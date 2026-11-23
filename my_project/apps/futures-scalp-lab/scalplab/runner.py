@@ -32,24 +32,28 @@ def _params(cfg: LabConfig) -> dict:
 
 
 def run_one_seed(cfg: LabConfig, seed: int, signals_w: JsonlWriter,
-                 outcomes_w: JsonlWriter) -> Tuple[List[dict], Dict[str, List[dict]]]:
+                 outcomes_w: JsonlWriter):
     candles = load_candles(cfg, seed)
     n = len(candles)
     params = _params(cfg)
     snaps = build_snapshot(candles, params)
     models = build_models(params, seed)
-    real_ids = [m.id for m in models if m.id != "random_control"]
+    real_models = [m for m in models if m.id != "random_control"]
+    real_ids = [m.id for m in real_models]
     control = [m for m in models if m.id == "random_control"][0]
 
     from collections import defaultdict
+    from .hunter import AdaptiveHunter
     h = cfg.horizon
-    fee_frac = 2 * cfg.fee_bps / 10_000          # ورود + خروج
-    last_fire = defaultdict(lambda: -10**9)      # شامل idهای consensus هم می‌شود
+    fee_frac = 2 * cfg.fee_bps / 10_000
+    last_fire = defaultdict(lambda: -10**9)
     for m in models:
         last_fire[m.id] = -10**9
+    hunter = AdaptiveHunter(real_ids, min_score=cfg.hunter_min_score)
 
     signals: List[dict] = []
     per_method_outcomes: Dict[str, List[dict]] = {}
+    logged: List[Signal] = []
 
     def emit(model_id, family, d, conf, reason, i, snap):
         sig = Signal(i=i, ts=candles[i].ts, model_id=model_id, family=family,
@@ -60,16 +64,14 @@ def run_one_seed(cfg: LabConfig, seed: int, signals_w: JsonlWriter,
         signals.append(rec)
         return sig
 
-    def evaluate(sig: Signal) -> Optional[dict]:
+    def evaluate(sig: Signal, write=True) -> Optional[dict]:
         i = sig.i
         if i + h >= n:
             return None
         entry = sig.entry_price
         d = sig.direction
-        path = []
-        for j in range(i + 1, i + h + 1):
-            r = d * (candles[j].c - entry) / entry
-            path.append(r)
+        path = [d * (candles[j].c - entry) / entry
+                for j in range(i + 1, i + h + 1)]
         ret_gross = path[-1]
         ret_net = ret_gross - fee_frac
         o = {
@@ -82,31 +84,33 @@ def run_one_seed(cfg: LabConfig, seed: int, signals_w: JsonlWriter,
             "mae_bps": round(min(min(path), 0.0) * 10_000, 2),
             "mfe_bps": round(max(max(path), 0.0) * 10_000, 2),
         }
-        outcomes_w.write({**o, "run_id": cfg.run_id, "seed": seed,
-                          "symbol": cfg.symbol, "timeframe": cfg.timeframe,
-                          "data_mode": cfg.data_mode})
+        if write:
+            outcomes_w.write({**o, "run_id": cfg.run_id, "seed": seed,
+                              "symbol": cfg.symbol, "timeframe": cfg.timeframe,
+                              "data_mode": cfg.data_mode})
         return o
 
-    logged: List[Signal] = []
     for i in range(n):
+        # Resolve matured training labels before scoring bar i. Nothing from i+h is
+        # visible before that bar has arrived.
+        if cfg.adaptive_hunter:
+            hunter.advance(i, candles)
         snap = snaps[i]
         if snap is None:
             continue
         prev = snaps[i - 1] if i > 0 else None
 
-        # رأی خام همهٔ مدل‌های واقعی در هر کندل (برای تحلیل توافق)
         votes = []
-        for m in models:
-            if m.id == "random_control":
-                continue
+        for m in real_models:
             res = m.maybe_signal(i, candles[i].ts, snap, prev, candles[i].c)
             if res:
                 votes.append((m.id, m.family, res[0], res[1], res[2]))
                 if i - last_fire[m.id] >= cfg.cooldown:
                     last_fire[m.id] = i
                     logged.append(emit(m.id, m.family, res[0], res[1], res[2], i, snap))
+                    if cfg.adaptive_hunter:
+                        hunter.queue(i, m.id, res[0], candles[i].c, h, fee_frac, n)
 
-        # توافق k از M به‌عنوان روش‌های اعتبارسنجی جدا (k = agree_min تا M)
         for k in range(cfg.agree_min, len(real_ids) + 1):
             pos = [v for v in votes if v[2] == 1]
             neg = [v for v in votes if v[2] == -1]
@@ -123,7 +127,16 @@ def run_one_seed(cfg: LabConfig, seed: int, signals_w: JsonlWriter,
                                    f"{len(pos) if d == 1 else len(neg)}/{len(real_ids)} agree",
                                    i, snap))
 
-        # خط پایهٔ تصادفی
+        if cfg.adaptive_hunter and len(votes) >= cfg.agree_min:
+            side, score = hunter.score([(v[0], v[2], v[3]) for v in votes])
+            if side and i - last_fire["adaptive_hunter"] >= cfg.cooldown:
+                last_fire["adaptive_hunter"] = i
+                contributors = ",".join(v[0] for v in votes if v[2] == side)
+                logged.append(emit("adaptive_hunter", "adaptive_ensemble", side,
+                                   score / 100.0,
+                                   f"weighted alignment={score:.2f}; contributors={contributors}",
+                                   i, snap))
+
         cres = control.maybe_signal(i, candles[i].ts, snap, prev, candles[i].c)
         if cres and i - last_fire[control.id] >= cfg.cooldown:
             last_fire[control.id] = i
@@ -134,7 +147,10 @@ def run_one_seed(cfg: LabConfig, seed: int, signals_w: JsonlWriter,
         if o:
             per_method_outcomes.setdefault(sig.model_id, []).append(o)
 
-    return signals, per_method_outcomes
+    diag = {"enabled": cfg.adaptive_hunter,
+            "updates": hunter.updates if cfg.adaptive_hunter else [],
+            "final_weights": hunter.weights if cfg.adaptive_hunter else {}}
+    return signals, per_method_outcomes, diag
 
 
 def run_lab(cfg: LabConfig) -> dict:
@@ -146,10 +162,12 @@ def run_lab(cfg: LabConfig) -> dict:
     per_seed: Dict[int, Dict[str, dict]] = {}
     pooled: Dict[str, List[dict]] = {}
     all_signals_count = 0
+    hunter_by_seed = {}
 
     for seed in cfg.seeds:
-        _, per_method = run_one_seed(cfg, seed, sw, ow)
+        _, per_method, hunter_diag = run_one_seed(cfg, seed, sw, ow)
         per_seed[seed] = {mid: metrics(ocs) for mid, ocs in per_method.items()}
+        hunter_by_seed[seed] = hunter_diag
         for mid, ocs in per_method.items():
             pooled.setdefault(mid, []).extend(ocs)
         all_signals_count += sum(len(v) for v in per_method.values())
@@ -160,6 +178,27 @@ def run_lab(cfg: LabConfig) -> dict:
     pooled_metrics = {mid: metrics(ocs) for mid, ocs in pooled.items()}
     ranking = rank_methods(pooled_metrics)
     control_m = pooled_metrics.get("random_control", {})
+    hunter_m = pooled_metrics.get("adaptive_hunter", {})
+    baseline_candidates = {k: v for k, v in pooled_metrics.items()
+                           if k not in ("random_control", "adaptive_hunter")
+                           and not k.startswith("consensus_")}
+    baseline_consensus_id = f"consensus_k{cfg.agree_min}"
+    baseline_id = (baseline_consensus_id if baseline_consensus_id in baseline_candidates
+                   else max(baseline_candidates,
+                            key=lambda k: baseline_candidates[k].get("avg_net_bps", float("-inf")),
+                            default=None))
+    comparison = {
+        "baseline_method": baseline_id,
+        "baseline": pooled_metrics.get(baseline_id, {}),
+        "adaptive_hunter": hunter_m,
+        "random_control": control_m,
+        "hunter_minus_baseline_avg_net_bps": (
+            round(hunter_m.get("avg_net_bps", 0) - pooled_metrics[baseline_id].get("avg_net_bps", 0), 2)
+            if baseline_id and hunter_m.get("n") else None),
+        "hunter_minus_control_avg_net_bps": (
+            round(hunter_m.get("avg_net_bps", 0) - control_m.get("avg_net_bps", 0), 2)
+            if hunter_m.get("n") and control_m.get("n") else None),
+    }
 
     calib = calibration([o for ocs in pooled.values() for o in ocs
                          if o["model_id"] not in ("random_control",) and
@@ -178,6 +217,10 @@ def run_lab(cfg: LabConfig) -> dict:
         "pooled_metrics": pooled_metrics,
         "ranking_by_net_expectancy": ranking,
         "control": control_m,
+        "adaptive_hunter": {"enabled": cfg.adaptive_hunter,
+                            "min_score": cfg.hunter_min_score,
+                            "comparison": comparison,
+                            "per_seed": hunter_by_seed},
         "calibration_conf_vs_hit": calib,
         "files": {"signals": sig_path, "outcomes": out_path},
     }

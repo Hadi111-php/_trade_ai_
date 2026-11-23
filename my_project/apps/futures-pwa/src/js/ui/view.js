@@ -205,6 +205,8 @@ export class DashboardView {
           alert('symbolMap باید JSON معتبر باشد');
           return;
         }
+      } else if (typeof old[key] === 'boolean') {
+        next[key] = Boolean(element.checked);
       } else if (typeof old[key] === 'number') {
         const number = Number(element.value);
         if (!Number.isFinite(number)) {
@@ -232,6 +234,10 @@ export class DashboardView {
     for (const [key, value] of Object.entries(settings)) {
       const element = form.elements[key];
       if (!element) continue;
+      if (typeof value === 'boolean' && element.type === 'checkbox') {
+        element.checked = value;
+        continue;
+      }
       element.value = key === 'symbols'
         ? value.join(',')
         : key === 'symbolMap'
@@ -278,8 +284,10 @@ export class DashboardView {
     $('#winRate').textContent = closedWinRate;
     $('#feesPaid').textContent = `${fmt(paper.state.feesPaid, 3)} USDT`;
     $('#closedTrades').textContent = `${report.count} • ${fmt(realizedNet, 3)} USDT`;
-    $('#reportScope').textContent = `پروفایل ${profile} • معاملات بسته‌شده Paper، خالص بعد از کارمزد`;
-    $('#dashReportScope').textContent = `پروفایل ${profile} • معاملات بسته‌شده Paper، خالص بعد از کارمزد`;
+    const comparison = this.app.performance.compareScoringModes(paper.state, this.app.settings.value.paperInitialEquity, profile);
+    const compareLine = `مقایسهٔ امتیازدهی Paper: پایه ${comparison.baseline.count} / ${fmt(comparison.baseline.netPnl, 2)} USDT؛ Hunter ${comparison.adaptiveHunter.count} / ${fmt(comparison.adaptiveHunter.netPnl, 2)} USDT؛ به‌روزرسانی وزن پس از بسته‌شدن: ${comparison.hunterWeightUpdates}`;
+    $('#reportScope').textContent = `پروفایل ${profile} • معاملات بسته‌شده Paper، خالص بعد از کارمزد | ${compareLine}`;
+    $('#dashReportScope').textContent = `پروفایل ${profile} • معاملات بسته‌شده Paper، خالص بعد از کارمزد | ${compareLine}`;
 
     $('#reportCount').textContent = report.count ? `${report.count} (${report.wins}W/${report.losses}L)` : '--';
     $('#reportWinRate').textContent = report.count ? `${report.winRate.toFixed(1)}%` : '--';
