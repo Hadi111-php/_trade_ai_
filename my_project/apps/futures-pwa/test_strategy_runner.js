@@ -1,5 +1,7 @@
-import { MomentumScalpStrategy } from '../src/js/services/strategy.js';
-import { PaperBroker } from '../src/js/services/paper-broker.js';
+import { MomentumScalpStrategy } from './src/js/services/strategy.js';
+import { PaperBroker } from './src/js/services/paper-broker.js';
+import { PerformanceReport } from './src/js/services/performance-report.js';
+import { scoreAdaptiveHunter } from './src/js/services/adaptive-hunter.js';
 
 function createMockCandles(count = 50, trend = 'neutral', volatility = 1.0) {
   const candles = [];
@@ -89,6 +91,8 @@ function runTests() {
   mockSettings.value.algoMode = 'consensus';
   const consensusResult = strategy.analyze(market);
   assert(consensusResult.score > 0, `Consensus score calculated: ${consensusResult.score}`);
+  assert(consensusResult.side === consensusResult.baseSide && consensusResult.score === consensusResult.baseScore,
+    'Disabled Adaptive Hunter preserves baseline signal and score');
 
   // Test 4: Paper Broker Order Execution and Risk Management
   const paperBroker = new PaperBroker(mockSettings, mockLogger);
@@ -116,6 +120,45 @@ function runTests() {
   assert(closeSuccess === true, 'Paper position closed successfully');
   assert(paperBroker.state.paperPositions.length === 0, 'Position removed after close');
   assert(paperBroker.state.paperTrades.length === 1, 'Trade recorded in trade log');
+
+  // Adaptive Hunter votes require multiple experts; weights only change after close.
+  const agreement = scoreAdaptiveHunter([
+    { id: 'ema', direction: 1, confidence: 1 },
+    { id: 'momentum', direction: 1, confidence: 0.8 }
+  ], {}, 55);
+  assert(agreement.direction === 1 && agreement.score >= 55, 'Adaptive Hunter scores aligned expert votes');
+  const noConsensus = scoreAdaptiveHunter([
+    { id: 'ema', direction: 1, confidence: 1 },
+    { id: 'momentum', direction: -1, confidence: 1 }
+  ], {}, 55);
+  assert(noConsensus.direction === 0, 'Adaptive Hunter rejects tied votes');
+
+  const hunterSettings = { value: { ...mockSettings.value, paperInitialEquity: 1000, riskProfile: 'medium' } };
+  const hunterBroker = new PaperBroker(hunterSettings, mockLogger);
+  const hunterSignal = {
+    ...signal,
+    symbol: 'BTCUSDT', side: 'LONG', entry: 3000, score: 82,
+    stop: 2950, take: 3100, candleTs: Date.now(),
+    scoringMode: 'adaptive_hunter', baseSide: 'LONG', baseScore: 80, hunterScore: 84,
+    hunterVotes: [{ id: 'ema', direction: 1, confidence: 1 }, { id: 'momentum', direction: 1, confidence: 0.8 }]
+  };
+  hunterBroker.open(hunterSignal, 'hunter-test', true);
+  assert(Object.keys(hunterBroker.state.hunterWeights).length === 0,
+    'Adaptive Hunter weights stay unchanged while outcome is unresolved');
+  const hunterPosition = hunterBroker.state.paperPositions[0];
+  hunterBroker.close(hunterPosition, 3100, 'test_close');
+  assert(hunterBroker.state.hunterWeights.ema > 1 && hunterBroker.state.hunterUpdates.length === 2,
+    'Adaptive Hunter weights update only after net paper outcome is known');
+  const learnedWeight = hunterBroker.state.hunterWeights.ema;
+  hunterBroker.close(hunterPosition, 3200, 'duplicate_close');
+  assert(hunterBroker.state.hunterWeights.ema === learnedWeight && hunterBroker.state.hunterUpdates.length === 2,
+    'A closed signal cannot produce a duplicate learning update');
+  const baseSignal = { ...hunterSignal, symbol: 'ETHUSDT', scoringMode: 'base', hunterVotes: [] };
+  hunterBroker.open(baseSignal, 'base-test', true);
+  hunterBroker.close(hunterBroker.state.paperPositions[0], 3050, 'test_close');
+  const comparison = new PerformanceReport().compareScoringModes(hunterBroker.state, 1000, 'medium');
+  assert(comparison.adaptiveHunter.count === 1 && comparison.baseline.count === 1,
+    'PWA report separates baseline and Hunter closed trades');
 
   console.log(`=== TEST SUMMARY: ${passed} PASSED, ${failed} FAILED ===`);
   if (failed > 0) process.exit(1);

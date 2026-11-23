@@ -26,7 +26,7 @@ export class ScalpLabApp {
 
   rebuildServices() {
     this.market = new MarketClient(this.settings, this.logger);
-    this.strategy = new MomentumScalpStrategy(this.settings);
+    this.strategy = new MomentumScalpStrategy(this.settings, () => this.paper?.state?.hunterWeights || {});
     this.paper = this.paper || new PaperBroker(this.settings, this.logger);
     // Rebuilding services deliberately resets the real gate. A settings change
     // must never silently preserve permission to send an order.
@@ -90,8 +90,15 @@ export class ScalpLabApp {
         if (paperEnabled && signal.side !== 'WAIT') this.paper.open(signal, 'auto');
         // Real is a second, explicit gate. It is never enabled by default and
         // requires BYBIT LIVE data plus a user-configured secure backend.
-        if (this.real.enabled && signal.side !== 'WAIT' && signal.score >= Number(this.settings.value.minScore)) {
-          await this.real.send(signal);
+        // Adaptive Hunter is a Paper-only experiment. Preserve the exact legacy
+        // base-side signal for the pre-existing real-order path.
+        const realSignal = signal.scoringMode === 'adaptive_hunter'
+          ? { ...signal, side: signal.baseSide, score: signal.baseScore,
+              entry: signal.baseEntry, stop: signal.baseStop, take: signal.baseTake,
+              qty: signal.baseQty, signalId: `${signal.symbol}:${signal.candleTs}:${signal.baseSide}` }
+          : signal;
+        if (this.real.enabled && realSignal.side !== 'WAIT' && realSignal.score >= Number(this.settings.value.minScore)) {
+          await this.real.send(realSignal);
         }
       }
 

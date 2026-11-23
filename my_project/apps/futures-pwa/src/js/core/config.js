@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   symbolMap: {},
   timeframe: '60', // پیش‌فرض ۱ ساعته طلایی (۱h) برای حذف نویزها
   riskProfile: 'medium',
+  adaptiveHunter: false,
 
   // Medium profile defaults (تایم‌فریم ۱ ساعته با فیلتر دقیق شکست و RSI)
   minScore: 85,

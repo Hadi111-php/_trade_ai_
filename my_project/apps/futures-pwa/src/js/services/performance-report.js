@@ -1,7 +1,10 @@
 export class PerformanceReport {
-  summarize(state, initialEquity, profile = null) {
+  summarize(state, initialEquity, profile = null, scoringMode = null) {
     const allTrades = Array.isArray(state?.paperTrades) ? state.paperTrades : [];
-    const trades = profile ? allTrades.filter(trade => trade.riskProfile === profile) : allTrades;
+    let trades = profile ? allTrades.filter(trade => trade.riskProfile === profile) : allTrades;
+    if (scoringMode) {
+      trades = trades.filter(trade => (trade.scoringMode || 'base') === scoringMode);
+    }
     const chronological = [...trades].reverse();
     const profileStart = profile ? state?.profileStarts?.[profile] : null;
     const startingEquity = Number(profileStart ?? initialEquity) || 0;
@@ -54,6 +57,17 @@ export class PerformanceReport {
       averageHoldSec: count ? holdSeconds / count : null,
       maxDrawdown,
       maxDrawdownPct: startingEquity > 0 ? maxDrawdown / startingEquity * 100 : null
+    };
+  }
+
+  compareScoringModes(state, initialEquity, profile = null) {
+    const baseline = this.summarize(state, initialEquity, profile, 'base');
+    const hunter = this.summarize(state, initialEquity, profile, 'adaptive_hunter');
+    return {
+      baseline,
+      adaptiveHunter: hunter,
+      hunterWeightUpdates: Array.isArray(state?.hunterUpdates) ? state.hunterUpdates.length : 0,
+      note: 'Closed paper trades only; net PnL includes entry and exit fees. Historical comparison, not a live-performance claim.'
     };
   }
 }

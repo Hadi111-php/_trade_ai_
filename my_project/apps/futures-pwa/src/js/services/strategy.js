@@ -1,8 +1,10 @@
 import { clamp, mean } from '../core/utils.js';
+import { scoreAdaptiveHunter } from './adaptive-hunter.js';
 
 export class MomentumScalpStrategy {
-  constructor(settings) {
+  constructor(settings, getHunterWeights = () => ({})) {
     this.s = settings;
+    this.getHunterWeights = getHunterWeights;
   }
 
   // --- Technical Indicator Calculations ---
@@ -323,9 +325,51 @@ export class MomentumScalpStrategy {
       why = reasons.join(' ، ') || 'تأیید کافی برای ورود ندارد';
     }
 
+    const baseSide = side;
+    const baseScore = score;
+    const hunterVotes = [];
+    const addVote = (id, direction, strength = 1) => {
+      if (direction) hunterVotes.push({ id, direction, confidence: clamp(strength, 0, 1) });
+    };
+    if (algoMode === 'consensus') {
+      if (Math.abs(movePct) >= Number(s.minMovePct)) addVote('momentum', Math.sign(movePct), Math.min(1, Math.abs(movePct) / Math.max(Number(s.minMovePct) * 2, 0.001)));
+      if (Math.abs(oneCandlePct) >= Number(s.minMovePct) / 1.5) addVote('candle_impulse', Math.sign(oneCandlePct), Math.min(1, Math.abs(oneCandlePct) / Math.max(Number(s.minMovePct), 0.001)));
+      if (volumeX >= Number(s.volumeSpikeX)) addVote('volume', Math.sign(movePct || oneCandlePct), Math.min(1, volumeX / Math.max(Number(s.volumeSpikeX) * 2, 0.1)));
+      if (breakoutUp) addVote('breakout', 1);
+      if (breakoutDown) addVote('breakout', -1);
+      if (trendUp) addVote('trend', 1);
+      if (trendDown) addVote('trend', -1);
+      if (rsiVal < 35) addVote('rsi', 1, Math.min(1, (35 - rsiVal) / 20));
+      if (rsiVal > 65) addVote('rsi', -1, Math.min(1, (rsiVal - 65) / 20));
+      if (emaFast !== emaSlow) addVote('ema', Math.sign(emaFast - emaSlow));
+      if (macdRes.histogram) addVote('macd', Math.sign(macdRes.histogram));
+      if (bodyPct > atrPct * 0.35) addVote('candle_body', Math.sign(last.close - last.open));
+    }
+    let hunterScore = null;
+    let scoringMode = 'base';
+    if (s.adaptiveHunter && algoMode === 'consensus') {
+      const hunter = scoreAdaptiveHunter(hunterVotes, this.getHunterWeights(), 55);
+      hunterScore = hunter.score;
+      scoringMode = 'adaptive_hunter';
+      const baseDirection = baseSide === 'LONG' ? 1 : baseSide === 'SHORT' ? -1 : 0;
+      if (baseDirection && hunter.direction === baseDirection) {
+        score = Math.round((baseScore + hunter.score) / 2);
+        side = score >= Number(s.minScore) ? baseSide : 'WAIT';
+        why += ` | Adaptive Hunter ${hunter.score}/100 (${hunter.activeExperts} خبرة)`;
+      } else {
+        side = 'WAIT';
+        score = Math.round(baseScore * (hunter.direction ? 0.25 : 0.5));
+        why += ` | Adaptive Hunter تأیید نکرد (${hunter.score}/100)`;
+      }
+    }
+
     const direction = side === 'LONG' ? 1 : side === 'SHORT' ? -1 : 0;
+    const baseDirection = baseSide === 'LONG' ? 1 : baseSide === 'SHORT' ? -1 : 0;
     const stopDistance = Math.max(atr * Number(s.atrStopMult), price * 0.0015);
     const entry = price * (1 + direction * (Number(s.slippagePct) / 100));
+    const baseEntry = price * (1 + baseDirection * (Number(s.slippagePct) / 100));
+    const baseStop = baseDirection ? baseEntry - baseDirection * stopDistance : null;
+    const baseTake = baseDirection ? baseEntry + baseDirection * stopDistance * Number(s.takeProfitR) : null;
     const stop = direction ? entry - direction * stopDistance : null;
     const take = direction ? entry + direction * stopDistance * Number(s.takeProfitR) : null;
     const notional = Number(s.orderMargin) * Number(s.leverage);
@@ -343,6 +387,15 @@ export class MomentumScalpStrategy {
       price,
       side,
       score,
+      baseSide,
+      baseScore,
+      baseEntry,
+      baseStop,
+      baseTake,
+      baseQty: notional / (baseEntry || price),
+      hunterScore,
+      hunterVotes,
+      scoringMode,
       movePct,
       oneCandlePct,
       volX: volumeX,
