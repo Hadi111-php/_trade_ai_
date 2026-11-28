@@ -1,0 +1,25 @@
+{
+  "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+  "timeframe": "15",
+  "kline_limit": 100,
+  "poll_interval_seconds": 15,
+  "initial_balance": 1000.0,
+  "position_size_pct": 0.10,
+  "fee_rate": 0.00055,
+  "slippage": 0.0002,
+  "round_trip_cost_pct": 0.0015,
+  "v9_parameters": {
+    "bb_period": 20,
+    "bb_std": 2.0,
+    "rsi_period": 14,
+    "rsi_oversold": 30.0,
+    "rsi_overbought": 70.0,
+    "volume_multiplier": 1.35,
+    "vol_sma_period": 20,
+    "atr_period": 14,
+    "atr_buffer": 0.10,
+    "rr_ratio": 2.5,
+    "time_stop_bars": 16,
+    "min_reward_filter_pct": 0.0035
+  }
+}
